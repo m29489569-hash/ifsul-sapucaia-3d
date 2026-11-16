@@ -15,26 +15,34 @@ func _apply_time_instant(main: Node3D, is_night: bool) -> void:
 	main.hud.set_day_night(is_night)
 	if is_night:
 		main.sun_light.rotation_degrees.x = -15.0
-		main.sun_light.light_energy = 0.18
+		main.sun_light.light_energy = 0.22
 		main.sun_light.light_color = Color("#7094D4")
-		main.sky_mat.sky_top_color = Color("#090D1A")
-		main.sky_mat.sky_horizon_color = Color("#1A243B")
+		if main.sky_mat:
+			main.sky_mat.sky_top_color = Color("#090D1A")
+			main.sky_mat.sky_horizon_color = Color("#1A243B")
+		main.world_env.environment.background_energy_multiplier = 0.12
 		main.world_env.environment.ambient_light_energy = 0.24
 		main.world_env.environment.fog_light_color = Color("#141D2E")
 		if main.builder.lamp_mat:
-			main.builder.lamp_mat.emission_energy_multiplier = 3.5
+			main.builder.lamp_mat.emission_energy_multiplier = 4.5
+		if main.builder.win_mat:
+			main.builder.win_mat.emission_energy_multiplier = 1.35
 		for l in main.builder.night_lights:
-			l.light_energy = 3.2
+			l.light_energy = 6.5
 	else:
-		main.sun_light.rotation_degrees.x = -48.0
-		main.sun_light.light_energy = 1.35
-		main.sun_light.light_color = Color("#FFF8EB")
-		main.sky_mat.sky_top_color = Color("#3B82C4")
-		main.sky_mat.sky_horizon_color = Color("#A8D2F0")
-		main.world_env.environment.ambient_light_energy = 0.45
+		main.sun_light.rotation_degrees.x = -42.0
+		main.sun_light.light_energy = 1.55
+		main.sun_light.light_color = Color("#FFF6E5")
+		if main.sky_mat:
+			main.sky_mat.sky_top_color = Color("#3B82C4")
+			main.sky_mat.sky_horizon_color = Color("#A8D2F0")
+		main.world_env.environment.background_energy_multiplier = 1.05
+		main.world_env.environment.ambient_light_energy = 0.55
 		main.world_env.environment.fog_light_color = Color("#C8DCEB")
 		if main.builder.lamp_mat:
 			main.builder.lamp_mat.emission_energy_multiplier = 0.0
+		if main.builder.win_mat:
+			main.builder.win_mat.emission_energy_multiplier = 0.0
 		for l in main.builder.night_lights:
 			l.light_energy = 0.0
 

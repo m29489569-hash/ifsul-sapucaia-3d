@@ -37,10 +37,13 @@ func get_material(key: String, tint: Color = Color.WHITE, uv_scale: Vector3 = Ve
 			mat.albedo_color = tint if tint != Color.WHITE else Color("#4A5056")
 			_apply_pbr(mat, "metal_diff.jpg", "", "", 0.38, 0.82, 8.0, 0.015)
 		"glass":
-			mat.albedo_color = Color(0.22, 0.44, 0.58, 0.72)
+			mat.albedo_color = Color(0.16, 0.33, 0.46, 0.82)
 			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 			mat.roughness = 0.08
-			mat.metallic = 0.25
+			mat.metallic = 0.35
+			mat.emission_enabled = true
+			mat.emission = Color("#FFE3A3")
+			mat.emission_energy_multiplier = 0.0
 		"ifsul_green":
 			mat.albedo_color = Color("#2F9E41")
 			mat.roughness = 0.55

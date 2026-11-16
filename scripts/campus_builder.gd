@@ -6,6 +6,7 @@ var mats := MaterialsLib.new()
 var poi_nodes: Array[Area3D] = []
 var night_lights: Array[OmniLight3D] = []
 var lamp_mat: StandardMaterial3D
+var win_mat: StandardMaterial3D
 var building_polys: Array = []
 
 func build(root: Node3D, data: Dictionary) -> void:
@@ -13,6 +14,7 @@ func build(root: Node3D, data: Dictionary) -> void:
 	night_lights.clear()
 	building_polys.clear()
 	lamp_mat = mats.get_material("lamp_glow")
+	win_mat = mats.get_material("glass")
 
 	_build_ground(root)
 	_build_streets(root, data.get("streets", []))
@@ -224,7 +226,7 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 	var wall_mat := mats.get_material("wall", col_wall)
 	var roof_mat := mats.get_material("concrete", Color("#6B6E72"))
 	var trim_mat := mats.get_material("ifsul_green") if col_trim == Color("#2F9E41") else mats.get_material("ifsul_red")
-	var win_mat := mats.get_material("glass")
+	var wmat := win_mat
 
 	var body := StaticBody3D.new()
 	var mesh := _extrude_polygon_mesh(poly, h, true)
@@ -289,7 +291,7 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 				var wm := BoxMesh.new()
 				wm.size = Vector3(0.08, 1.35, len * 0.78)
 				win.mesh = wm
-				win.material_override = win_mat
+				win.material_override = wmat
 				win.position = Vector3(mid.x + out_dir.x * 0.06, wy, mid.y + out_dir.y * 0.06)
 				win.rotation.y = angle
 				parent.add_child(win)
@@ -654,15 +656,26 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 		var p: Vector2 = pole_pts[i]
 		pole_mm.set_instance_transform(i, Transform3D(Basis(), Vector3(p.x, 3.1, p.y)))
 		head_mm.set_instance_transform(i, Transform3D(Basis(), Vector3(p.x + 0.2, 6.2, p.y)))
-		if i % 2 == 0:
+		if i % 2 == 0 or i <= 4:
 			var light := OmniLight3D.new()
 			light.position = Vector3(p.x + 0.2, 5.9, p.y)
 			light.light_color = Color("#FFD794")
 			light.light_energy = 0.0
-			light.omni_range = 24.0
+			light.omni_range = 34.0
 			light.shadow_enabled = false
 			props_root.add_child(light)
 			night_lights.append(light)
+
+	# Sports courts & main plaza night floodlights
+	for fp in [Vector3(-60.0, 7.2, -84.0), Vector3(-23.0, 7.5, -105.0), Vector3(-22.0, 9.0, 4.0)]:
+		var fl := OmniLight3D.new()
+		fl.position = fp
+		fl.light_color = Color("#FFF0D6")
+		fl.light_energy = 0.0
+		fl.omni_range = 42.0
+		fl.shadow_enabled = false
+		props_root.add_child(fl)
+		night_lights.append(fl)
 
 	var pole_mmi := MultiMeshInstance3D.new()
 	pole_mmi.multimesh = pole_mm

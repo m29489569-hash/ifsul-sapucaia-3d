@@ -38,34 +38,52 @@ func _load_campus_json(path: String) -> Dictionary:
 func _setup_environment() -> void:
 	world_env = WorldEnvironment.new()
 	var env := Environment.new()
-	sky_mat = ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color("#3B82C4")
-	sky_mat.sky_horizon_color = Color("#A8D2F0")
-	sky_mat.ground_bottom_color = Color("#2C3B28")
-	sky_mat.ground_horizon_color = Color("#8EA38E")
-
 	var sky := Sky.new()
-	sky.sky_material = sky_mat
+	var hdr_path := ProjectSettings.globalize_path("res://assets/hdri/sky_1k.hdr")
+	var used_hdr := false
+	if FileAccess.file_exists(hdr_path):
+		var hdr_img := Image.load_from_file(hdr_path)
+		if hdr_img != null and not hdr_img.is_empty():
+			var pmat := PanoramaSkyMaterial.new()
+			pmat.panorama = ImageTexture.create_from_image(hdr_img)
+			sky.sky_material = pmat
+			used_hdr = true
+	if not used_hdr:
+		sky_mat = ProceduralSkyMaterial.new()
+		sky_mat.sky_top_color = Color("#3B82C4")
+		sky_mat.sky_horizon_color = Color("#A8D2F0")
+		sky_mat.ground_bottom_color = Color("#2C3B28")
+		sky_mat.ground_horizon_color = Color("#8EA38E")
+		sky.sky_material = sky_mat
+
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
+	env.background_energy_multiplier = 1.05
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.tonemap_exposure = 1.05
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.45
+	env.ambient_light_energy = 0.55
+	env.ssao_enabled = true
+	env.ssao_radius = 1.4
+	env.ssao_intensity = 1.15
+	env.glow_enabled = true
+	env.glow_intensity = 0.35
+	env.glow_bloom = 0.12
 	env.fog_enabled = true
 	env.fog_light_color = Color("#C8DCEB")
-	env.fog_density = 0.0014
+	env.fog_density = 0.00028
+	env.fog_sky_affect = 0.25
 	world_env.environment = env
 	add_child(world_env)
 
 	sun_light = DirectionalLight3D.new()
 	sun_light.name = "SunLight"
-	sun_light.rotation_degrees = Vector3(-48.0, 32.0, 0.0)
-	sun_light.light_color = Color("#FFF8EB")
-	sun_light.light_energy = 1.35
+	sun_light.rotation_degrees = Vector3(-42.0, 48.0, 0.0)
+	sun_light.light_color = Color("#FFF6E5")
+	sun_light.light_energy = 1.55
 	sun_light.shadow_enabled = true
-	sun_light.directional_shadow_max_distance = 130.0
-	sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	sun_light.directional_shadow_max_distance = 190.0
+	sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	add_child(sun_light)
 
 func _setup_audio() -> void:
@@ -216,26 +234,34 @@ func toggle_day_night() -> void:
 	var tw := create_tween().set_parallel(true)
 	if is_night:
 		tw.tween_property(sun_light, "rotation_degrees:x", -15.0, 1.6)
-		tw.tween_property(sun_light, "light_energy", 0.16, 1.6)
+		tw.tween_property(sun_light, "light_energy", 0.22, 1.6)
 		tw.tween_property(sun_light, "light_color", Color("#7094D4"), 1.6)
-		tw.tween_property(sky_mat, "sky_top_color", Color("#090D1A"), 1.6)
-		tw.tween_property(sky_mat, "sky_horizon_color", Color("#1A243B"), 1.6)
-		tw.tween_property(world_env.environment, "ambient_light_energy", 0.22, 1.6)
+		if sky_mat:
+			tw.tween_property(sky_mat, "sky_top_color", Color("#090D1A"), 1.6)
+			tw.tween_property(sky_mat, "sky_horizon_color", Color("#1A243B"), 1.6)
+		tw.tween_property(world_env.environment, "background_energy_multiplier", 0.12, 1.6)
+		tw.tween_property(world_env.environment, "ambient_light_energy", 0.24, 1.6)
 		tw.tween_property(world_env.environment, "fog_light_color", Color("#141D2E"), 1.6)
 		if builder.lamp_mat:
-			tw.tween_property(builder.lamp_mat, "emission_energy_multiplier", 3.5, 1.6)
+			tw.tween_property(builder.lamp_mat, "emission_energy_multiplier", 4.5, 1.6)
+		if builder.win_mat:
+			tw.tween_property(builder.win_mat, "emission_energy_multiplier", 1.35, 1.6)
 		for l in builder.night_lights:
-			tw.tween_property(l, "light_energy", 3.2, 1.6)
+			tw.tween_property(l, "light_energy", 6.5, 1.6)
 	else:
-		tw.tween_property(sun_light, "rotation_degrees:x", -48.0, 1.6)
-		tw.tween_property(sun_light, "light_energy", 1.35, 1.6)
-		tw.tween_property(sun_light, "light_color", Color("#FFF8EB"), 1.6)
-		tw.tween_property(sky_mat, "sky_top_color", Color("#3B82C4"), 1.6)
-		tw.tween_property(sky_mat, "sky_horizon_color", Color("#A8D2F0"), 1.6)
-		tw.tween_property(world_env.environment, "ambient_light_energy", 0.45, 1.6)
+		tw.tween_property(sun_light, "rotation_degrees:x", -42.0, 1.6)
+		tw.tween_property(sun_light, "light_energy", 1.55, 1.6)
+		tw.tween_property(sun_light, "light_color", Color("#FFF6E5"), 1.6)
+		if sky_mat:
+			tw.tween_property(sky_mat, "sky_top_color", Color("#3B82C4"), 1.6)
+			tw.tween_property(sky_mat, "sky_horizon_color", Color("#A8D2F0"), 1.6)
+		tw.tween_property(world_env.environment, "background_energy_multiplier", 1.05, 1.6)
+		tw.tween_property(world_env.environment, "ambient_light_energy", 0.55, 1.6)
 		tw.tween_property(world_env.environment, "fog_light_color", Color("#C8DCEB"), 1.6)
 		if builder.lamp_mat:
 			tw.tween_property(builder.lamp_mat, "emission_energy_multiplier", 0.0, 1.6)
+		if builder.win_mat:
+			tw.tween_property(builder.win_mat, "emission_energy_multiplier", 0.0, 1.6)
 		for l in builder.night_lights:
 			tw.tween_property(l, "light_energy", 0.0, 1.6)
 
