@@ -55,7 +55,7 @@ func _run_capture() -> void:
 	var main := packed.instantiate()
 	root.add_child(main)
 
-	for _i in range(4):
+	for _i in range(6):
 		await process_frame
 
 	main._start_exploration()
@@ -67,6 +67,10 @@ func _run_capture() -> void:
 	var cap_cam := Camera3D.new()
 	cap_cam.far = 650.0
 	main.add_child(cap_cam)
+	cap_cam.look_at_from_position(Vector3(-8.0, 145.0, 25.0), Vector3(-10.0, 0.0, -25.0), Vector3.UP)
+	cap_cam.current = true
+	for _w in range(4):
+		await process_frame
 
 	var shots_txt := FileAccess.get_file_as_string("res://data/shots.json")
 	var shots_cfg: Dictionary = JSON.parse_string(shots_txt)

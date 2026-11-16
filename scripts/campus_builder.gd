@@ -449,8 +449,19 @@ func _build_courts(root: Node3D, courts: Array) -> void:
 	c_root.name = "SportsCourts"
 	root.add_child(c_root)
 	var line_mat := mats.get_material("line_white")
-	var roof_mat := mats.get_material("metal", Color("#7C8288"))
-	var col_mat := mats.get_material("concrete", Color("#D2CEC6"))
+	var gym_roof_mat := StandardMaterial3D.new()
+	gym_roof_mat.albedo_color = Color("#DCE1E6")
+	gym_roof_mat.metallic = 0.35
+	gym_roof_mat.roughness = 0.42
+	var blue_truss_mat := StandardMaterial3D.new()
+	blue_truss_mat.albedo_color = Color("#1D63B8")
+	blue_truss_mat.metallic = 0.45
+	blue_truss_mat.roughness = 0.38
+	var fence_mat := StandardMaterial3D.new()
+	fence_mat.albedo_color = Color(0.75, 0.80, 0.85, 0.24)
+	fence_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	fence_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var curb_mat := mats.get_material("wall", Color("#EAE8E2"))
 
 	for c in courts:
 		var center: Array = c.get("center", [0, 0])
@@ -514,37 +525,61 @@ func _build_courts(root: Node3D, courts: Array) -> void:
 			_add_court_line(node, Vector3(0, 1.25, -pd * 0.52), Vector3(0.12, 2.5, 0.12), post_mat)
 			_add_court_line(node, Vector3(0, 1.25, pd * 0.52), Vector3(0.12, 2.5, 0.12), post_mat)
 			_add_court_line(node, Vector3(0, 2.0, 0), Vector3(0.04, 0.95, pd * 1.02), mats.get_material("glass"))
+			# Perimeter wire fence & posts on Volleyball court (MSS-00.2485)
+			for f_side in [-1.0, 1.0]:
+				_add_court_line(node, Vector3(0.0, 1.6, f_side * (d * 0.52)), Vector3(w, 3.2, 0.04), fence_mat)
+			_add_court_line(node, Vector3(-w * 0.52, 1.6, 0.0), Vector3(0.04, 3.2, d), fence_mat)
 
-		# Covered gymnasium roof & pillars (matching satellite!)
+		# Covered gymnasium blue steel trusses, silver roof, curb & wire fence (MSS-00.446 / MSS-00.2607)
 		if bool(c.get("covered", false)):
-			var roof_h := 7.8
-			for sx in [-w * 0.48, w * 0.48]:
+			var roof_h := 8.0
+			for sx: float in [-w * 0.48, w * 0.48]:
 				for i in range(6):
 					var pz := lerpf(-d * 0.46, d * 0.46, float(i) / 5.0)
 					var pbody := StaticBody3D.new()
 					pbody.position = Vector3(sx, roof_h * 0.5, pz)
 					var pc := CollisionShape3D.new()
 					var pbox := BoxShape3D.new()
-					pbox.size = Vector3(0.45, roof_h, 0.45)
+					pbox.size = Vector3(0.42, roof_h, 0.42)
 					pc.shape = pbox
 					pbody.add_child(pc)
-					var pmi := MeshInstance3D.new()
-					var pmesh := BoxMesh.new()
-					pmesh.size = Vector3(0.42, roof_h, 0.42)
-					pmi.mesh = pmesh
-					pmi.material_override = col_mat
-					pbody.add_child(pmi)
+					# Twin vertical blue steel truss legs
+					for sub_z in [-0.18, 0.18]:
+						var pmi := MeshInstance3D.new()
+						var pmesh := BoxMesh.new()
+						pmesh.size = Vector3(0.32, roof_h, 0.14)
+						pmi.mesh = pmesh
+						pmi.position.z = sub_z
+						pmi.material_override = blue_truss_mat
+						pbody.add_child(pmi)
 					node.add_child(pbody)
-			# Pitched roof (2 sloped panels)
-			for side in [-1.0, 1.0]:
+				# Longitudinal blue eaves truss girder
+				_add_court_line(node, Vector3(sx, roof_h - 0.3, 0.0), Vector3(0.28, 0.65, d * 0.96), blue_truss_mat)
+				# Low white concrete curb + wire mesh fence along sides (leaving gap near POI on east side)
+				_add_court_line(node, Vector3(sx, 0.3, 0.0), Vector3(0.26, 0.6, d * 0.96), curb_mat)
+				if sx < 0.0:
+					_add_court_line(node, Vector3(sx, 2.4, 0.0), Vector3(0.04, 3.6, d * 0.96), fence_mat)
+				else:
+					_add_court_line(node, Vector3(sx, 2.4, -d * 0.25), Vector3(0.04, 3.6, d * 0.44), fence_mat)
+					_add_court_line(node, Vector3(sx, 2.4, d * 0.30), Vector3(0.04, 3.6, d * 0.36), fence_mat)
+
+			# Transverse blue roof trusses + pitched bright silver metal roof panels
+			for i in range(6):
+				var pz := lerpf(-d * 0.46, d * 0.46, float(i) / 5.0)
+				_add_court_line(node, Vector3(0.0, roof_h - 0.18, pz), Vector3(w * 0.94, 0.48, 0.18), blue_truss_mat)
+			for side: float in [-1.0, 1.0]:
 				var rmi := MeshInstance3D.new()
 				var rbox := BoxMesh.new()
 				rbox.size = Vector3(w * 0.54, 0.22, d + 1.5)
 				rmi.mesh = rbox
-				rmi.material_override = roof_mat
-				rmi.position = Vector3(side * w * 0.25, roof_h + 1.0, 0.0)
+				rmi.material_override = gym_roof_mat
+				rmi.position = Vector3(side * w * 0.25, roof_h + 1.05, 0.0)
 				rmi.rotation.z = -side * deg_to_rad(11.0)
 				node.add_child(rmi)
+			# South & North blue fence + white entrance portico frame (MSS-00.446)
+			_add_court_line(node, Vector3(0.0, 0.3, d * 0.49), Vector3(w * 0.96, 0.6, 0.26), curb_mat)
+			_add_court_line(node, Vector3(0.0, 2.4, d * 0.49), Vector3(w * 0.96, 3.6, 0.04), fence_mat)
+			_add_court_line(node, Vector3(-w * 0.54, 2.0, -d * 0.45), Vector3(3.4, 3.8, 0.45), curb_mat)
 
 func _add_court_line(parent: Node3D, pos: Vector3, sz: Vector3, mat: Material) -> void:
 	var mi := MeshInstance3D.new()
