@@ -69,6 +69,23 @@ func _build_campus_pad(root: Node3D, perim: Array) -> void:
 	plaza_mi.material_override = mats.get_material("concrete", Color("#C8C3B9"))
 	root.add_child(plaza_mi)
 
+	# Inner courtyard tiled floor (05_central_courtyard) + Bloco Adm atrium floor + North soccer pitch lines
+	var inner_pts := PackedVector2Array([
+		Vector2(-6.0, -7.0), Vector2(28.0, -12.0), Vector2(34.0, 26.0), Vector2(4.0, 22.0)
+	])
+	var inner_mi := MeshInstance3D.new()
+	inner_mi.name = "InnerCourtyardTile"
+	inner_mi.mesh = _extrude_polygon_mesh(inner_pts, 0.025, false)
+	inner_mi.material_override = mats.get_material("tile", Color("#CFC9BE"))
+	root.add_child(inner_mi)
+
+	var line_mat := mats.get_material("line_white")
+	_add_court_line(root, Vector3(-10.0, 0.028, -148.0), Vector3(44.0, 0.01, 0.16), line_mat)
+	_add_court_line(root, Vector3(-10.0, 0.028, -118.0), Vector3(44.0, 0.01, 0.16), line_mat)
+	_add_court_line(root, Vector3(-32.0, 0.028, -133.0), Vector3(0.16, 0.01, 30.0), line_mat)
+	_add_court_line(root, Vector3(12.0, 0.028, -133.0), Vector3(0.16, 0.01, 30.0), line_mat)
+	_add_court_line(root, Vector3(-10.0, 0.028, -133.0), Vector3(0.16, 0.01, 30.0), line_mat)
+
 func _build_streets(root: Node3D, streets: Array) -> void:
 	var road_mat := mats.get_material("asphalt", Color("#323539"))
 	var walk_mat := mats.get_material("sidewalk", Color("#BDB9B0"))
@@ -227,6 +244,31 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 	var roof_mat := mats.get_material("concrete", Color("#C9C8C2"))
 	var trim_mat := mats.get_material("ifsul_green") if col_trim == Color("#2F9E41") else mats.get_material("ifsul_red")
 	var wmat := win_mat
+	var btype := String(b.get("type", ""))
+
+	if btype == "corridor":
+		# Open covered walkway on concrete pillars (passable on foot!)
+		var canopy := StaticBody3D.new()
+		var cmesh := _extrude_polygon_mesh(poly, 0.35, true)
+		var cmi := MeshInstance3D.new()
+		cmi.mesh = cmesh
+		cmi.position.y = h - 0.35
+		cmi.material_override = roof_mat
+		canopy.add_child(cmi)
+		var ccol := CollisionShape3D.new()
+		ccol.shape = cmesh.create_trimesh_shape()
+		ccol.position.y = h - 0.35
+		canopy.add_child(ccol)
+		parent.add_child(canopy)
+		for v in poly:
+			var pmi := MeshInstance3D.new()
+			var pm := CylinderMesh.new()
+			pm.top_radius = 0.14; pm.bottom_radius = 0.16; pm.height = h - 0.35
+			pmi.mesh = pm
+			pmi.position = Vector3(v.x, (h - 0.35) * 0.5, v.y)
+			pmi.material_override = mats.get_material("concrete", Color("#DEDAD2"))
+			parent.add_child(pmi)
+		return
 
 	var body := StaticBody3D.new()
 	var mesh := _extrude_polygon_mesh(poly, h, true)
@@ -246,7 +288,6 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 	cap.position.y = h
 	cap.material_override = roof_mat
 	parent.add_child(cap)
-	var btype := String(b.get("type", ""))
 	if btype in ["academic", "workshop"] and poly.size() >= 4:
 		var c2 := _poly_centroid(poly)
 		var rib_mat := mats.get_material("metal", Color("#5B6770"))
@@ -802,7 +843,8 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 	var bench_pts := [
 		Vector2(-24.5, 11.0), Vector2(-21.5, 14.8), Vector2(-18.5, 11.2),
 		Vector2(-46.0, 5.5), Vector2(-32.0, -4.0), Vector2(12.0, -76.0),
-		Vector2(-10.0, 92.0), Vector2(-42.0, -56.0)
+		Vector2(-10.0, 92.0), Vector2(-42.0, -56.0), Vector2(14.0, 4.0),
+		Vector2(18.0, 11.0), Vector2(-48.0, -24.0)
 	]
 	var bench_mm := MultiMesh.new()
 	bench_mm.transform_format = MultiMesh.TRANSFORM_3D
@@ -869,10 +911,69 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 		car_mmi.material_override = cmat
 		props_root.add_child(car_mmi)
 
+	# 5. Sapucaia do Sul surrounding neighborhood houses via MultiMesh
+	var house_pts: Array[Vector2] = []
+	var hrng := RandomNumberGenerator.new()
+	hrng.seed = 93216
+	# West residential blocks across Av. Copacabana
+	for row_z in [-110.0, -92.0, -52.0, -34.0, -2.0, 12.0, 48.0, 68.0, 98.0, 122.0]:
+		for col_x in [-112.0, -128.0, -146.0, -165.0, -184.0]:
+			house_pts.append(Vector2(col_x + hrng.randf_range(-2.5, 2.5), row_z + hrng.randf_range(-2.0, 2.0)))
+	# North & South neighborhood blocks
+	for col_x in [-85.0, -64.0, -42.0, -20.0, 2.0, 24.0, 46.0]:
+		house_pts.append(Vector2(col_x, -188.0 + hrng.randf_range(-4.0, 4.0)))
+		house_pts.append(Vector2(col_x, -210.0 + hrng.randf_range(-4.0, 4.0)))
+	for col_x in [-25.0, 0.0, 25.0, 52.0, 78.0]:
+		house_pts.append(Vector2(col_x, 198.0 + hrng.randf_range(-5.0, 5.0)))
+
+	if house_pts.size() > 0:
+		var hw_mm := MultiMesh.new()
+		hw_mm.transform_format = MultiMesh.TRANSFORM_3D
+		hw_mm.use_colors = true
+		var hwm := BoxMesh.new()
+		hwm.size = Vector3(9.5, 3.6, 8.0)
+		hw_mm.mesh = hwm
+		hw_mm.instance_count = house_pts.size()
+
+		var hr_mm := MultiMesh.new()
+		hr_mm.transform_format = MultiMesh.TRANSFORM_3D
+		var hrm := BoxMesh.new()
+		hrm.size = Vector3(10.2, 0.9, 8.6)
+		hr_mm.mesh = hrm
+		hr_mm.instance_count = house_pts.size()
+
+		var hpal := [Color("#E6DFD3"), Color("#DED8CE"), Color("#D5DFD8"), Color("#E8DCC8")]
+		for i in range(house_pts.size()):
+			var hp: Vector2 = house_pts[i]
+			var ang := deg_to_rad(8.7 + hrng.randf_range(-2.0, 2.0))
+			hw_mm.set_instance_transform(i, Transform3D(Basis(Vector3.UP, ang), Vector3(hp.x, 1.8, hp.y)))
+			hw_mm.set_instance_color(i, hpal[i % hpal.size()])
+			hr_mm.set_instance_transform(i, Transform3D(Basis(Vector3.UP, ang), Vector3(hp.x, 4.0, hp.y)))
+
+		var hw_mmi := MultiMeshInstance3D.new()
+		hw_mmi.multimesh = hw_mm
+		var hwmat := mats.get_material("wall", Color.WHITE)
+		hwmat.vertex_color_use_as_albedo = true
+		hw_mmi.material_override = hwmat
+		props_root.add_child(hw_mmi)
+
+		var hr_mmi := MultiMeshInstance3D.new()
+		hr_mmi.multimesh = hr_mm
+		hr_mmi.material_override = mats.get_material("wall", Color("#9C523B"))
+		props_root.add_child(hr_mmi)
+
 func _collect_tree_positions(data: Dictionary) -> Array[Vector2]:
 	var out: Array[Vector2] = []
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 2008
+	# Central inner courtyard & Bloco Adm atrium trees
+	for cp in [Vector2(14.5, 6.0), Vector2(18.5, 13.0), Vector2(10.5, 13.5), Vector2(-48.5, -24.5)]:
+		out.append(cp)
+	# Eastern woodland forest belt across Rua Palestina (matching satellite_esri_campus.jpg)
+	for _i in range(145):
+		var px := rng.randf_range(92.0, 190.0)
+		var pz := rng.randf_range(-160.0, 120.0)
+		out.append(Vector2(px, pz))
 	# Southern green park & eastern woodland edge (matching satellite dense canopy)
 	for _i in range(110):
 		var px := rng.randf_range(-52.0, 72.0)
