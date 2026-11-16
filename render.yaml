@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: ifsul-sapucaia-3d
+    name: if
     runtime: node
     plan: free
     buildCommand: npm ci --omit=dev
