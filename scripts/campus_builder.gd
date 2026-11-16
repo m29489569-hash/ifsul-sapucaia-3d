@@ -22,7 +22,7 @@ func build(root: Node3D, data: Dictionary) -> void:
 	_build_perimeter_walls(root, data.get("perimeter", []), data.get("gates", []))
 	_build_parking_lots(root, data.get("parking_lots", []))
 	_build_paths(root, data.get("footways", []), "concrete", 0.036, Color("#CBC6BC"))
-	_build_paths(root, data.get("driveways", []), "asphalt", 0.032, Color("#3A3D42"))
+	_build_paths(root, data.get("driveways", []), "asphalt", 0.023, Color("#323539"))
 	_build_courts(root, data.get("courts", []))
 	_build_buildings(root, data.get("buildings", []))
 	_build_landmarks(root, data)
@@ -61,11 +61,11 @@ func _build_campus_pad(root: Node3D, perim: Array) -> void:
 
 	# Central paved civic courtyard around entrance, admin & auditorium
 	var plaza_pts := PackedVector2Array([
-		Vector2(-62.0, -5.0), Vector2(18.0, -12.0), Vector2(22.0, 44.0), Vector2(-58.0, 26.0)
+		Vector2(-69.5, -2.0), Vector2(18.0, -12.0), Vector2(22.0, 44.0), Vector2(-64.5, 26.5)
 	])
 	var plaza_mi := MeshInstance3D.new()
 	plaza_mi.name = "CentralPlaza"
-	plaza_mi.mesh = _extrude_polygon_mesh(plaza_pts, 0.028, false)
+	plaza_mi.mesh = _extrude_polygon_mesh(plaza_pts, 0.018, false)
 	plaza_mi.material_override = mats.get_material("concrete", Color("#C8C3B9"))
 	root.add_child(plaza_mi)
 
@@ -94,12 +94,111 @@ func _build_streets(root: Node3D, streets: Array) -> void:
 	st_root.name = "Streets"
 	root.add_child(st_root)
 
+	# Pass 1: all sidewalks below asphalt; Pass 2: all asphalt; Pass 3: dashed centerlines on top
 	for s in streets:
 		var pts: Array = s.get("points", [])
 		var w := float(s.get("width", 8.0))
-		_add_polyline_ribbon(st_root, pts, w + 3.0, 0.014, walk_mat, false)
-		_add_polyline_ribbon(st_root, pts, w, 0.022, road_mat, false)
-		_add_polyline_ribbon(st_root, pts, 0.16, 0.027, line_mat, true)
+		_add_polyline_ribbon(st_root, pts, w + 3.2, 0.014, walk_mat, false, 0.4)
+	for s in streets:
+		var pts: Array = s.get("points", [])
+		var w := float(s.get("width", 8.0))
+		_add_polyline_ribbon(st_root, pts, w, 0.022, road_mat, false, 0.4)
+
+	# Paved median crossover openings matching real Av. Copacabana intersections
+	var slope := 0.160
+	var bou_ang := atan2(slope, 1.0)
+	var crossover_spans := [
+		[-150.0, 9.0],
+		[-119.5, 9.0],
+		[16.8, 16.0],
+		[184.0, 10.0],
+	]
+	for cs in crossover_spans:
+		var cz := float(cs[0])
+		var clen := float(cs[1])
+		var cx := -80.25 + (cz - 13.0) * slope
+		var pad := MeshInstance3D.new()
+		var pbox := BoxMesh.new()
+		pbox.size = Vector3(14.0, 0.02, clen)
+		pad.mesh = pbox
+		pad.position = Vector3(cx, 0.022, cz)
+		pad.rotation.y = bou_ang
+		pad.material_override = road_mat
+		st_root.add_child(pad)
+
+	for s in streets:
+		var pts: Array = s.get("points", [])
+		_add_polyline_ribbon(st_root, pts, 0.16, 0.036, line_mat, true, 0.0)
+
+	# Vegetated central median islands (canteiro central) along Av. Copacabana
+	var curb_mat := mats.get_material("wall", Color("#ECEAE4"))
+	var grass_mat := mats.get_material("grass", Color("#49873A"))
+	var shrub_mats: Array[Material] = [
+		mats.get_material("wall", Color("#3A7D2C")),
+		mats.get_material("wall", Color("#5B9E3E")),
+		mats.get_material("wall", Color("#D94E73")),
+		mats.get_material("wall", Color("#EAB308")),
+	]
+	var curb_w := 4.5
+	var grass_w := 3.9
+	var curb_r := curb_w * 0.5
+	var grass_r := grass_w * 0.5
+	var cos_b := cos(bou_ang)
+	var sin_b := sin(bou_ang)
+	var median_spans := [
+		[-142.0, -124.0],
+		[-115.0, 9.0],
+		[24.5, 176.0],
+	]
+	for span in median_spans:
+		var z0 := float(span[0])
+		var z1 := float(span[1])
+		var seg_len := (z1 - z0) / cos_b
+		var body_len := seg_len - curb_w
+		if body_len <= 0.5:
+			continue
+		var z_mid := (z0 + z1) * 0.5
+		var x_mid := -80.25 + (z_mid - 13.0) * slope
+		var m_node := Node3D.new()
+		m_node.position = Vector3(x_mid, 0.0, z_mid)
+		m_node.rotation.y = bou_ang
+		st_root.add_child(m_node)
+
+		_add_court_line(m_node, Vector3(0.0, 0.08, 0.0), Vector3(curb_w, 0.16, body_len), curb_mat)
+		_add_court_line(m_node, Vector3(0.0, 0.09, 0.0), Vector3(grass_w, 0.18, body_len), grass_mat)
+
+		var end_off := body_len * 0.5
+		for sgn in [-1.0, 1.0]:
+			var cap_c := MeshInstance3D.new()
+			var cc_m := CylinderMesh.new()
+			cc_m.top_radius = curb_r; cc_m.bottom_radius = curb_r; cc_m.height = 0.16; cc_m.radial_segments = 16
+			cap_c.mesh = cc_m
+			cap_c.position = Vector3(0.0, 0.08, sgn * end_off)
+			cap_c.material_override = curb_mat
+			m_node.add_child(cap_c)
+
+			var cap_g := MeshInstance3D.new()
+			var cg_m := CylinderMesh.new()
+			cg_m.top_radius = grass_r; cg_m.bottom_radius = grass_r; cg_m.height = 0.18; cg_m.radial_segments = 16
+			cap_g.mesh = cg_m
+			cap_g.position = Vector3(0.0, 0.09, sgn * end_off)
+			cap_g.material_override = grass_mat
+			m_node.add_child(cap_g)
+
+		var shrub_n := int((seg_len - 4.0) / 6.0)
+		for si in range(shrub_n + 1):
+			var sz := -end_off + 1.0 + float(si) * 6.0
+			if sz > end_off - 0.5:
+				break
+			var sh := MeshInstance3D.new()
+			var sm := SphereMesh.new()
+			sm.radius = 0.55; sm.height = 0.78; sm.radial_segments = 8; sm.rings = 5
+			sh.mesh = sm
+			sh.position = Vector3(0.0 if si % 2 == 0 else (0.55 if si % 4 == 1 else -0.55), 0.45, sz)
+			var mat_idx := (si % 2) if si % 3 != 2 else (2 if si % 6 == 2 else 3)
+			sh.material_override = shrub_mats[mat_idx]
+			m_node.add_child(sh)
+		var _unused := sin_b
 
 func _build_paths(root: Node3D, paths: Array, mat_key: String, y_height: float, tint: Color) -> void:
 	var mat := mats.get_material(mat_key, tint)
@@ -109,9 +208,19 @@ func _build_paths(root: Node3D, paths: Array, mat_key: String, y_height: float, 
 	for p in paths:
 		_add_polyline_ribbon(p_root, p.get("points", []), float(p.get("width", 2.5)), y_height, mat, false)
 
-func _add_polyline_ribbon(parent: Node3D, pts: Array, width: float, y: float, mat: Material, dashed: bool) -> void:
+func _is_in_copacabana_junction(wp: Vector3) -> bool:
+	if wp.x > -42.0:
+		return false
+	for zj: float in [-150.0, -132.0, -119.5, -80.0, -28.0, 16.8, 185.0]:
+		var tol := 9.5 if absf(zj - 16.8) < 1.0 else (6.8 if zj < -140.0 or zj > 180.0 else 5.5)
+		if absf(wp.z - zj) < tol:
+			return true
+	return false
+
+func _add_polyline_ribbon(parent: Node3D, pts: Array, width: float, y: float, mat: Material, dashed: bool, end_pad: float = -1.0) -> void:
 	if pts.size() < 2:
 		return
+	var pad := end_pad if end_pad >= 0.0 else width * 0.35
 	for i in range(pts.size() - 1):
 		var a := Vector3(float(pts[i][0]), 0.0, float(pts[i][1]))
 		var b := Vector3(float(pts[i + 1][0]), 0.0, float(pts[i + 1][1]))
@@ -125,18 +234,21 @@ func _add_polyline_ribbon(parent: Node3D, pts: Array, width: float, y: float, ma
 			var n := int(length / step)
 			for k in range(n):
 				var t := (k + 0.5) / maxf(1.0, float(n))
+				var wp := a.lerp(b, t)
+				if _is_in_copacabana_junction(wp):
+					continue
 				var mi := MeshInstance3D.new()
 				var q := BoxMesh.new()
-				q.size = Vector3(width, 0.01, 2.0)
+				q.size = Vector3(width, 0.012, 2.0)
 				mi.mesh = q
 				mi.material_override = mat
-				mi.position = a.lerp(b, t) + Vector3(0.0, y, 0.0)
+				mi.position = wp + Vector3(0.0, y, 0.0)
 				mi.rotation.y = angle
 				parent.add_child(mi)
 		else:
 			var mi := MeshInstance3D.new()
 			var box := BoxMesh.new()
-			box.size = Vector3(width, 0.02, length + width * 0.35)
+			box.size = Vector3(width, 0.02, length + pad)
 			mi.mesh = box
 			mi.material_override = mat
 			mi.position = (a + b) * 0.5 + Vector3(0.0, y, 0.0)
@@ -885,13 +997,15 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 		wing.position = Vector3(1.6, 0.95, gz)
 		wing.material_override = gate_mat
 		gate_root.add_child(wing)
-	var curb := MeshInstance3D.new()
-	var cb := BoxMesh.new()
-	cb.size = Vector3(0.25, 0.14, 14.0)
-	curb.mesh = cb
-	curb.position = Vector3(-1.4, 0.07, 1.5)
-	curb.material_override = mats.get_material("wall", Color("#E8B923"))
-	gate_root.add_child(curb)
+	var yellow_curb_mat := mats.get_material("wall", Color("#E8B923"))
+	for c_spec in [[-8.0, 8.0], [8.8, 7.5]]:
+		var curb := MeshInstance3D.new()
+		var cb := BoxMesh.new()
+		cb.size = Vector3(0.24, 0.15, float(c_spec[1]))
+		curb.mesh = cb
+		curb.position = Vector3(-2.2, 0.08, float(c_spec[0]))
+		curb.material_override = yellow_curb_mat
+		gate_root.add_child(curb)
 	for oz in [-7.6, -6.5]:
 		var orelhao := MeshInstance3D.new()
 		var om := SphereMesh.new()
@@ -909,10 +1023,21 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 		opost.material_override = gate_mat
 		gate_root.add_child(opost)
 
-	# White crosswalk stripes on entrance driveway (MSS-00.444)
+	# White zebra crosswalks: 1) Gate entrance throat, 2) Av. Copacabana carriageways at median tip (z = 10.6)
 	var cw_mat := mats.get_material("line_white")
-	for cwi in range(6):
-		_add_court_line(gate_root, Vector3(-5.5, 0.032, -1.0 + cwi * 0.9), Vector3(2.8, 0.01, 0.42), cw_mat)
+	for cwi in range(7):
+		_add_court_line(gate_root, Vector3(-2.0, 0.038, -2.7 + cwi * 0.9), Vector3(2.8, 0.012, 0.45), cw_mat)
+
+	var bou_cw := Node3D.new()
+	bou_cw.name = "CopacabanaCrosswalk"
+	bou_cw.rotation.y = atan2(0.160, 1.0)
+	var cw_z := 10.6
+	bou_cw.position = Vector3(-80.25 + (cw_z - 13.0) * 0.160, 0.0, cw_z)
+	root.add_child(bou_cw)
+	for lane_x: float in [-6.15, 6.15]:
+		for bi in range(7):
+			var lx := lane_x - 2.85 + float(bi) * 0.95
+			_add_court_line(bou_cw, Vector3(lx, 0.038, 0.0), Vector3(0.44, 0.012, 2.5), cw_mat)
 
 	# Bicycle rack behind Guarita with parked bikes (MSS-00.444 / MSS-00.223)
 	var bike_rack := Node3D.new()
@@ -1320,10 +1445,12 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 	var house_pts: Array[Vector2] = []
 	var hrng := RandomNumberGenerator.new()
 	hrng.seed = 93216
-	# West residential blocks across Av. Copacabana
-	for row_z in [-110.0, -92.0, -52.0, -34.0, -2.0, 12.0, 48.0, 68.0, 98.0, 122.0]:
-		for col_x in [-112.0, -128.0, -146.0, -165.0, -184.0]:
-			house_pts.append(Vector2(col_x + hrng.randf_range(-2.5, 2.5), row_z + hrng.randf_range(-2.0, 2.0)))
+	# West residential blocks across Av. Copacabana (aligned parallel to Pista Oeste)
+	for row_z: float in [-110.0, -92.0, -52.0, -34.0, -2.0, 12.0, 48.0, 68.0, 98.0, 122.0]:
+		var x_west_base := -86.5 + (row_z - 13.0) * 0.160 - 13.5
+		for col_i in range(5):
+			var col_x := x_west_base - float(col_i) * 17.5
+			house_pts.append(Vector2(col_x + hrng.randf_range(-2.2, 2.2), row_z + hrng.randf_range(-2.0, 2.0)))
 	# North & South neighborhood blocks
 	for col_x in [-85.0, -64.0, -42.0, -20.0, 2.0, 24.0, 46.0]:
 		house_pts.append(Vector2(col_x, -188.0 + hrng.randf_range(-4.0, 4.0)))
@@ -1391,12 +1518,10 @@ func _collect_tree_positions(data: Dictionary) -> Array[Vector2]:
 		var pz := rng.randf_range(-155.0, -115.0)
 		if _is_tree_clear(Vector2(px, pz), data):
 			out.append(Vector2(px, pz))
-	# Avenue Copacabana boulevard trees
-	for k in range(18):
-		var t := float(k) / 17.0
-		var ax := lerpf(-95.0, -56.0, t)
-		var az := lerpf(-140.0, 160.0, t)
-		var cand := Vector2(ax - 7.5, az)
+	# Avenue Copacabana central median boulevard trees (inside vegetated median islands)
+	for mz: float in [-138.0, -128.0, -110.0, -96.0, -82.0, -68.0, -54.0, -40.0, -26.0, -12.0, 2.0, 30.0, 46.0, 62.0, 78.0, 94.0, 110.0, 126.0, 144.0, 162.0]:
+		var mx := -80.25 + (mz - 13.0) * 0.160
+		var cand := Vector2(mx, mz)
 		if _is_tree_clear(cand, data):
 			out.append(cand)
 	return out

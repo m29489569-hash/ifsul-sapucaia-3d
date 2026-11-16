@@ -16,3 +16,4 @@
 - ~~[7.5]~~ Piso concreto com vagas amarelas, faixa de pedestres, bicicletário e jardim topiaria `IFSul` (`iter-10`, keep).
 - ~~[6.0]~~ Lago sul com ilhota/casinhas, 16 balizadores brancos e jardim de agaves junto à caixa d'água (`iter-11`, keep).
 - ~~[4.5]~~ Montantes verticais nas janelas, unidades externas de AC e refletores noturnos no Auditório/lago (`iter-12`, keep).
+- ~~[15.0]~~ Correção geométrica da Av. Copacabana em pista dupla paralela (`9.09°`), canteiro central vegetado, retornos asfaltados, faixas de pedestres/tracejado sem clipping e alinhamento do casario oeste (`iter-13`, keep).
