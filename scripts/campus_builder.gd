@@ -242,9 +242,11 @@ func _build_courtyard_building(parent: Node3D, poly: PackedVector2Array, h: floa
 func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, col_wall: Color, col_trim: Color, floors: int, has_windows: bool, b: Dictionary) -> void:
 	var wall_mat := mats.get_material("wall", col_wall)
 	var roof_mat := mats.get_material("concrete", Color("#C9C8C2"))
-	var trim_mat := mats.get_material("ifsul_green") if col_trim == Color("#2F9E41") else mats.get_material("ifsul_red")
+	var trim_mat := mats.get_material("ifsul_green") if col_trim == Color("#2F9E41") else (mats.get_material("ifsul_red") if col_trim == Color("#CD191E") else mats.get_material("wall", col_trim))
 	var wmat := win_mat
 	var btype := String(b.get("type", ""))
+	if btype == "auditorium":
+		roof_mat = mats.get_material("wall", Color("#EAEAE6"))
 
 	if btype == "corridor":
 		# Open covered walkway on concrete pillars (passable on foot!)
@@ -327,36 +329,36 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 		band.rotation.y = angle
 		parent.add_child(band)
 
-		# Auditório iconic terracotta wall + clerestory ribbon windows & pillars matching MSS-00.2155
+		# Auditório iconic terracotta wall + clerestory ribbon windows & white portico matching MSS-00.223 / MSS-00.2155
 		if String(b.get("type", "")) == "auditorium" and len > 8.0:
 			var panel := MeshInstance3D.new()
 			var pm := BoxMesh.new()
-			pm.size = Vector3(0.12, h * 0.56, len * 0.86)
+			pm.size = Vector3(0.12, h * 0.60, len * 0.88)
 			panel.mesh = pm
-			panel.material_override = mats.get_material("wall", Color("#C2725A"))
-			panel.position = Vector3(mid.x + out_dir.x * 0.07, h * 0.29, mid.y + out_dir.y * 0.07)
+			panel.material_override = mats.get_material("wall", Color("#BA715C"))
+			panel.position = Vector3(mid.x + out_dir.x * 0.07, h * 0.31, mid.y + out_dir.y * 0.07)
 			panel.rotation.y = angle
 			parent.add_child(panel)
 
 			var clere := MeshInstance3D.new()
 			var cm := BoxMesh.new()
-			cm.size = Vector3(0.10, 1.15, len * 0.86)
+			cm.size = Vector3(0.10, 1.05, len * 0.88)
 			clere.mesh = cm
 			clere.material_override = wmat
-			clere.position = Vector3(mid.x + out_dir.x * 0.07, h * 0.68, mid.y + out_dir.y * 0.07)
+			clere.position = Vector3(mid.x + out_dir.x * 0.07, h * 0.72, mid.y + out_dir.y * 0.07)
 			clere.rotation.y = angle
 			parent.add_child(clere)
 
 			var mull_mat := mats.get_material("metal", Color("#23272A"))
-			for m_i in range(7):
-				var t := lerpf(-0.4, 0.4, float(m_i) / 6.0)
+			for m_i in range(9):
+				var t := lerpf(-0.42, 0.42, float(m_i) / 8.0)
 				var along := edge.normalized() * (t * len)
 				var mull := MeshInstance3D.new()
 				var mm := BoxMesh.new()
-				mm.size = Vector3(0.14, 1.25, 0.10)
+				mm.size = Vector3(0.14, 1.12, 0.10)
 				mull.mesh = mm
 				mull.material_override = mull_mat
-				mull.position = Vector3(mid.x + along.x + out_dir.x * 0.08, h * 0.68, mid.y + along.y + out_dir.y * 0.08)
+				mull.position = Vector3(mid.x + along.x + out_dir.x * 0.08, h * 0.72, mid.y + along.y + out_dir.y * 0.08)
 				mull.rotation.y = angle
 				parent.add_child(mull)
 
@@ -584,8 +586,16 @@ func _build_landmarks(root: Node3D, data: Dictionary) -> void:
 		cm.bottom_radius = r
 		cm.height = h
 		mi.mesh = cm
-		mi.material_override = mats.get_material("concrete", Color("#CFCBC3"))
+		mi.material_override = mats.get_material("wall", Color("#F0EEE9"))
 		body.add_child(mi)
+		# Metallic maintenance cage ladder along east side of water tower (MSS-00.223)
+		var lad := MeshInstance3D.new()
+		var lbox := BoxMesh.new()
+		lbox.size = Vector3(0.55, h * 0.92, 0.55)
+		lad.mesh = lbox
+		lad.position = Vector3(r + 0.28, 0.0, 0.0)
+		lad.material_override = mats.get_material("metal", Color("#CBD5E1"))
+		body.add_child(lad)
 		# Red/white mast atop water tower (matching MSS-00.266 photo)
 		for seg in range(4):
 			var mast := MeshInstance3D.new()
@@ -598,6 +608,114 @@ func _build_landmarks(root: Node3D, data: Dictionary) -> void:
 			mast.material_override = mats.get_material("ifsul_red") if seg % 2 == 0 else mats.get_material("line_white")
 			body.add_child(mast)
 		root.add_child(body)
+
+	# White colonnade walkway + "Profissionais para o mundo." fascia & Auditório 3D IFSul Relief Logo + Portico (MSS-00.223)
+	var col_node := Node3D.new()
+	col_node.name = "ColonnadeAndAuditorioPortico"
+	root.add_child(col_node)
+	var white_mat := mats.get_material("wall", Color("#F3F2EE"))
+	var c_start := Vector3(-31.5, 0.0, -7.2)
+	var c_end := Vector3(-8.5, 0.0, 5.2)
+	var c_vec := c_end - c_start
+	var c_len := c_vec.length()
+	var c_ang := atan2(c_vec.x, c_vec.z)
+	var beam := MeshInstance3D.new()
+	var bm_col := BoxMesh.new()
+	bm_col.size = Vector3(2.4, 0.72, c_len)
+	beam.mesh = bm_col
+	beam.material_override = white_mat
+	beam.position = (c_start + c_end) * 0.5 + Vector3(0.0, 3.65, 0.0)
+	beam.rotation.y = c_ang
+	col_node.add_child(beam)
+	for ci in range(7):
+		var cp := c_start.lerp(c_end, float(ci) / 6.0)
+		var pil := MeshInstance3D.new()
+		var pm_c := BoxMesh.new()
+		pm_c.size = Vector3(0.35, 3.4, 0.35)
+		pil.mesh = pm_c
+		pil.material_override = white_mat
+		pil.position = cp + Vector3(0.0, 1.7, 0.0)
+		col_node.add_child(pil)
+	var motto := Label3D.new()
+	motto.text = "Educação Pública e Gratuita: Profissionais para o mundo."
+	motto.font_size = 34
+	motto.pixel_size = 0.0085
+	motto.double_sided = false
+	motto.modulate = Color("#1F3524")
+	motto.position = (c_start + c_end) * 0.5 + Vector3(-1.25, 3.65, 0.65)
+	motto.rotation.y = c_ang - PI * 0.5
+	col_node.add_child(motto)
+
+	# Auditório Pedro Kaizer West-facing Front Portico + Giant 3D Relief IFSul Logo + Mural (MSS-00.223)
+	var aud_front := Node3D.new()
+	aud_front.name = "AuditorioFrontPortico"
+	aud_front.position = Vector3(-22.8, 0.0, 21.8)
+	aud_front.rotation.y = deg_to_rad(-8.5)
+	col_node.add_child(aud_front)
+
+	# Open white portico canopy extending west over plaza edge
+	var port_roof := MeshInstance3D.new()
+	var prm := BoxMesh.new()
+	prm.size = Vector3(6.8, 0.55, 13.5)
+	port_roof.mesh = prm
+	port_roof.material_override = white_mat
+	port_roof.position = Vector3(-3.2, 6.25, 1.5)
+	aud_front.add_child(port_roof)
+	for pz in [-4.5, 7.6]:
+		var pcol_m := MeshInstance3D.new()
+		var pcm := BoxMesh.new()
+		pcm.size = Vector3(0.55, 6.1, 0.55)
+		pcol_m.mesh = pcm
+		pcol_m.material_override = white_mat
+		pcol_m.position = Vector3(-6.1, 3.05, pz)
+		aud_front.add_child(pcol_m)
+
+	# Giant 3D Relief IFSul Logo mounted on the west Auditório wall (x=-0.1, z=1.5..5.5)
+	var relief_cells := [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [0, 2], [1, 2], [2, 2], [0, 3], [1, 3]]
+	for rc in relief_cells:
+		var rmi := MeshInstance3D.new()
+		if rc[0] == 0 and rc[1] == 0:
+			var rcm := CylinderMesh.new()
+			rcm.top_radius = 0.28; rcm.bottom_radius = 0.28; rcm.height = 0.16
+			rmi.mesh = rcm
+			rmi.rotation.z = PI * 0.5
+			rmi.material_override = mats.get_material("ifsul_red")
+		else:
+			var rbm := BoxMesh.new()
+			rbm.size = Vector3(0.16, 0.52, 0.52)
+			rmi.mesh = rbm
+			rmi.material_override = mats.get_material("ifsul_green")
+		rmi.position = Vector3(-0.35, 5.1 - float(rc[1]) * 0.62, 1.2 + float(rc[0]) * 0.62)
+		aud_front.add_child(rmi)
+	var aud_logo_txt := Label3D.new()
+	aud_logo_txt.text = "INSTITUTO FEDERAL\nSUL-RIO-GRANDENSE\nCâmpus Sapucaia do Sul"
+	aud_logo_txt.font_size = 38
+	aud_logo_txt.pixel_size = 0.0085
+	aud_logo_txt.double_sided = false
+	aud_logo_txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	aud_logo_txt.modulate = Color("#1D2E20")
+	aud_logo_txt.position = Vector3(-0.38, 3.85, 3.1)
+	aud_logo_txt.rotation.y = -PI * 0.5
+	aud_front.add_child(aud_logo_txt)
+
+	# Student colorful mural on north-facing terrace wall of Auditório (visible from FlagPlaza!)
+	var mural_bg := MeshInstance3D.new()
+	var mbox := BoxMesh.new()
+	mbox.size = Vector3(4.6, 2.2, 0.14)
+	mural_bg.mesh = mbox
+	mural_bg.material_override = mats.get_material("wall", Color("#F4F0E8"))
+	mural_bg.position = Vector3(5.8, 2.3, -6.2)
+	mural_bg.rotation.y = deg_to_rad(18.0)
+	aud_front.add_child(mural_bg)
+	var mural_cols := [Color("#E11D48"), Color("#F59E0B"), Color("#2563EB"), Color("#16A34A"), Color("#9333EA")]
+	for mi_c in range(5):
+		var mp := MeshInstance3D.new()
+		var mpb := BoxMesh.new()
+		mpb.size = Vector3(0.75, 1.7, 0.04)
+		mp.mesh = mpb
+		mp.material_override = mats.get_material("wall", mural_cols[mi_c])
+		mp.position = Vector3(-1.6 + mi_c * 0.8, 0.0, 0.08)
+		mural_bg.add_child(mp)
 
 	# Flagpoles + raised planter matching MSS-00.2155 reference photo
 	var fp: Dictionary = lm.get("flag_plaza", {})
