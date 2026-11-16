@@ -387,8 +387,10 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 				mull.rotation.y = angle
 				parent.add_child(mull)
 
-		# Floor window strips & 2.1m entrance door on longest facade
+		# Floor window strips, vertical mullions, AC split units & 2.1m entrance door on longest facade
 		if has_windows:
+			var mull_mat2 := mats.get_material("metal", Color("#272B30"))
+			var ac_mat := mats.get_material("wall", Color("#F0F2F5"))
 			for fl in range(floors):
 				var wy := 1.9 + fl * (h / maxf(1.0, float(floors)))
 				if wy + 0.8 > h - 0.5:
@@ -401,6 +403,30 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 				win.position = Vector3(mid.x + out_dir.x * 0.06, wy, mid.y + out_dir.y * 0.06)
 				win.rotation.y = angle
 				parent.add_child(win)
+				if len >= 6.0:
+					var m_cnt := mini(8, int(len / 3.4))
+					for mi_w in range(m_cnt):
+						var mt := lerpf(-0.36, 0.36, float(mi_w) / maxf(1.0, float(m_cnt - 1)))
+						var along_m := edge.normalized() * (mt * len)
+						var mm_w := MeshInstance3D.new()
+						var mb_w := BoxMesh.new()
+						mb_w.size = Vector3(0.11, 1.38, 0.08)
+						mm_w.mesh = mb_w
+						mm_w.material_override = mull_mat2
+						mm_w.position = Vector3(mid.x + along_m.x + out_dir.x * 0.07, wy, mid.y + along_m.y + out_dir.y * 0.07)
+						mm_w.rotation.y = angle
+						parent.add_child(mm_w)
+				if fl == 1 and len >= 10.0:
+					for ac_t: float in [-0.24, 0.24]:
+						var along_ac: Vector2 = edge.normalized() * (ac_t * len)
+						var ac := MeshInstance3D.new()
+						var acb := BoxMesh.new()
+						acb.size = Vector3(0.26, 0.45, 0.68)
+						ac.mesh = acb
+						ac.material_override = ac_mat
+						ac.position = Vector3(mid.x + along_ac.x + out_dir.x * 0.14, wy - 0.92, mid.y + along_ac.y + out_dir.y * 0.14)
+						ac.rotation.y = angle
+						parent.add_child(ac)
 
 		if i == 0 and len >= 5.0 and String(b.get("type", "")) != "corridor":
 			var door := MeshInstance3D.new()
@@ -1160,8 +1186,8 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 			props_root.add_child(light)
 			night_lights.append(light)
 
-	# Sports courts & main plaza night floodlights
-	for fp in [Vector3(-60.0, 7.2, -84.0), Vector3(-23.0, 7.5, -105.0), Vector3(-22.0, 9.0, 4.0)]:
+	# Sports courts, main plaza, Auditório portico & southern pond night floodlights
+	for fp in [Vector3(-60.0, 7.2, -84.0), Vector3(-23.0, 7.5, -105.0), Vector3(-22.0, 9.0, 4.0), Vector3(-28.0, 5.2, 22.0), Vector3(-24.0, 6.0, 82.0)]:
 		var fl := OmniLight3D.new()
 		fl.position = fp
 		fl.light_color = Color("#FFF0D6")
