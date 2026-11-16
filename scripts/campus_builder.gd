@@ -937,6 +937,69 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 	for hx in [-5.4, -2.7, 0.0, 2.7, 5.4]:
 		_add_court_line(topiary, Vector3(hx, 0.20, 0.0), Vector3(1.6, 0.28, 2.2), top_mat)
 
+	# Southern Pond with island, 4 white birdhouses & parking bollards (MSS-00.1912 / MSS-00.442)
+	var pond_node := Node3D.new()
+	pond_node.name = "SouthernPond"
+	pond_node.position = Vector3(-24.0, 0.0, 81.0)
+	pond_node.rotation.y = deg_to_rad(8.7)
+	root.add_child(pond_node)
+	var water_mat := StandardMaterial3D.new()
+	water_mat.albedo_color = Color("#2D5F5B")
+	water_mat.roughness = 0.08
+	water_mat.metallic = 0.30
+	var pond_mi := MeshInstance3D.new()
+	var pond_m := CylinderMesh.new()
+	pond_m.top_radius = 6.5; pond_m.bottom_radius = 6.5; pond_m.height = 0.05
+	pond_mi.mesh = pond_m
+	pond_mi.scale = Vector3(1.9, 1.0, 1.0)
+	pond_mi.position.y = 0.03
+	pond_mi.material_override = water_mat
+	pond_node.add_child(pond_mi)
+	var isl_mi := MeshInstance3D.new()
+	var isl_m := CylinderMesh.new()
+	isl_m.top_radius = 2.8; isl_m.bottom_radius = 3.2; isl_m.height = 0.28
+	isl_mi.mesh = isl_m
+	isl_mi.scale = Vector3(1.7, 1.0, 0.9)
+	isl_mi.position = Vector3(1.5, 0.14, 0.0)
+	isl_mi.material_override = lawn_mat
+	pond_node.add_child(isl_mi)
+	var bh_mat := mats.get_material("wall", Color("#F3F2EE"))
+	for bh_i in range(4):
+		var bx := -1.8 + bh_i * 1.4
+		_add_court_line(pond_node, Vector3(1.5 + bx, 0.52, 0.0), Vector3(0.08, 0.55, 0.08), mats.get_material("trunk"))
+		_add_court_line(pond_node, Vector3(1.5 + bx, 0.85, 0.0), Vector3(0.45, 0.42, 0.45), bh_mat)
+	for bol_i in range(16):
+		var bp := Vector3(-24.0 + bol_i * 2.8, 0.32, -11.5)
+		_add_court_line(pond_node, bp, Vector3(0.16, 0.64, 0.16), bh_mat)
+
+	# Water tower Agave & Purple Foliage Garden (MSS-00.2360) + North Admin Garden (MSS-00.406)
+	var agave_bed := Node3D.new()
+	agave_bed.position = Vector3(-18.5, 0.0, -3.5)
+	root.add_child(agave_bed)
+	_add_court_line(agave_bed, Vector3(0.0, 0.05, 0.0), Vector3(4.6, 0.06, 2.8), mats.get_material("concrete", Color("#CFC3B4")))
+	var purple_mat := mats.get_material("wall", Color("#6B2D5C"))
+	var agave_mat := mats.get_material("wall", Color("#4D8C7A"))
+	for ai in range(6):
+		_add_court_line(agave_bed, Vector3(-1.8 + ai * 0.72, 0.18, 0.9), Vector3(0.65, 0.24, 0.65), purple_mat)
+		_add_court_line(agave_bed, Vector3(-1.8 + ai * 0.72, 0.18, -0.9), Vector3(0.65, 0.24, 0.65), purple_mat)
+	for ax in [-1.1, 0.2, 1.3]:
+		var ag := MeshInstance3D.new()
+		var agm := CylinderMesh.new()
+		agm.top_radius = 0.55; agm.bottom_radius = 0.14; agm.height = 0.75; agm.radial_segments = 6
+		ag.mesh = agm
+		ag.position = Vector3(ax, 0.42, 0.0)
+		ag.material_override = agave_mat
+		agave_bed.add_child(ag)
+
+	var north_g := Node3D.new()
+	north_g.position = Vector3(-48.0, 0.0, -49.5)
+	north_g.rotation.y = deg_to_rad(8.7)
+	root.add_child(north_g)
+	_add_court_line(north_g, Vector3(0.0, 0.18, 0.0), Vector3(14.0, 0.30, 0.45), hedge_mat)
+	_add_court_line(north_g, Vector3(0.0, 0.18, 4.0), Vector3(14.0, 0.30, 0.45), hedge_mat)
+	_add_court_line(north_g, Vector3(-7.0, 0.18, 2.0), Vector3(0.45, 0.30, 4.0), hedge_mat)
+	_add_court_line(north_g, Vector3(7.0, 0.18, 2.0), Vector3(0.45, 0.30, 4.0), hedge_mat)
+
 	# Totem monument at main gate
 	var totem_body := StaticBody3D.new()
 	var tcol := CollisionShape3D.new()
