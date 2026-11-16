@@ -93,15 +93,17 @@ func _build_ui() -> void:
 	top_bar.add_child(spacer)
 
 	time_btn = Button.new()
-	time_btn.text = "☀ [N] Dia"
+	time_btn.text = "[N] Dia"
 	time_btn.focus_mode = Control.FOCUS_NONE
 	time_btn.pressed.connect(func(): day_night_clicked.emit())
 	top_bar.add_child(time_btn)
 
 	mute_btn = Button.new()
-	mute_btn.text = "🔊 [M] Som: ON"
+	mute_btn.text = "[M] Som: ON"
 	mute_btn.focus_mode = Control.FOCUS_NONE
 	mute_btn.pressed.connect(func(): mute_clicked.emit())
+	if OS.has_feature("web"):
+		mute_btn.visible = false
 	top_bar.add_child(mute_btn)
 
 	# Bottom controls hint pill
@@ -272,10 +274,10 @@ func set_drone_mode(drone: bool) -> void:
 	mode_lbl.text = "[F] Modo: Drone Livre" if drone else "[F] Modo: A pé"
 
 func set_day_night(is_night: bool) -> void:
-	time_btn.text = "🌙 [N] Noite" if is_night else "☀ [N] Dia"
+	time_btn.text = "[N] Noite" if is_night else "[N] Dia"
 
 func set_muted(muted: bool) -> void:
-	mute_btn.text = "🔇 [M] Som: MUDO" if muted else "🔊 [M] Som: ON"
+	mute_btn.text = "[M] Som: MUDO" if muted else "[M] Som: ON"
 
 func set_nearby_poi(poi: Dictionary) -> void:
 	if poi.is_empty():

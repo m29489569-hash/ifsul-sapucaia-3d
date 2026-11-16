@@ -8,11 +8,15 @@ var night_lights: Array[OmniLight3D] = []
 var lamp_mat: StandardMaterial3D
 var win_mat: StandardMaterial3D
 var building_polys: Array = []
+var tree_mmi_list: Array[MultiMeshInstance3D] = []
+var full_tree_count: int = 0
 
 func build(root: Node3D, data: Dictionary) -> void:
 	poi_nodes.clear()
 	night_lights.clear()
 	building_polys.clear()
+	tree_mmi_list.clear()
+	full_tree_count = 0
 	lamp_mat = mats.get_material("lamp_glow")
 	win_mat = mats.get_material("glass")
 
@@ -1275,6 +1279,9 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 	crown2_mmi.material_override = fmat
 	props_root.add_child(crown2_mmi)
 
+	full_tree_count = tree_positions.size()
+	tree_mmi_list = [trunk_mmi, crown_mmi, crown2_mmi]
+
 	# 2. Light poles via MultiMeshInstance3D + key OmniLight3D night lights
 	var pole_pts := [
 		Vector2(-75, -100), Vector2(-70, -40), Vector2(-64, 15), Vector2(-56, 60), Vector2(-50, 110),
@@ -1544,6 +1551,14 @@ func _is_tree_clear(p: Vector2, data: Dictionary) -> bool:
 		if p.distance_to(Vector2(float(arr[0]), float(arr[2]))) < 5.0:
 			return false
 	return true
+
+func set_vegetation_density(ratio: float) -> void:
+	if full_tree_count <= 0:
+		return
+	var target := clampi(int(round(float(full_tree_count) * ratio)), 1, full_tree_count)
+	for mmi in tree_mmi_list:
+		if is_instance_valid(mmi) and mmi.multimesh != null:
+			mmi.multimesh.visible_instance_count = target if target < full_tree_count else -1
 
 func _build_pois(root: Node3D, pois: Array) -> void:
 	var p_root := Node3D.new()
