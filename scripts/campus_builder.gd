@@ -389,15 +389,33 @@ func _add_building_sign(parent: Node3D, poly: PackedVector2Array, h: float, text
 	var c := _poly_centroid(poly)
 	var lbl := Label3D.new()
 	lbl.text = text
-	lbl.font_size = 44
-	lbl.pixel_size = 0.012
+	lbl.font_size = 46
+	lbl.pixel_size = 0.0095
 	lbl.modulate = Color.WHITE
-	lbl.outline_modulate = trim_col.darkened(0.45)
-	lbl.outline_size = 8
+	lbl.outline_modulate = trim_col.darkened(0.55)
+	lbl.outline_size = 10
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.no_depth_test = false
-	lbl.position = Vector3(c.x, h + 1.4, c.y)
+	lbl.position = Vector3(c.x, h + 1.15, c.y)
 	parent.add_child(lbl)
+
+	if text == "BIBLIOTECA":
+		var plaque := MeshInstance3D.new()
+		var pm := BoxMesh.new()
+		pm.size = Vector3(4.2, 0.85, 0.14)
+		plaque.mesh = pm
+		plaque.material_override = mats.get_material("ifsul_green")
+		plaque.position = Vector3(20.6, 3.05, -78.8)
+		plaque.rotation.y = deg_to_rad(-52.0)
+		parent.add_child(plaque)
+		var flbl := Label3D.new()
+		flbl.text = "BIBLIOTECA • IFSul"
+		flbl.font_size = 42
+		flbl.pixel_size = 0.008
+		flbl.double_sided = false
+		flbl.modulate = Color.WHITE
+		flbl.position = Vector3(0.0, 0.0, 0.09)
+		plaque.add_child(flbl)
 
 func _build_courts(root: Node3D, courts: Array) -> void:
 	var c_root := Node3D.new()
@@ -953,16 +971,20 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 
 		var car_mmi := MultiMeshInstance3D.new()
 		car_mmi.multimesh = car_mm
-		var cmat := mats.get_material("metal", Color.WHITE)
+		var cmat := StandardMaterial3D.new()
 		cmat.vertex_color_use_as_albedo = true
-		cmat.metallic = 0.45
-		cmat.roughness = 0.28
+		cmat.metallic = 0.35
+		cmat.roughness = 0.22
 		car_mmi.material_override = cmat
 		props_root.add_child(car_mmi)
 
 		var cab_mmi := MultiMeshInstance3D.new()
 		cab_mmi.multimesh = cab_mm
-		cab_mmi.material_override = mats.get_material("metal", Color("#1F2937"))
+		var cab_mat := StandardMaterial3D.new()
+		cab_mat.albedo_color = Color("#1E293B")
+		cab_mat.metallic = 0.2
+		cab_mat.roughness = 0.12
+		cab_mmi.material_override = cab_mat
 		props_root.add_child(cab_mmi)
 
 		var wheel_mmi := MultiMeshInstance3D.new()

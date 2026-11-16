@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 const MinimapView = preload("res://scripts/minimap.gd")
+const MaterialsLib = preload("res://scripts/materials.gd")
 
 signal start_clicked
 signal resume_clicked
@@ -56,11 +57,20 @@ func _build_ui() -> void:
 	top_bar.add_theme_constant_override("separation", 10)
 	add_child(top_bar)
 
-	var brand_box := _make_pill_panel(Color(0.08, 0.14, 0.10, 0.88), Color("#2F9E41"))
+	var brand_box := _make_pill_panel(Color(0.08, 0.14, 0.10, 0.90), Color("#2F9E41"))
+	var brand_row := HBoxContainer.new()
+	brand_row.add_theme_constant_override("separation", 8)
+	var logo_rect := TextureRect.new()
+	logo_rect.texture = MaterialsLib.create_ifsul_logo_texture(64)
+	logo_rect.custom_minimum_size = Vector2(22, 22)
+	logo_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	logo_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	brand_row.add_child(logo_rect)
 	var brand_lbl := Label.new()
 	brand_lbl.text = "IFSul • Sapucaia do Sul"
 	brand_lbl.add_theme_font_size_override("font_size", 15)
-	brand_box.add_child(brand_lbl)
+	brand_row.add_child(brand_lbl)
+	brand_box.add_child(brand_row)
 	top_bar.add_child(brand_box)
 
 	var tour_box := _make_pill_panel(Color(0.08, 0.14, 0.10, 0.88), Color("#2F9E41"))
@@ -94,14 +104,17 @@ func _build_ui() -> void:
 	mute_btn.pressed.connect(func(): mute_clicked.emit())
 	top_bar.add_child(mute_btn)
 
-	# Bottom controls hint
+	# Bottom controls hint pill
+	var hint_box := _make_pill_panel(Color(0.06, 0.10, 0.08, 0.86), Color(0.18, 0.50, 0.28, 0.85))
+	hint_box.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	hint_box.offset_left = 16; hint_box.offset_bottom = -12; hint_box.offset_top = -44
+	hint_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var hint := Label.new()
 	hint.text = "WASD Mover | Shift Correr | Espaço Pular | E Interagir | F Drone (Scroll Zoom) | N Dia/Noite | M Som | Esc Pausa"
-	hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	hint.offset_left = 18; hint.offset_bottom = -14; hint.offset_top = -36
 	hint.add_theme_font_size_override("font_size", 12)
-	hint.modulate = Color(0.92, 0.95, 0.92, 0.82)
-	add_child(hint)
+	hint.modulate = Color(0.95, 0.98, 0.95, 0.95)
+	hint_box.add_child(hint)
+	add_child(hint_box)
 
 	# Minimap (bottom right)
 	minimap = MinimapView.new()
