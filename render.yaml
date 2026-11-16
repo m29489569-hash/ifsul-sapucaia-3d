@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: if
+    name: ifsul3d
     runtime: node
     plan: free
     buildCommand: npm ci --omit=dev
