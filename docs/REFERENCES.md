@@ -8,4 +8,7 @@
 - https://www.openstreetmap.org/way/333342533 — Polígono exato do terreno, azimute ~8,7°, 16 edificações mapeadas, 2 quadras (`443457033`, `443460951`), 2 estacionamentos (`443463515`, `443463516`), acessos e ruas do entorno.
 - http://static.sapucaia.ifsul.edu.br/media/acervo/MSS-00.266.jpg — Referência visual da fachada atual, muro frontal e pórtico de entrada na Av. Copacabana.
 - http://static.sapucaia.ifsul.edu.br/media/acervo/MSS-00.2155.jpg — Referência visual da fachada do auditório, volumes em alvenaria clara e três mastros de bandeiras na entrada.
+- http://static.sapucaia.ifsul.edu.br/media/acervo/MSS-00.223.jpg — Referência moderna (2015): caixa d'água branca, fachada do Auditório com marca IFSul em relevo 3D, vagas amarelas, bicicletário e colunata branca.
+- http://static.sapucaia.ifsul.edu.br/media/acervo/MSS-00.442.jpg — Vista aérea completa: pórtico curvo frontal do Auditório, topiaria verde "IFSul" no gramado e Biblioteca branca em cruz.
+- http://static.sapucaia.ifsul.edu.br/media/acervo/MSS-00.446.jpg — Quadra poliesportiva coberta com pilares/treliças metálicas pintadas de azul e alambrado perimetral.
 - https://polyhaven.com/textures — Texturas PBR CC0 (concreto, asfalto, grama, piso, metal) e HDRI CC0 de céu parcialmente nublado.

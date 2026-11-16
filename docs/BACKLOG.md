@@ -1,7 +1,7 @@
 # Backlog Visual e de Fidelidade (Score = Impacto × Exposição ÷ Custo)
 
-1. **[3.0 | I:3 E:2 C:2]** Detalhamento extra de fachadas e acessos (`03`, `06`): pórticos brancos em relevo no Auditório Pedro Kaizer, bicicletário junto à guarita e arquibancadas/alambrados na quadra poliesportiva.
-2. **[2.5 | I:3 E:2 C:2.5]** Sinalização externa de rua (`03`, `07`): placas de nome da Av. Copacabana / Rua Palestina e faixas de pedestres na portaria.
+1. **[9.0 | I:5 E:3 C:1.7]** Fidelidade descoberta nas novas fotos (`MSS-00.223`, `MSS-00.442`, `MSS-00.446`): pintar caixa d'água de branco, adicionar logo IFSul gigante em relevo + pórtico branco curvo na fachada oeste do Auditório (`01`, `04`, `07`), faixas amarelas no estacionamento frontal, bicicletário, topiaria verde "IFSul" no gramado diante do Bloco Administrativo e pilares/treliças azuis (`#1E6FB8`) + alambrado na quadra coberta (`06`).
+2. **[3.0 | I:3 E:2 C:2]** Sinalização externa de rua e entorno (`03`, `07`): placas de nome da Av. Copacabana / Rua Palestina e faixas de pedestres na portaria.
 3. **[2.0 | I:2 E:2 C:2]** Refinamento noturno das áreas externas (`09`): iluminação nas quadras de vôlei e área sul de convivência.
 
 ## Concluídos
