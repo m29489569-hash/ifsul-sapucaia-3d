@@ -1,0 +1,578 @@
+{
+  "meta": {
+    "name": "IFSul — Câmpus Sapucaia do Sul",
+    "institution": "INSTITUTO FEDERAL Sul-rio-grandense",
+    "address": "Av. Copacabana, 100 — Bairro Piratini, Sapucaia do Sul - RS, CEP 93216-120",
+    "origin_lat": -29.8151,
+    "origin_lon": -51.1560,
+    "north_angle_deg": 0.0,
+    "campus_azimuth_deg": 8.7,
+    "total_area_m2": 38600,
+    "built_area_m2": 16000,
+    "scale_anchors": {
+      "parking_bay_m": [2.5, 5.0],
+      "door_height_m": 2.1,
+      "floor_height_m": 3.8
+    },
+    "colors": {
+      "ifsul_green": "#2F9E41",
+      "ifsul_red": "#CD191E",
+      "wall_cream": "#EAE6DF",
+      "wall_white": "#F4F4F2",
+      "brick_terracotta": "#B85D43",
+      "roof_dark": "#3A3D40",
+      "glass_blue": "#3A6B88",
+      "asphalt": "#36393D",
+      "sidewalk": "#C4C0B8",
+      "grass": "#4B7A3B"
+    }
+  },
+  "spawn": {
+    "position": [-55.0, 1.1, 12.0],
+    "look_at": [-20.0, 1.8, 8.0]
+  },
+  "perimeter": [
+    [-92.7, -143.8],
+    [44.8, -165.0],
+    [80.0, 75.3],
+    [-30.7, 161.5],
+    [-43.6, 163.4],
+    [-64.6, 28.1],
+    [-59.2, 27.3],
+    [-64.1, -1.6],
+    [-68.7, -0.8]
+  ],
+  "gates": [
+    {
+      "id": "portaria_principal",
+      "p1": [-64.1, -1.6],
+      "p2": [-59.2, 27.3],
+      "sign_pos": [-60.5, 13.0],
+      "sign_rot_deg": 8.7
+    },
+    {
+      "id": "portao_norte",
+      "p1": [-71.1, -55.0],
+      "p2": [-69.0, -41.5]
+    }
+  ],
+  "buildings": [
+    {
+      "id": "guarita",
+      "name": "Guarita e Portaria Principal",
+      "sign_text": "PORTARIA — RECEPÇÃO",
+      "type": "gatehouse",
+      "floors": 1,
+      "height_m": 3.6,
+      "color": "#EAE6DF",
+      "trim_color": "#2F9E41",
+      "has_windows": true,
+      "polygon": [
+        [-63.5, 8.0],
+        [-58.5, 7.2],
+        [-57.3, 15.0],
+        [-62.3, 15.8]
+      ]
+    },
+    {
+      "id": "bloco_adm",
+      "name": "Bloco Administrativo e Direção-Geral",
+      "sign_text": "BLOCO ADMINISTRATIVO — DIREÇÃO-GERAL",
+      "type": "admin",
+      "floors": 2,
+      "height_m": 8.0,
+      "courtyard_inset": 7.5,
+      "color": "#EAE6DF",
+      "trim_color": "#2F9E41",
+      "has_windows": true,
+      "polygon": [
+        [-66.4, -38.2],
+        [-37.1, -43.3],
+        [-33.4, -22.2],
+        [-31.6, -11.7],
+        [-60.9, -6.6]
+      ]
+    },
+    {
+      "id": "passarela_adm",
+      "name": "Passarela Coberta Central",
+      "sign_text": "",
+      "type": "corridor",
+      "floors": 1,
+      "height_m": 4.2,
+      "color": "#D8D4CC",
+      "trim_color": "#2F9E41",
+      "has_windows": true,
+      "polygon": [
+        [-33.4, -22.2],
+        [-26.7, -23.1],
+        [-24.4, -8.9],
+        [-31.6, -11.7]
+      ]
+    },
+    {
+      "id": "bloco_ensino_central",
+      "name": "Bloco de Ensino e Informática",
+      "sign_text": "ENSINO — SALAS DE AULA E INFORMÁTICA",
+      "type": "academic",
+      "floors": 2,
+      "height_m": 8.2,
+      "color": "#EAE6DF",
+      "trim_color": "#2F9E41",
+      "has_windows": true,
+      "polygon": [
+        [-27.5, -27.3],
+        [15.9, -34.5],
+        [16.8, -30.0],
+        [18.6, -18.5],
+        [19.6, -12.3],
+        [-9.9, -7.4],
+        [-8.6, 0.7],
+        [4.4, 10.6],
+        [3.0, 12.6],
+        [-7.8, 4.6],
+        [-24.4, -8.9],
+        [-26.7, -23.1]
+      ]
+    },
+    {
+      "id": "auditorio",
+      "name": "Auditório Pedro Kaizer",
+      "sign_text": "AUDITÓRIO PEDRO KAIZER",
+      "type": "auditorium",
+      "floors": 2,
+      "height_m": 9.0,
+      "color": "#E4DDD3",
+      "trim_color": "#CD191E",
+      "has_windows": false,
+      "polygon": [
+        [-7.8, 4.6],
+        [3.0, 12.6],
+        [14.4, 21.1],
+        [3.7, 23.0],
+        [5.3, 40.4],
+        [0.3, 40.8],
+        [-5.2, 40.0],
+        [-10.4, 38.9],
+        [-15.2, 36.3],
+        [-18.6, 32.8],
+        [-21.6, 28.0],
+        [-23.4, 23.3],
+        [-24.2, 17.4],
+        [-6.0, 13.9]
+      ]
+    },
+    {
+      "id": "bloco_didatico_leste",
+      "name": "Bloco Didático Leste e Miniauditório",
+      "sign_text": "BLOCO DIDÁTICO — SALAS E MINIAUDITÓRIO",
+      "type": "academic",
+      "floors": 2,
+      "height_m": 8.2,
+      "color": "#EAE6DF",
+      "trim_color": "#2F9E41",
+      "has_windows": true,
+      "polygon": [
+        [19.6, -12.3],
+        [27.7, -13.5],
+        [39.6, -15.1],
+        [43.1, -15.6],
+        [49.9, 29.0],
+        [46.1, 29.5],
+        [35.3, 30.9],
+        [36.4, 36.2],
+        [14.4, 21.1],
+        [3.0, 12.6],
+        [4.4, 10.6],
+        [15.7, 18.6],
+        [24.5, 17.2]
+      ]
+    },
+    {
+      "id": "bloco_labs_industriais",
+      "name": "Complexo de Laboratórios — Mecânica e Plásticos",
+      "sign_text": "LABORATÓRIOS DE MECÂNICA E PLÁSTICOS",
+      "type": "workshop",
+      "floors": 2,
+      "height_m": 8.5,
+      "color": "#E2DED8",
+      "trim_color": "#2F9E41",
+      "has_windows": true,
+      "polygon": [
+        [21.6, -50.6],
+        [52.7, -55.5],
+        [57.6, -24.7],
+        [38.5, -21.7],
+        [26.6, -19.7],
+        [24.7, -31.2],
+        [23.2, -40.6]
+      ]
+    },
+    {
+      "id": "anexo_lab_1",
+      "name": "Anexo de Laboratórios Oeste",
+      "sign_text": "",
+      "type": "corridor",
+      "floors": 1,
+      "height_m": 4.5,
+      "color": "#D8D4CC",
+      "trim_color": "#2F9E41",
+      "has_windows": false,
+      "polygon": [
+        [16.8, -30.0],
+        [24.7, -31.2],
+        [26.6, -19.7],
+        [18.6, -18.5]
+      ]
+    },
+    {
+      "id": "anexo_lab_2",
+      "name": "Anexo de Laboratórios Central",
+      "sign_text": "",
+      "type": "corridor",
+      "floors": 1,
+      "height_m": 4.5,
+      "color": "#D8D4CC",
+      "trim_color": "#2F9E41",
+      "has_windows": false,
+      "polygon": [
+        [26.6, -19.7],
+        [27.7, -13.5],
+        [39.6, -15.1],
+        [38.5, -21.7]
+      ]
+    },
+    {
+      "id": "central_utilidades",
+      "name": "Laboratório de Química e Controle de Qualidade",
+      "sign_text": "QUÍMICA E CONTROLE DE QUALIDADE",
+      "type": "lab",
+      "floors": 1,
+      "height_m": 4.8,
+      "color": "#EAE6DF",
+      "trim_color": "#2F9E41",
+      "has_windows": true,
+      "polygon": [
+        [1.7, -44.3],
+        [-0.4, -56.3],
+        [8.4, -57.8],
+        [10.5, -45.8]
+      ]
+    },
+    {
+      "id": "biblioteca",
+      "name": "Biblioteca do Câmpus",
+      "sign_text": "BIBLIOTECA",
+      "type": "library",
+      "floors": 2,
+      "height_m": 8.4,
+      "color": "#F0ECE4",
+      "trim_color": "#2F9E41",
+      "has_windows": true,
+      "polygon": [
+        [23.1, -78.3],
+        [22.7, -81.3],
+        [22.3, -83.7],
+        [18.0, -86.6],
+        [24.2, -96.0],
+        [29.7, -92.4],
+        [34.3, -93.3],
+        [38.0, -98.4],
+        [47.2, -91.8],
+        [43.7, -86.9],
+        [44.6, -81.5],
+        [50.2, -77.6],
+        [43.5, -68.1],
+        [37.4, -72.3],
+        [32.5, -71.7],
+        [28.6, -66.8],
+        [19.7, -74.0]
+      ]
+    },
+    {
+      "id": "bloco_engenharia_sul",
+      "name": "Pavilhão de Engenharia, Inovação e Laboratórios",
+      "sign_text": "ENGENHARIA MECÂNICA E INOVAÇÃO",
+      "type": "academic",
+      "floors": 2,
+      "height_m": 8.5,
+      "color": "#EAE6DF",
+      "trim_color": "#2F9E41",
+      "has_windows": true,
+      "polygon": [
+        [36.2, 37.9],
+        [47.0, 36.6],
+        [66.7, 33.5],
+        [71.5, 64.6],
+        [40.7, 69.4]
+      ]
+    },
+    {
+      "id": "passarela_sul",
+      "name": "Passarela Bloco Sul",
+      "sign_text": "",
+      "type": "corridor",
+      "floors": 1,
+      "height_m": 4.2,
+      "color": "#D8D4CC",
+      "trim_color": "#2F9E41",
+      "has_windows": false,
+      "polygon": [
+        [35.3, 30.9],
+        [46.1, 29.5],
+        [47.0, 36.6],
+        [36.2, 37.9]
+      ]
+    },
+    {
+      "id": "vestiarios_esporte",
+      "name": "Academia, Vestiários e Apoio Esportivo",
+      "sign_text": "ACADEMIA E APOIO ESPORTIVO",
+      "type": "sports",
+      "floors": 1,
+      "height_m": 4.8,
+      "color": "#EAE6DF",
+      "trim_color": "#2F9E41",
+      "has_windows": true,
+      "polygon": [
+        [-72.9, -120.8],
+        [-55.2, -123.7],
+        [-52.9, -109.3],
+        [-70.6, -106.5]
+      ]
+    },
+    {
+      "id": "convivencia_cantina",
+      "name": "Espaço de Convivência, Cantina e Saúde",
+      "sign_text": "CONVIVÊNCIA, CANTINA E SAÚDE",
+      "type": "student_center",
+      "floors": 1,
+      "height_m": 5.6,
+      "color": "#F0ECE4",
+      "trim_color": "#2F9E41",
+      "has_windows": true,
+      "polygon": [
+        [-23.1, 106.4],
+        [-12.2, 107.2],
+        [-12.7, 113.7],
+        [-9.8, 118.4],
+        [-2.8, 119.4],
+        [-4.2, 129.0],
+        [-10.1, 128.2],
+        [-14.5, 131.8],
+        [-14.7, 137.3],
+        [-26.1, 136.9],
+        [-25.9, 130.3],
+        [-29.0, 126.4],
+        [-35.2, 125.9],
+        [-34.3, 114.7],
+        [-27.4, 115.3],
+        [-23.6, 111.6]
+      ]
+    },
+    {
+      "id": "apoio_sul",
+      "name": "Bloco de Manutenção e Almoxarifado",
+      "sign_text": "ALMOXARIFADO E MANUTENÇÃO",
+      "type": "support",
+      "floors": 1,
+      "height_m": 4.5,
+      "color": "#E2DED8",
+      "trim_color": "#2F9E41",
+      "has_windows": false,
+      "polygon": [
+        [21.9, 88.7],
+        [25.9, 99.0],
+        [37.3, 94.7],
+        [33.4, 84.3],
+        [25.2, 87.4]
+      ]
+    }
+  ],
+  "courts": [
+    {
+      "id": "quadra_poliesportiva",
+      "name": "Quadra Poliesportiva Coberta",
+      "sport": "multi",
+      "covered": true,
+      "center": [-60.2, -84.2],
+      "size": [26.7, 47.2],
+      "rot_deg": 9.7,
+      "surface_color": "#255B8A",
+      "border_color": "#B85D43",
+      "polygon": [
+        [-77.3, -105.2],
+        [-51.0, -109.7],
+        [-43.1, -63.2],
+        [-69.3, -58.8]
+      ]
+    },
+    {
+      "id": "quadra_volei",
+      "name": "Quadra de Vôlei",
+      "sport": "volleyball",
+      "covered": false,
+      "center": [-23.2, -105.0],
+      "size": [21.8, 12.5],
+      "rot_deg": 5.5,
+      "surface_color": "#C9A87C",
+      "border_color": "#C4C0B8",
+      "polygon": [
+        [-34.6, -110.1],
+        [-12.9, -112.2],
+        [-11.7, -99.8],
+        [-33.4, -97.7]
+      ]
+    }
+  ],
+  "landmarks": {
+    "water_tower": {"position": [-22.0, 0.0, -3.5], "radius": 1.85, "height": 16.5},
+    "flag_plaza": {"position": [-21.5, 0.0, 12.0], "rot_deg": 8.7}
+  },
+  "parking_lots": [
+    {
+      "id": "estacionamento_norte",
+      "name": "Estacionamento Norte",
+      "polygon": [
+        [-43.4, -86.3],
+        [8.5, -94.3],
+        [13.0, -64.9],
+        [-32.4, -58.0],
+        [-30.8, -47.3],
+        [-69.0, -41.5],
+        [-71.1, -55.0],
+        [-39.3, -59.9]
+      ],
+      "bay_rows": [
+        {"start": [-38.0, -82.0], "count": 14, "step": 2.7, "angle_deg": 8.7, "car_indices": [0, 2, 3, 5, 8, 10, 12]},
+        {"start": [-36.0, -66.0], "count": 14, "step": 2.7, "angle_deg": 8.7, "car_indices": [1, 4, 6, 7, 11, 13]}
+      ]
+    },
+    {
+      "id": "estacionamento_principal",
+      "name": "Estacionamento Principal",
+      "polygon": [
+        [-59.9, 16.2],
+        [-30.9, 11.8],
+        [-24.7, 55.5],
+        [9.6, 50.3],
+        [11.9, 66.5],
+        [-41.4, 73.9],
+        [-40.5, 79.9],
+        [-53.4, 88.6],
+        [-63.5, 29.4],
+        [-57.7, 28.1]
+      ],
+      "bay_rows": [
+        {"start": [-53.0, 23.0], "count": 8, "step": 2.8, "angle_deg": 98.7, "car_indices": [0, 1, 3, 5, 7]},
+        {"start": [-37.0, 20.5], "count": 10, "step": 2.8, "angle_deg": 98.7, "car_indices": [1, 2, 4, 6, 8, 9]},
+        {"start": [-22.0, 61.0], "count": 10, "step": 2.7, "angle_deg": 8.7, "car_indices": [0, 2, 5, 7, 8]}
+      ]
+    }
+  ],
+  "footways": [
+    {"width": 3.4, "points": [[-62.0, 11.0], [-42.0, 8.0], [-28.0, 6.0], [-10.0, 2.0]]},
+    {"width": 2.8, "points": [[-47.7, -90.1], [12.8, -100.7], [13.1, -98.5], [16.2, -80.5], [19.5, -61.6], [14.3, -60.6], [17.1, -39.8], [23.2, -40.6]]},
+    {"width": 2.8, "points": [[16.2, -80.5], [22.7, -81.3]]},
+    {"width": 2.6, "points": [[10.8, 22.2], [8.0, 26.1], [5.1, 30.2], [16.5, 72.4], [20.1, 83.0], [25.2, 87.4]]},
+    {"width": 2.6, "points": [[16.5, 72.4], [-5.0, 111.7], [-8.6, 115.0]]},
+    {"width": 2.8, "points": [[-8.8, 13.6], [-9.9, 5.9], [-30.3, -8.9], [-63.2, -3.7], [-68.6, -38.9]]},
+    {"width": 2.6, "points": [[-42.0, -80.0], [-36.0, -56.0], [18.0, -64.0], [18.0, -35.0]]}
+  ],
+  "driveways": [
+    {"width": 6.5, "points": [[-73.1, 17.2], [-63.2, 18.7], [-58.3, 18.2], [-36.5, 15.1]]},
+    {"width": 5.5, "points": [[-58.3, 18.2], [-50.1, 74.3], [-27.5, 70.3], [-28.6, 63.9], [-36.5, 15.1]]},
+    {"width": 5.5, "points": [[-28.6, 63.9], [8.8, 58.4]]}
+  ],
+  "streets": [
+    {
+      "name": "Avenida Copacabana",
+      "width": 10.0,
+      "points": [[-137.4, -319.5], [-108.0, -132.0], [-91.9, -29.3], [-73.1, 17.2], [-46.7, 186.1]]
+    },
+    {
+      "name": "Avenida Copacabana (Pista Leste)",
+      "width": 9.0,
+      "points": [[-125.9, -321.0], [-96.6, -133.7], [-73.1, 17.2], [-57.0, 193.9]]
+    },
+    {
+      "name": "Rua Cristóvão Colombo",
+      "width": 8.0,
+      "points": [[-110.5, -147.9], [-99.1, -149.7], [48.3, -172.9], [160.0, -190.5]]
+    },
+    {
+      "name": "Rua Palestina",
+      "width": 8.0,
+      "points": [[26.1, -341.8], [38.9, -250.6], [48.3, -172.9], [85.9, 69.8], [87.4, 79.8]]
+    },
+    {
+      "name": "Rua João Rodrigues",
+      "width": 9.0,
+      "points": [[-151.3, 257.7], [-97.6, 226.0], [-46.7, 186.1], [25.5, 129.9], [87.4, 79.8], [113.6, 67.2], [229.6, 18.1]]
+    },
+    {
+      "name": "Rua Acácio Vitorino Machado",
+      "width": 7.5,
+      "points": [[-176.1, 34.3], [-135.4, 27.6], [-84.4, 18.7], [-73.1, 17.2]]
+    },
+    {
+      "name": "Rua Waldemar Boa Vista",
+      "width": 7.5,
+      "points": [[-185.0, -15.0], [-91.9, -29.3]]
+    },
+    {
+      "name": "Rua Jerônimo Pires de Almeida",
+      "width": 7.5,
+      "points": [[-185.0, -67.0], [-100.0, -80.8]]
+    },
+    {
+      "name": "Rua Tercílio João Alves",
+      "width": 7.5,
+      "points": [[-185.0, -120.0], [-108.0, -132.0], [-96.6, -133.7]]
+    }
+  ],
+  "pois": [
+    {
+      "id": "poi_entrada",
+      "title": "Portaria Principal e Histórico (1996)",
+      "subtitle": "Av. Copacabana, 100 — Primeiro câmpus do IFSul fora de Pelotas",
+      "position": [-52.0, 0.0, 10.5],
+      "description": "Inaugurado em 26 de fevereiro de 1996 como Unidade de Ensino Descentralizada (UNED) da Escola Técnica Federal de Pelotas, o Câmpus Sapucaia do Sul foi o primeiro câmpus do IFSul estabelecido fora de Pelotas. Em 1999 integrou o CEFET-RS e, em 2008 (Lei nº 11.892), tornou-se câmpus do Instituto Federal Sul-rio-grandense. O terreno soma mais de 38 mil m² (cerca de 16 mil m² construídos) no polo industrial da Região Metropolitana."
+    },
+    {
+      "id": "poi_administrativo",
+      "title": "Bloco Administrativo e Auditório Pedro Kaizer",
+      "subtitle": "Gestão acadêmica, direção e espaço cultural para 300 lugares",
+      "position": [-39.0, 0.0, -10.5],
+      "description": "Reúne a Direção-Geral, Diretorias de Ensino, Pesquisa e Extensão, Registros Acadêmicos e a recepção institucional. Anexo ao eixo central encontra-se o Auditório Pedro Kaizer, com capacidade para 300 poltronas e acessibilidade, além de um miniauditório para 50 pessoas que sediam palestras, formaturas, mostras científicas e eventos culturais."
+    },
+    {
+      "id": "poi_cursos",
+      "title": "Ensino, Salas de Aula e Cursos Ofertados",
+      "subtitle": "Ensino gratuito técnico, superior e pós-graduação",
+      "position": [-12.0, 0.0, -3.5],
+      "description": "O câmpus conta com 18 salas de aula climatizadas, laboratórios de informática e salas de estudo. Oferta cursos Técnicos Integrados e EJA (Mecânica, Plásticos, Desenvolvimento de Sistemas, Informática, Eventos e Administração), Graduações (Engenharia Mecânica, Análise e Desenvolvimento de Sistemas, Licenciatura em Matemática e EAD) e Pós-Graduações em Educação e Manufatura Avançada."
+    },
+    {
+      "id": "poi_laboratorios",
+      "title": "Complexo de Laboratórios Industriais",
+      "subtitle": "Mecânica, Plásticos, Química e Inovação Tecnológica",
+      "position": [16.5, 0.0, -39.0],
+      "description": "Pavilhões equipados para prática industrial de ponta: usinagem convencional e CNC, soldagem, metrologia, hidráulica, pneumática, metalografia e microscopia na área de Mecânica; extrusão, sopro, injeção, reciclagem, química e controle de qualidade em Plásticos; além do Laboratório de Inovação STEAM premiado em projetos tecnológicos."
+    },
+    {
+      "id": "poi_biblioteca",
+      "title": "Biblioteca do Câmpus",
+      "subtitle": "Prédio próprio inaugurado em 2014 com mais de 580 m²",
+      "position": [16.5, 0.0, -80.5],
+      "description": "Inaugurada em 2014 em edificação exclusiva ao norte do complexo acadêmico, a Biblioteca dispõe de salão de leitura, cabines de estudo individual e em grupo, guarda-volumes, espaço infanteca e acervo com milhares de obras técnicas, científicas e literárias disponíveis à comunidade interna e externa."
+    },
+    {
+      "id": "poi_esportes",
+      "title": "Complexo Esportivo e Convivência",
+      "subtitle": "Quadras poliesportivas, academia, saúde e áreas estudantis",
+      "position": [-46.0, 0.0, -84.0],
+      "description": "Área dedicada à educação física, esportes e qualidade de vida, com quadra poliesportiva para futsal, basquete, handebol e vôlei, quadra de vôlei externa, vestiários e sala de musculação/academia. Ao sul do câmpus estão o Espaço de Convivência, a cantina e o setor de atendimento à saúde (enfermagem, medicina e psicologia)."
+    }
+  ]
+}

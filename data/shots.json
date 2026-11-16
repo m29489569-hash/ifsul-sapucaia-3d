@@ -1,0 +1,13 @@
+{
+  "shots": [
+    {"id": "01_spawn_hud", "pos": [-55.0, 2.68, 12.0], "look_at": [-20.0, 2.4, 8.0], "fov": 72, "hud": true, "night": false},
+    {"id": "02_aerial_overview", "pos": [-8.0, 145.0, 25.0], "look_at": [-10.0, 0.0, -25.0], "fov": 60, "hud": false, "night": false},
+    {"id": "03_entrance_guarita", "pos": [-74.0, 3.2, 10.5], "look_at": [-58.0, 2.2, 9.5], "fov": 60, "hud": false, "night": false},
+    {"id": "04_main_facade", "pos": [-48.0, 3.5, 14.0], "look_at": [-14.0, 4.5, 10.0], "fov": 62, "hud": false, "night": false},
+    {"id": "05_central_courtyard", "pos": [-2.0, 5.0, 2.0], "look_at": [22.0, 4.0, -18.0], "fov": 65, "hud": false, "night": false},
+    {"id": "06_sports_courts", "pos": [-34.0, 12.0, -68.0], "look_at": [-58.0, 3.5, -88.0], "fov": 65, "hud": false, "night": false},
+    {"id": "07_parking_lot", "pos": [-50.0, 9.5, 58.0], "look_at": [-22.0, 2.5, 32.0], "fov": 62, "hud": false, "night": false},
+    {"id": "08_material_signage_close", "pos": [8.0, 3.2, -68.0], "look_at": [26.0, 4.2, -80.0], "fov": 55, "hud": false, "night": false},
+    {"id": "09_aerial_night", "pos": [-8.0, 145.0, 25.0], "look_at": [-10.0, 0.0, -25.0], "fov": 60, "hud": false, "night": true}
+  ]
+}
