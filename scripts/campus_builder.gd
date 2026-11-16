@@ -49,6 +49,7 @@ func _build_ground(root: Node3D) -> void:
 	plane.size = Vector2(560.0, 740.0)
 	mi.mesh = plane
 	mi.material_override = mats.get_material("grass", Color("#476F38"))
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	body.add_child(mi)
 	root.add_child(body)
 
@@ -61,6 +62,7 @@ func _build_campus_pad(root: Node3D, perim: Array) -> void:
 	mi.name = "CampusGroundPad"
 	mi.mesh = mesh
 	mi.material_override = mats.get_material("grass", Color("#4E803E"))
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(mi)
 
 	# Central paved civic courtyard around entrance, admin & auditorium
@@ -71,6 +73,7 @@ func _build_campus_pad(root: Node3D, perim: Array) -> void:
 	plaza_mi.name = "CentralPlaza"
 	plaza_mi.mesh = _extrude_polygon_mesh(plaza_pts, 0.018, false)
 	plaza_mi.material_override = mats.get_material("concrete", Color("#C8C3B9"))
+	plaza_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(plaza_mi)
 
 	# Inner courtyard tiled floor (05_central_courtyard) + Bloco Adm atrium floor + North soccer pitch lines
@@ -81,6 +84,7 @@ func _build_campus_pad(root: Node3D, perim: Array) -> void:
 	inner_mi.name = "InnerCourtyardTile"
 	inner_mi.mesh = _extrude_polygon_mesh(inner_pts, 0.025, false)
 	inner_mi.material_override = mats.get_material("tile", Color("#CFC9BE"))
+	inner_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(inner_mi)
 
 	var line_mat := mats.get_material("line_white")
@@ -225,6 +229,7 @@ func _add_polyline_ribbon(parent: Node3D, pts: Array, width: float, y: float, ma
 	if pts.size() < 2:
 		return
 	var pad := end_pad if end_pad >= 0.0 else width * 0.35
+	var dash_xforms: Array[Transform3D] = []
 	for i in range(pts.size() - 1):
 		var a := Vector3(float(pts[i][0]), 0.0, float(pts[i][1]))
 		var b := Vector3(float(pts[i + 1][0]), 0.0, float(pts[i + 1][1]))
@@ -241,23 +246,31 @@ func _add_polyline_ribbon(parent: Node3D, pts: Array, width: float, y: float, ma
 				var wp := a.lerp(b, t)
 				if _is_in_copacabana_junction(wp):
 					continue
-				var mi := MeshInstance3D.new()
-				var q := BoxMesh.new()
-				q.size = Vector3(width, 0.012, 2.0)
-				mi.mesh = q
-				mi.material_override = mat
-				mi.position = wp + Vector3(0.0, y, 0.0)
-				mi.rotation.y = angle
-				parent.add_child(mi)
+				dash_xforms.append(Transform3D(Basis(Vector3.UP, angle), wp + Vector3(0.0, y, 0.0)))
 		else:
 			var mi := MeshInstance3D.new()
 			var box := BoxMesh.new()
 			box.size = Vector3(width, 0.02, length + pad)
 			mi.mesh = box
 			mi.material_override = mat
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			mi.position = (a + b) * 0.5 + Vector3(0.0, y, 0.0)
 			mi.rotation.y = angle
 			parent.add_child(mi)
+	if dashed and not dash_xforms.is_empty():
+		var dmm := MultiMesh.new()
+		dmm.transform_format = MultiMesh.TRANSFORM_3D
+		var q := BoxMesh.new()
+		q.size = Vector3(width, 0.012, 2.0)
+		dmm.mesh = q
+		dmm.instance_count = dash_xforms.size()
+		for di in range(dash_xforms.size()):
+			dmm.set_instance_transform(di, dash_xforms[di])
+		var dmmi := MultiMeshInstance3D.new()
+		dmmi.multimesh = dmm
+		dmmi.material_override = mat
+		dmmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		parent.add_child(dmmi)
 
 func _build_perimeter_walls(root: Node3D, perim: Array, gates: Array) -> void:
 	if perim.size() < 3:
@@ -1494,11 +1507,13 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 		var hwmat := mats.get_material("wall", Color.WHITE)
 		hwmat.vertex_color_use_as_albedo = true
 		hw_mmi.material_override = hwmat
+		hw_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		props_root.add_child(hw_mmi)
 
 		var hr_mmi := MultiMeshInstance3D.new()
 		hr_mmi.multimesh = hr_mm
 		hr_mmi.material_override = mats.get_material("wall", Color("#9C523B"))
+		hr_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		props_root.add_child(hr_mmi)
 
 func _collect_tree_positions(data: Dictionary) -> Array[Vector2]:

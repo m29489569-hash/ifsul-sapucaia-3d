@@ -108,7 +108,7 @@ async function run() {
     {
       const ctxCrash = await browser.newContext({ viewport: { width: 1280, height: 720 } });
       const pageCrash = await ctxCrash.newPage();
-      await pageCrash.route('**/game/build-meta.json', (route) => route.abort());
+      await pageCrash.route('**/game/ifsul.*.js', (route) => route.abort());
       await pageCrash.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
       await pageCrash.waitForSelector('#dlg-crash[open]', { timeout: 5000 });
       const btnText = await pageCrash.textContent('#btn-crash-reload');

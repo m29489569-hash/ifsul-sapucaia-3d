@@ -40,7 +40,7 @@ func _ready() -> void:
 	builder.build(world_node, campus_data)
 	_setup_audio()
 	_setup_player_and_hud()
-	_apply_resolved_quality("high")
+	_apply_resolved_quality("medium" if is_compat else "high")
 	if OS.has_feature("web"):
 		hud.set_start_visible(false)
 		_setup_web_bridge()
@@ -397,7 +397,7 @@ func set_quality_mode(mode: String) -> void:
 	_auto_warmup = 2.0
 	_auto_cooldown = 0.0
 	if quality_mode == "auto":
-		_apply_resolved_quality("medium" if OS.has_feature("mobile") else "high")
+		_apply_resolved_quality("medium" if is_compat else "high")
 	else:
 		_apply_resolved_quality(quality_mode)
 	_notify_web_shell()
@@ -407,28 +407,35 @@ func _apply_resolved_quality(tier: String) -> void:
 	var vp := get_viewport()
 	if vp == null:
 		return
+	var env := world_env.environment if world_env else null
 	match tier:
 		"low":
-			vp.scaling_3d_scale = 0.70
+			vp.scaling_3d_scale = 0.72
 			vp.msaa_3d = Viewport.MSAA_DISABLED
+			if env:
+				env.glow_enabled = false
 			if sun_light:
 				sun_light.shadow_enabled = false
 			builder.set_vegetation_density(0.35)
 		"medium":
-			vp.scaling_3d_scale = 0.85
+			vp.scaling_3d_scale = 0.90
 			vp.msaa_3d = Viewport.MSAA_DISABLED
+			if env:
+				env.glow_enabled = not is_compat
 			if sun_light:
 				sun_light.shadow_enabled = true
 				sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 			RenderingServer.directional_shadow_atlas_set_size(1024, true)
-			builder.set_vegetation_density(0.65)
+			builder.set_vegetation_density(0.75)
 		_:
 			resolved_quality = "high"
 			vp.scaling_3d_scale = 1.0
 			vp.msaa_3d = Viewport.MSAA_2X
+			if env:
+				env.glow_enabled = true
 			if sun_light:
 				sun_light.shadow_enabled = true
-				sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+				sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if is_compat else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 			RenderingServer.directional_shadow_atlas_set_size(2048, true)
 			builder.set_vegetation_density(1.0)
 
@@ -436,7 +443,7 @@ func _update_adaptive_quality(delta: float) -> void:
 	if not started or paused or hud.is_any_modal_open():
 		return
 	var frame_ms := clampf(delta * 1000.0, 1.0, 200.0)
-	ft_ema_ms = lerpf(ft_ema_ms, frame_ms, 0.08)
+	ft_ema_ms = lerpf(ft_ema_ms, frame_ms, 0.12)
 	if quality_mode != "auto":
 		return
 	if _auto_warmup > 0.0:
@@ -447,7 +454,7 @@ func _update_adaptive_quality(delta: float) -> void:
 	if ft_ema_ms > 20.5:
 		_low_perf_accum += delta
 		_high_perf_accum = 0.0
-		if _low_perf_accum >= 2.0 and _auto_cooldown <= 0.0:
+		if _low_perf_accum >= 1.5 and _auto_cooldown <= 0.0:
 			if resolved_quality == "high":
 				_apply_resolved_quality("medium")
 				_auto_cooldown = 6.0
@@ -455,10 +462,10 @@ func _update_adaptive_quality(delta: float) -> void:
 				_apply_resolved_quality("low")
 				_auto_cooldown = 6.0
 			_low_perf_accum = 0.0
-	elif ft_ema_ms < 14.0:
+	elif ft_ema_ms < 12.5:
 		_high_perf_accum += delta
 		_low_perf_accum = 0.0
-		if _high_perf_accum >= 5.0 and _auto_cooldown <= 0.0:
+		if _high_perf_accum >= 4.0 and _auto_cooldown <= 0.0:
 			if resolved_quality == "low":
 				_apply_resolved_quality("medium")
 				_auto_cooldown = 10.0
@@ -630,3 +637,4 @@ func _exit_tree() -> void:
 	builder.poi_nodes.clear()
 	builder.night_lights.clear()
 	builder.mats.cache.clear()
+	builder.mats._noise_cache.clear()

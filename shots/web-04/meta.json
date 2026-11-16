@@ -1,0 +1,25 @@
+{
+  "hash": "de283f29",
+  "glInfo": {
+    "glVendor": "Google Inc. (Google)",
+    "glRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "godotRenderer": "gl_compatibility"
+  },
+  "measurementMethod": "headless_chromium_software_gl_swiftshader (NAO representa GPU real de usuario)",
+  "perfSample": {
+    "rafAvgMs": 1418.38,
+    "godotEmaMs": 133.35,
+    "godotFps": 1
+  },
+  "consoleErrors": 0,
+  "checks": {
+    "webgl2Fallback": true,
+    "hookHiddenWithoutTestParam": true,
+    "tour6of6": true,
+    "muteAndQualityPersisted": true,
+    "pauseResume": true,
+    "resize800x600AndFullscreen": true,
+    "reloadWithCache": true,
+    "wasmMimeAndCompression": true
+  }
+}

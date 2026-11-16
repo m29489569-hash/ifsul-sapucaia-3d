@@ -239,9 +239,12 @@
 
   async function bootEngine() {
     try {
-      const metaRes = await fetch('/game/build-meta.json', { cache: 'no-cache' });
-      if (!metaRes.ok) throw new Error('Falha ao carregar metadados da build.');
-      const meta = await metaRes.json();
+      let meta = window.__BUILD_META__ || null;
+      if (!meta) {
+        const metaRes = await fetch('/game/build-meta.json', { cache: 'no-cache' });
+        if (!metaRes.ok) throw new Error('Falha ao carregar metadados da build.');
+        meta = await metaRes.json();
+      }
       expectedTotalBytes = meta?.sizes?.total || 0;
 
       await new Promise((resolve, reject) => {

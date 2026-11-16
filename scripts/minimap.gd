@@ -6,11 +6,16 @@ var visited_pois: Dictionary = {}
 var player_pos: Vector3 = Vector3.ZERO
 var player_yaw: float = 0.0
 var is_drone: bool = false
+var _last_drawn_pos := Vector3(1e9, 0.0, 1e9)
+var _last_drawn_yaw := 999.0
+var _last_visited_count := -1
+var _last_drone := false
 
 const MAP_BOUNDS := Rect2(-115.0, -180.0, 220.0, 370.0)
 
 func setup(data: Dictionary) -> void:
 	campus_data = data
+	_last_visited_count = -1
 	queue_redraw()
 
 func update_state(pos: Vector3, yaw: float, visited: Dictionary, drone: bool) -> void:
@@ -18,7 +23,14 @@ func update_state(pos: Vector3, yaw: float, visited: Dictionary, drone: bool) ->
 	player_yaw = yaw
 	visited_pois = visited
 	is_drone = drone
-	queue_redraw()
+	var moved := Vector2(pos.x - _last_drawn_pos.x, pos.z - _last_drawn_pos.z).length_squared() > 0.06
+	var turned := absf(yaw - _last_drawn_yaw) > 0.02
+	if moved or turned or visited.size() != _last_visited_count or drone != _last_drone:
+		_last_drawn_pos = pos
+		_last_drawn_yaw = yaw
+		_last_visited_count = visited.size()
+		_last_drone = drone
+		queue_redraw()
 
 func _world_to_map(wx: float, wz: float) -> Vector2:
 	var pad := 10.0

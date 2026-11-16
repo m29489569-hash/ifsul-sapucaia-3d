@@ -2,17 +2,23 @@ class_name CampusMaterials
 extends RefCounted
 
 var cache: Dictionary = {}
+var _noise_cache: Dictionary = {}
+
+func _is_compat() -> bool:
+	return OS.has_feature("web") or RenderingServer.get_current_rendering_method() == "gl_compatibility"
 
 func get_material(key: String, tint: Color = Color.WHITE, uv_scale: Vector3 = Vector3.ONE) -> StandardMaterial3D:
 	var cache_key := "%s_%s_%s" % [key, tint.to_html(false), str(uv_scale)]
 	if cache.has(cache_key):
 		return cache[cache_key]
 
+	var compat := _is_compat()
 	var mat := StandardMaterial3D.new()
 	var default_uv := Vector3(0.14, 0.14, 0.14) if key in ["grass", "asphalt", "concrete", "sidewalk", "wall"] else Vector3.ONE
 	mat.uv1_scale = uv_scale if uv_scale != Vector3.ONE else default_uv
-	mat.uv1_triplanar = (key in ["grass", "asphalt", "concrete", "sidewalk", "brick", "wall"])
-	mat.uv1_world_triplanar = mat.uv1_triplanar
+	var use_triplanar := (key in ["grass", "asphalt", "concrete", "sidewalk", "brick"]) or (key == "wall" and not compat)
+	mat.uv1_triplanar = use_triplanar
+	mat.uv1_world_triplanar = use_triplanar
 
 	match key:
 		"grass":
@@ -91,7 +97,7 @@ func _apply_pbr(mat: StandardMaterial3D, diff: String, nor: String, rough: Strin
 	if nor_tex != null:
 		mat.normal_enabled = true
 		mat.normal_texture = nor_tex
-	else:
+	elif not _is_compat():
 		mat.normal_enabled = true
 		mat.normal_texture = _make_procedural_normal(noise_freq)
 
@@ -115,22 +121,30 @@ func _load_tex(filename: String) -> Texture2D:
 	return null
 
 func _make_procedural_albedo(freq: float, amp: float) -> NoiseTexture2D:
+	var nkey := "alb_%.2f_%.3f" % [freq, amp]
+	if _noise_cache.has(nkey):
+		return _noise_cache[nkey]
 	var tex := NoiseTexture2D.new()
-	tex.width = 256
-	tex.height = 256
+	var sz := 128 if _is_compat() else 256
+	tex.width = sz
+	tex.height = sz
 	tex.seamless = true
 	var noise := FastNoiseLite.new()
 	noise.frequency = freq * 0.02
-	noise.fractal_octaves = 3
+	noise.fractal_octaves = 2 if _is_compat() else 3
 	tex.noise = noise
 	var grad := Gradient.new()
 	var lo := clampf(1.0 - amp * 3.0, 0.72, 0.96)
 	grad.set_color(0, Color(lo, lo, lo, 1.0))
 	grad.set_color(1, Color(1.0, 1.0, 1.0, 1.0))
 	tex.color_ramp = grad
+	_noise_cache[nkey] = tex
 	return tex
 
 func _make_procedural_normal(freq: float) -> NoiseTexture2D:
+	var nkey := "nor_%.2f" % freq
+	if _noise_cache.has(nkey):
+		return _noise_cache[nkey]
 	var tex := NoiseTexture2D.new()
 	tex.width = 256
 	tex.height = 256
@@ -141,6 +155,7 @@ func _make_procedural_normal(freq: float) -> NoiseTexture2D:
 	noise.frequency = freq * 0.025
 	noise.fractal_octaves = 3
 	tex.noise = noise
+	_noise_cache[nkey] = tex
 	return tex
 
 static func create_ifsul_logo_texture(size: int = 256) -> ImageTexture:

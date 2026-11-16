@@ -109,7 +109,25 @@ app.use((req, res, next) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return next();
 
   const cleanPath = decodeURIComponent(req.path);
-  const relPath = cleanPath === '/' ? 'index.html' : cleanPath.replace(/^\/+/, '');
+  if (cleanPath === '/' || cleanPath === '/index.html') {
+    const htmlPath = path.join(PUBLIC_DIR, 'index.html');
+    let html = fs.readFileSync(htmlPath, 'utf8');
+    const meta = readBuildMeta();
+    if (meta) {
+      const preloads = [
+        `<link rel="preload" as="script" href="/game/${meta.files.js}">`,
+        `<link rel="preload" as="fetch" crossorigin href="/game/${meta.files.wasm}">`,
+        `<link rel="preload" as="fetch" crossorigin href="/game/${meta.files.pck}">`,
+        `<script>window.__BUILD_META__=${JSON.stringify(meta)};</script>`
+      ].join('\n  ');
+      html = html.replace('</head>', `  ${preloads}\n</head>`);
+    }
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache');
+    return res.send(html);
+  }
+
+  const relPath = cleanPath.replace(/^\/+/, '');
   const fullPath = path.resolve(PUBLIC_DIR, relPath);
   if (!fullPath.startsWith(PUBLIC_DIR)) return res.status(403).end();
 
