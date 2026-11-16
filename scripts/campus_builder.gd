@@ -246,10 +246,10 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 	parent.add_child(cap)
 
 	# Architectural fascia trim + ribbon windows along long outer edges
-	var ccw := _ensure_ccw(poly)
-	for i in range(ccw.size()):
-		var p1 := ccw[i]
-		var p2 := ccw[(i + 1) % ccw.size()]
+	var cw := _ensure_cw_screen(poly)
+	for i in range(cw.size()):
+		var p1 := cw[i]
+		var p2 := cw[(i + 1) % cw.size()]
 		var edge := p2 - p1
 		var len := edge.length()
 		if len < 3.5:
@@ -531,14 +531,14 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 	var totem_body := StaticBody3D.new()
 	var tcol := CollisionShape3D.new()
 	var tbox := BoxShape3D.new()
-	tbox.size = Vector3(0.45, 3.4, 5.2)
+	tbox.size = Vector3(0.45, 3.4, 6.4)
 	tcol.shape = tbox
 	tcol.position.y = 1.7
 	totem_body.add_child(tcol)
 
 	var base := MeshInstance3D.new()
 	var bm := BoxMesh.new()
-	bm.size = Vector3(0.42, 3.4, 5.2)
+	bm.size = Vector3(0.42, 3.4, 6.4)
 	base.mesh = bm
 	base.position.y = 1.7
 	base.material_override = mats.get_material("wall", Color("#F4F4F2"))
@@ -546,7 +546,7 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 
 	var stripe := MeshInstance3D.new()
 	var sm := BoxMesh.new()
-	sm.size = Vector3(0.46, 0.45, 5.24)
+	sm.size = Vector3(0.46, 0.45, 6.44)
 	stripe.mesh = sm
 	stripe.position.y = 3.15
 	stripe.material_override = mats.get_material("ifsul_green")
@@ -562,16 +562,17 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 		qm.size = Vector2(1.25, 1.25)
 		logo_mi.mesh = qm
 		logo_mi.material_override = logo_mat
-		logo_mi.position = Vector3(side * 0.24, 1.8, 1.65)
+		logo_mi.position = Vector3(side * 0.23, 1.75, 2.05 * side)
 		logo_mi.rotation.y = -PI * 0.5 if side < 0 else PI * 0.5
 		totem_body.add_child(logo_mi)
 
 		var title := Label3D.new()
 		title.text = "IFSul — Câmpus Sapucaia do Sul\nINSTITUTO FEDERAL Sul-rio-grandense\nAv. Copacabana, 100"
-		title.font_size = 38
-		title.pixel_size = 0.0085
+		title.font_size = 34
+		title.pixel_size = 0.0046
+		title.double_sided = false
 		title.modulate = Color("#16381D")
-		title.position = Vector3(side * 0.24, 1.85, -0.7)
+		title.position = Vector3(side * 0.23, 1.8, -0.7 * side)
 		title.rotation.y = -PI * 0.5 if side < 0 else PI * 0.5
 		totem_body.add_child(title)
 
@@ -846,13 +847,15 @@ func _build_pois(root: Node3D, pois: Array) -> void:
 
 		var lbl := Label3D.new()
 		lbl.text = "%d. %s\n[E] Explorar" % [i + 1, String(p.get("title", ""))]
-		lbl.position.y = 3.35
-		lbl.font_size = 34
-		lbl.pixel_size = 0.01
+		lbl.position.y = 2.95
+		lbl.font_size = 28
+		lbl.pixel_size = 0.0048
 		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lbl.visibility_range_end = 30.0
+		lbl.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 		lbl.modulate = Color("#FFFBE6")
 		lbl.outline_modulate = Color(0.05, 0.1, 0.06)
-		lbl.outline_size = 7
+		lbl.outline_size = 6
 		area.add_child(lbl)
 
 		p_root.add_child(area)
@@ -870,29 +873,29 @@ func _poly_centroid(poly: PackedVector2Array) -> Vector2:
 		sum += p
 	return sum / maxf(1.0, float(poly.size()))
 
-func _ensure_ccw(poly: PackedVector2Array) -> PackedVector2Array:
+func _ensure_cw_screen(poly: PackedVector2Array) -> PackedVector2Array:
 	var area := 0.0
 	for i in range(poly.size()):
 		var a := poly[i]
 		var b := poly[(i + 1) % poly.size()]
 		area += a.x * b.y - b.x * a.y
 	var copy := poly.duplicate()
-	if area > 0.0: # flip so XZ outward normal is consistent
+	if area < 0.0: # keep clockwise in XZ screen so outward normal is (edge.y, -edge.x)
 		copy.reverse()
 	return copy
 
 func _extrude_polygon_mesh(poly: PackedVector2Array, height: float, include_walls: bool) -> ArrayMesh:
-	var ccw := _ensure_ccw(poly)
-	var tris := Geometry2D.triangulate_polygon(ccw)
+	var cw := _ensure_cw_screen(poly)
+	var tris := Geometry2D.triangulate_polygon(cw)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 
-	# Top cap (+Y normal)
+	# Top cap (+Y normal; Godot front-face is CW, so (b-a)x(c-a).y < 0)
 	for i in range(0, tris.size(), 3):
-		var a := Vector3(ccw[tris[i]].x, height, ccw[tris[i]].y)
-		var b := Vector3(ccw[tris[i + 1]].x, height, ccw[tris[i + 1]].y)
-		var c := Vector3(ccw[tris[i + 2]].x, height, ccw[tris[i + 2]].y)
-		if (b - a).cross(c - a).y < 0.0:
+		var a := Vector3(cw[tris[i]].x, height, cw[tris[i]].y)
+		var b := Vector3(cw[tris[i + 1]].x, height, cw[tris[i + 1]].y)
+		var c := Vector3(cw[tris[i + 2]].x, height, cw[tris[i + 2]].y)
+		if (b - a).cross(c - a).y > 0.0:
 			var tmp := b
 			b = c
 			c = tmp
@@ -905,9 +908,9 @@ func _extrude_polygon_mesh(poly: PackedVector2Array, height: float, include_wall
 		st.add_vertex(c)
 
 	if include_walls:
-		for i in range(ccw.size()):
-			var p0 := ccw[i]
-			var p1 := ccw[(i + 1) % ccw.size()]
+		for i in range(cw.size()):
+			var p0 := cw[i]
+			var p1 := cw[(i + 1) % cw.size()]
 			var edge := p1 - p0
 			var len := edge.length()
 			if len < 0.01:
@@ -917,10 +920,10 @@ func _extrude_polygon_mesh(poly: PackedVector2Array, height: float, include_wall
 			var v1 := Vector3(p1.x, 0.0, p1.y)
 			var v2 := Vector3(p1.x, height, p1.y)
 			var v3 := Vector3(p0.x, height, p0.y)
-			# Ensure triangle winding aligns with outward normal n
+			# Ensure CW front-face aligns with outward normal n ((v1-v0)x(v2-v0).dot(n) < 0)
 			var tri_n := (v1 - v0).cross(v2 - v0)
 			st.set_normal(n)
-			if tri_n.dot(n) >= 0.0:
+			if tri_n.dot(n) <= 0.0:
 				_push_quad(st, v0, v1, v2, v3, len, height)
 			else:
 				_push_quad(st, v1, v0, v3, v2, len, height)

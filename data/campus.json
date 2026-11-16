@@ -464,9 +464,9 @@
         [-57.7, 28.1]
       ],
       "bay_rows": [
-        {"start": [-53.0, 23.0], "count": 8, "step": 2.8, "angle_deg": 98.7, "car_indices": [0, 1, 3, 5, 7]},
-        {"start": [-37.0, 20.5], "count": 10, "step": 2.8, "angle_deg": 98.7, "car_indices": [1, 2, 4, 6, 8, 9]},
-        {"start": [-22.0, 61.0], "count": 10, "step": 2.7, "angle_deg": 8.7, "car_indices": [0, 2, 5, 7, 8]}
+        {"start": [-55.0, 21.0], "count": 10, "step": 2.7, "angle_deg": -81.3, "car_indices": [0, 1, 3, 5, 7, 9]},
+        {"start": [-41.0, 19.0], "count": 11, "step": 2.7, "angle_deg": -81.3, "car_indices": [1, 2, 4, 6, 8, 10]},
+        {"start": [-22.0, 56.0], "count": 10, "step": 2.7, "angle_deg": 8.7, "car_indices": [0, 2, 5, 7, 8]}
       ]
     }
   ],
@@ -536,7 +536,7 @@
       "id": "poi_entrada",
       "title": "Portaria Principal e Histórico (1996)",
       "subtitle": "Av. Copacabana, 100 — Primeiro câmpus do IFSul fora de Pelotas",
-      "position": [-52.0, 0.0, 10.5],
+      "position": [-51.0, 0.0, 5.5],
       "description": "Inaugurado em 26 de fevereiro de 1996 como Unidade de Ensino Descentralizada (UNED) da Escola Técnica Federal de Pelotas, o Câmpus Sapucaia do Sul foi o primeiro câmpus do IFSul estabelecido fora de Pelotas. Em 1999 integrou o CEFET-RS e, em 2008 (Lei nº 11.892), tornou-se câmpus do Instituto Federal Sul-rio-grandense. O terreno soma mais de 38 mil m² (cerca de 16 mil m² construídos) no polo industrial da Região Metropolitana."
     },
     {

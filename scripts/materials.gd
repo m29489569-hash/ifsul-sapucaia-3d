@@ -9,23 +9,27 @@ func get_material(key: String, tint: Color = Color.WHITE, uv_scale: Vector3 = Ve
 		return cache[cache_key]
 
 	var mat := StandardMaterial3D.new()
-	mat.uv1_scale = uv_scale
+	var default_uv := Vector3(0.14, 0.14, 0.14) if key in ["grass", "asphalt", "concrete", "sidewalk", "wall"] else Vector3.ONE
+	mat.uv1_scale = uv_scale if uv_scale != Vector3.ONE else default_uv
 	mat.uv1_triplanar = (key in ["grass", "asphalt", "concrete", "sidewalk", "brick", "wall"])
 	mat.uv1_world_triplanar = mat.uv1_triplanar
 
 	match key:
 		"grass":
-			mat.albedo_color = tint if tint != Color.WHITE else Color("#4B7A3B")
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#528540")
 			_apply_pbr(mat, "grass_diff.jpg", "", "grass_rough.jpg", 0.92, 0.0, 2.5, 0.04)
 		"asphalt":
-			mat.albedo_color = tint if tint != Color.WHITE else Color("#35383C")
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#4C5056")
 			_apply_pbr(mat, "asphalt_diff.jpg", "asphalt_nor.jpg", "asphalt_rough.jpg", 0.88, 0.0, 4.0, 0.06)
+			mat.normal_scale = 0.45
 		"concrete", "sidewalk":
-			mat.albedo_color = tint if tint != Color.WHITE else Color("#C4C0B8")
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#D5D1C8")
 			_apply_pbr(mat, "concrete_diff.jpg", "concrete_nor.jpg", "concrete_rough.jpg", 0.85, 0.0, 3.0, 0.04)
+			mat.normal_scale = 0.35
 		"wall":
 			mat.albedo_color = tint
-			_apply_pbr(mat, "concrete_diff.jpg", "concrete_nor.jpg", "concrete_rough.jpg", 0.82, 0.0, 5.0, 0.025)
+			_apply_pbr(mat, "", "", "", 0.78, 0.0, 1.8, 0.015)
+			mat.normal_scale = 0.25
 		"tile":
 			mat.albedo_color = tint if tint != Color.WHITE else Color("#D8D4CC")
 			_apply_pbr(mat, "tile_diff.jpg", "", "", 0.62, 0.05, 6.0, 0.02)

@@ -21,6 +21,7 @@ var mode_lbl: Label
 var time_btn: Button
 var mute_btn: Button
 var fade_rect: ColorRect
+var fade_tween: Tween
 var poi_title: Label
 var poi_sub: Label
 var poi_desc: RichTextLabel
@@ -241,8 +242,10 @@ func _build_ui() -> void:
 
 func play_fade_in() -> void:
 	fade_rect.color.a = 1.0
-	var tw := create_tween()
-	tw.tween_property(fade_rect, "color:a", 0.0, 0.85)
+	if fade_tween:
+		fade_tween.kill()
+	fade_tween = create_tween()
+	fade_tween.tween_property(fade_rect, "color:a", 0.0, 0.85)
 
 func setup_minimap(data: Dictionary) -> void:
 	total_pois = maxi(1, data.get("pois", []).size())

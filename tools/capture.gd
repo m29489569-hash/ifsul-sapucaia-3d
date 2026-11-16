@@ -52,6 +52,8 @@ func _run_capture() -> void:
 
 	main._start_exploration()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if main.hud.fade_tween:
+		main.hud.fade_tween.kill()
 	main.hud.fade_rect.color.a = 0.0
 
 	var cap_cam := Camera3D.new()
