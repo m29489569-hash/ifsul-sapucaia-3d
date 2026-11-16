@@ -1,0 +1,45 @@
+{
+  "avg_frametime_ms": 7.09,
+  "fixed_fps": 60,
+  "iter": "iter-03",
+  "render_method": "native_forward_plus",
+  "resolution": "1280x720",
+  "shots": [
+    {
+      "avg_frametime_ms": 8.12,
+      "id": "01_spawn_hud"
+    },
+    {
+      "avg_frametime_ms": 7.82,
+      "id": "02_aerial_overview"
+    },
+    {
+      "avg_frametime_ms": 6.49,
+      "id": "03_entrance_guarita"
+    },
+    {
+      "avg_frametime_ms": 7.2,
+      "id": "04_main_facade"
+    },
+    {
+      "avg_frametime_ms": 6.35,
+      "id": "05_central_courtyard"
+    },
+    {
+      "avg_frametime_ms": 6.35,
+      "id": "06_sports_courts"
+    },
+    {
+      "avg_frametime_ms": 6.93,
+      "id": "07_parking_lot"
+    },
+    {
+      "avg_frametime_ms": 6.89,
+      "id": "08_material_signage_close"
+    },
+    {
+      "avg_frametime_ms": 7.69,
+      "id": "09_aerial_night"
+    }
+  ]
+}

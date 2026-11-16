@@ -224,7 +224,7 @@ func _build_courtyard_building(parent: Node3D, poly: PackedVector2Array, h: floa
 
 func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, col_wall: Color, col_trim: Color, floors: int, has_windows: bool, b: Dictionary) -> void:
 	var wall_mat := mats.get_material("wall", col_wall)
-	var roof_mat := mats.get_material("concrete", Color("#6B6E72"))
+	var roof_mat := mats.get_material("concrete", Color("#C9C8C2"))
 	var trim_mat := mats.get_material("ifsul_green") if col_trim == Color("#2F9E41") else mats.get_material("ifsul_red")
 	var wmat := win_mat
 
@@ -240,12 +240,25 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 	body.add_child(col_shape)
 	parent.add_child(body)
 
-	# Roof parapet cap
+	# Roof parapet cap + solar/skylight ribs on large academic/workshop roofs
 	var cap := MeshInstance3D.new()
 	cap.mesh = _extrude_polygon_mesh(poly, 0.25, false)
 	cap.position.y = h
 	cap.material_override = roof_mat
 	parent.add_child(cap)
+	var btype := String(b.get("type", ""))
+	if btype in ["academic", "workshop"] and poly.size() >= 4:
+		var c2 := _poly_centroid(poly)
+		var rib_mat := mats.get_material("metal", Color("#5B6770"))
+		for k in range(-2, 3):
+			var rmi := MeshInstance3D.new()
+			var rbox := BoxMesh.new()
+			rbox.size = Vector3(14.0, 0.16, 1.35)
+			rmi.mesh = rbox
+			rmi.material_override = rib_mat
+			rmi.position = Vector3(c2.x, h + 0.30, c2.y + k * 4.2)
+			rmi.rotation.y = deg_to_rad(8.7)
+			parent.add_child(rmi)
 
 	# Architectural fascia trim + ribbon windows along long outer edges
 	var cw := _ensure_cw_screen(poly)
@@ -270,16 +283,38 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 		band.rotation.y = angle
 		parent.add_child(band)
 
-		# Auditório iconic terracotta wall panel matching MSS-00.2155 reference
+		# Auditório iconic terracotta wall + clerestory ribbon windows & pillars matching MSS-00.2155
 		if String(b.get("type", "")) == "auditorium" and len > 8.0:
 			var panel := MeshInstance3D.new()
 			var pm := BoxMesh.new()
-			pm.size = Vector3(0.12, h * 0.62, len * 0.88)
+			pm.size = Vector3(0.12, h * 0.56, len * 0.86)
 			panel.mesh = pm
-			panel.material_override = mats.get_material("wall", Color("#B86B55"))
-			panel.position = Vector3(mid.x + out_dir.x * 0.07, h * 0.34, mid.y + out_dir.y * 0.07)
+			panel.material_override = mats.get_material("wall", Color("#C2725A"))
+			panel.position = Vector3(mid.x + out_dir.x * 0.07, h * 0.29, mid.y + out_dir.y * 0.07)
 			panel.rotation.y = angle
 			parent.add_child(panel)
+
+			var clere := MeshInstance3D.new()
+			var cm := BoxMesh.new()
+			cm.size = Vector3(0.10, 1.15, len * 0.86)
+			clere.mesh = cm
+			clere.material_override = wmat
+			clere.position = Vector3(mid.x + out_dir.x * 0.07, h * 0.68, mid.y + out_dir.y * 0.07)
+			clere.rotation.y = angle
+			parent.add_child(clere)
+
+			var mull_mat := mats.get_material("metal", Color("#23272A"))
+			for m_i in range(7):
+				var t := lerpf(-0.4, 0.4, float(m_i) / 6.0)
+				var along := edge.normalized() * (t * len)
+				var mull := MeshInstance3D.new()
+				var mm := BoxMesh.new()
+				mm.size = Vector3(0.14, 1.25, 0.10)
+				mull.mesh = mm
+				mull.material_override = mull_mat
+				mull.position = Vector3(mid.x + along.x + out_dir.x * 0.08, h * 0.68, mid.y + along.y + out_dir.y * 0.08)
+				mull.rotation.y = angle
+				parent.add_child(mull)
 
 		# Floor window strips & 2.1m entrance door on longest facade
 		if has_windows:
@@ -375,6 +410,21 @@ func _build_courts(root: Node3D, courts: Array) -> void:
 			ring.scale = Vector3(1.0, 0.15, 1.0)
 			ring.material_override = line_mat
 			node.add_child(ring)
+			# Futsal goals & basketball hoops
+			var goal_mat := mats.get_material("metal", Color("#F0F2F5"))
+			var hoop_mat := mats.get_material("ifsul_red")
+			for end_s: float in [-1.0, 1.0]:
+				var gz: float = end_s * (pd * 0.48)
+				_add_court_line(node, Vector3(-1.5, 1.05, gz), Vector3(0.10, 2.1, 0.10), goal_mat)
+				_add_court_line(node, Vector3(1.5, 1.05, gz), Vector3(0.10, 2.1, 0.10), goal_mat)
+				_add_court_line(node, Vector3(0.0, 2.1, gz), Vector3(3.1, 0.10, 0.10), goal_mat)
+				_add_court_line(node, Vector3(0.0, 3.05, gz - end_s * 0.6), Vector3(1.8, 1.1, 0.08), line_mat)
+				_add_court_line(node, Vector3(0.0, 2.75, gz - end_s * 0.85), Vector3(0.45, 0.06, 0.45), hoop_mat)
+		elif String(c.get("sport", "")) == "volleyball":
+			var post_mat := mats.get_material("metal", Color("#E2E8F0"))
+			_add_court_line(node, Vector3(0, 1.25, -pd * 0.52), Vector3(0.12, 2.5, 0.12), post_mat)
+			_add_court_line(node, Vector3(0, 1.25, pd * 0.52), Vector3(0.12, 2.5, 0.12), post_mat)
+			_add_court_line(node, Vector3(0, 2.0, 0), Vector3(0.04, 0.95, pd * 1.02), mats.get_material("glass"))
 
 		# Covered gymnasium roof & pillars (matching satellite!)
 		if bool(c.get("covered", false)):
@@ -474,6 +524,17 @@ func _build_landmarks(root: Node3D, data: Dictionary) -> void:
 		mi.mesh = cm
 		mi.material_override = mats.get_material("concrete", Color("#CFCBC3"))
 		body.add_child(mi)
+		# Red/white mast atop water tower (matching MSS-00.266 photo)
+		for seg in range(4):
+			var mast := MeshInstance3D.new()
+			var mm := CylinderMesh.new()
+			mm.top_radius = 0.07
+			mm.bottom_radius = 0.09
+			mm.height = 1.8
+			mast.mesh = mm
+			mast.position.y = h * 0.5 + 0.9 + seg * 1.8
+			mast.material_override = mats.get_material("ifsul_red") if seg % 2 == 0 else mats.get_material("line_white")
+			body.add_child(mast)
 		root.add_child(body)
 
 	# Flagpoles + raised planter matching MSS-00.2155 reference photo
@@ -500,6 +561,18 @@ func _build_landmarks(root: Node3D, data: Dictionary) -> void:
 		pmi.position.y = 0.225
 		pmi.material_override = mats.get_material("concrete", Color("#CBC6BC"))
 		planter.add_child(pmi)
+		# Flowers on raised planter (matching MSS-00.2155)
+		var frng := RandomNumberGenerator.new()
+		frng.seed = 2155
+		for fx in range(12):
+			var fl := MeshInstance3D.new()
+			var fs := SphereMesh.new()
+			fs.radius = 0.24
+			fs.height = 0.36
+			fl.mesh = fs
+			fl.position = Vector3(-2.9 + fx * 0.52, 0.55, frng.randf_range(-0.7, 0.7))
+			fl.material_override = mats.get_material("wall", Color("#DB4B7A") if fx % 2 == 0 else Color("#4C8E3B"))
+			planter.add_child(fl)
 		f_root.add_child(planter)
 
 		var flag_colors := [Color("#009B3A"), Color("#D92525"), Color("#2F9E41"), Color("#1E55A0")]
@@ -525,9 +598,47 @@ func _build_landmarks(root: Node3D, data: Dictionary) -> void:
 func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 	var sign_node := Node3D.new()
 	sign_node.name = "EntranceSignage"
-	sign_node.position = Vector3(-62.5, 0.0, 5.5)
+	sign_node.position = Vector3(-64.2, 0.0, 2.2)
 	sign_node.rotation.y = deg_to_rad(8.7)
 	root.add_child(sign_node)
+
+	# Yellow entrance curb + open metal gate wings + iconic green payphones (MSS-00.266)
+	var gate_root := Node3D.new()
+	gate_root.position = Vector3(-63.2, 0.0, 17.5)
+	gate_root.rotation.y = deg_to_rad(8.7)
+	root.add_child(gate_root)
+	var gate_mat := mats.get_material("metal", Color("#D8DCE0"))
+	for gz in [-1.5, 7.2]:
+		var wing := MeshInstance3D.new()
+		var wm := BoxMesh.new()
+		wm.size = Vector3(3.2, 1.9, 0.08)
+		wing.mesh = wm
+		wing.position = Vector3(1.6, 0.95, gz)
+		wing.material_override = gate_mat
+		gate_root.add_child(wing)
+	var curb := MeshInstance3D.new()
+	var cb := BoxMesh.new()
+	cb.size = Vector3(0.25, 0.14, 14.0)
+	curb.mesh = cb
+	curb.position = Vector3(-1.4, 0.07, 1.5)
+	curb.material_override = mats.get_material("wall", Color("#E8B923"))
+	gate_root.add_child(curb)
+	for oz in [-7.6, -6.5]:
+		var orelhao := MeshInstance3D.new()
+		var om := SphereMesh.new()
+		om.radius = 0.36
+		om.height = 0.8
+		orelhao.mesh = om
+		orelhao.position = Vector3(-1.2, 1.65, oz)
+		orelhao.material_override = mats.get_material("ifsul_green")
+		gate_root.add_child(orelhao)
+		var opost := MeshInstance3D.new()
+		var opm := CylinderMesh.new()
+		opm.top_radius = 0.04; opm.bottom_radius = 0.05; opm.height = 1.6
+		opost.mesh = opm
+		opost.position = Vector3(-1.2, 0.8, oz)
+		opost.material_override = gate_mat
+		gate_root.add_child(opost)
 
 	# Totem monument at main gate
 	var totem_body := StaticBody3D.new()
