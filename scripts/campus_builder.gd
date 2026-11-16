@@ -292,12 +292,15 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 		var c2 := _poly_centroid(poly)
 		var rib_mat := mats.get_material("metal", Color("#5B6770"))
 		for k in range(-2, 3):
+			var rc := Vector2(c2.x, c2.y + k * 4.2)
+			if not (Geometry2D.is_point_in_polygon(rc + Vector2(-5.5, 0), poly) and Geometry2D.is_point_in_polygon(rc + Vector2(5.5, 0), poly)):
+				continue
 			var rmi := MeshInstance3D.new()
 			var rbox := BoxMesh.new()
-			rbox.size = Vector3(14.0, 0.16, 1.35)
+			rbox.size = Vector3(11.0, 0.16, 1.35)
 			rmi.mesh = rbox
 			rmi.material_override = rib_mat
-			rmi.position = Vector3(c2.x, h + 0.30, c2.y + k * 4.2)
+			rmi.position = Vector3(rc.x, h + 0.30, rc.y)
 			rmi.rotation.y = deg_to_rad(8.7)
 			parent.add_child(rmi)
 
@@ -752,23 +755,41 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 	crown_mm.transform_format = MultiMesh.TRANSFORM_3D
 	crown_mm.use_colors = true
 	var c_sph := SphereMesh.new()
-	c_sph.radius = 2.4
-	c_sph.height = 3.8
+	c_sph.radius = 2.1
+	c_sph.height = 3.2
 	c_sph.radial_segments = 10
 	c_sph.rings = 6
 	crown_mm.mesh = c_sph
 	crown_mm.instance_count = tree_positions.size()
+
+	var crown2_mm := MultiMesh.new()
+	crown2_mm.transform_format = MultiMesh.TRANSFORM_3D
+	crown2_mm.use_colors = true
+	crown2_mm.mesh = c_sph
+	crown2_mm.instance_count = tree_positions.size()
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1996
 	for i in range(tree_positions.size()):
 		var p: Vector2 = tree_positions[i]
 		var sc := rng.randf_range(0.78, 1.45)
-		trunk_mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3(sc, sc, sc)), Vector3(p.x, 1.6 * sc, p.y)))
-		crown_mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3(sc, sc * 0.95, sc)), Vector3(p.x, 3.8 * sc, p.y)))
-		var roll := rng.randf()
-		var col := Color("#3D7A32") if roll < 0.72 else (Color("#E0B028") if roll < 0.86 else Color("#6E54A3"))
-		crown_mm.set_instance_color(i, col)
+		var is_araucaria := (i % 9 == 0)
+		if is_araucaria:
+			trunk_mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3(sc * 0.7, sc * 2.4, sc * 0.7)), Vector3(p.x, 3.8 * sc, p.y)))
+			crown_mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3(sc * 1.45, sc * 0.42, sc * 1.45)), Vector3(p.x, 7.6 * sc, p.y)))
+			crown2_mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3(sc * 0.95, sc * 0.30, sc * 0.95)), Vector3(p.x, 8.2 * sc, p.y)))
+			crown_mm.set_instance_color(i, Color("#295A27"))
+			crown2_mm.set_instance_color(i, Color("#33692E"))
+		else:
+			trunk_mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3(sc, sc, sc)), Vector3(p.x, 1.6 * sc, p.y)))
+			crown_mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3(sc, sc * 0.92, sc)), Vector3(p.x, 3.6 * sc, p.y)))
+			var ox := rng.randf_range(-0.9, 0.9) * sc
+			var oz := rng.randf_range(-0.9, 0.9) * sc
+			crown2_mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3(sc * 0.78, sc * 0.75, sc * 0.78)), Vector3(p.x + ox, 4.7 * sc, p.y + oz)))
+			var roll := rng.randf()
+			var col := Color("#3D7A32") if roll < 0.72 else (Color("#E0B028") if roll < 0.86 else Color("#6E54A3"))
+			crown_mm.set_instance_color(i, col)
+			crown2_mm.set_instance_color(i, col.lightened(0.08))
 
 	var trunk_mmi := MultiMeshInstance3D.new()
 	trunk_mmi.multimesh = trunk_mm
@@ -781,6 +802,11 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 	fmat.vertex_color_use_as_albedo = true
 	crown_mmi.material_override = fmat
 	props_root.add_child(crown_mmi)
+
+	var crown2_mmi := MultiMeshInstance3D.new()
+	crown2_mmi.multimesh = crown2_mm
+	crown2_mmi.material_override = fmat
+	props_root.add_child(crown2_mmi)
 
 	# 2. Light poles via MultiMeshInstance3D + key OmniLight3D night lights
 	var pole_pts := [
@@ -895,21 +921,54 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 		car_mm.transform_format = MultiMesh.TRANSFORM_3D
 		car_mm.use_colors = true
 		var car_mesh := BoxMesh.new()
-		car_mesh.size = Vector3(1.85, 1.3, 4.1)
+		car_mesh.size = Vector3(1.82, 0.62, 4.15)
 		car_mm.mesh = car_mesh
 		car_mm.instance_count = car_xforms.size()
-		var car_palette := [Color("#D9DCE0"), Color("#4B5563"), Color("#1E3A8A"), Color("#B91C1C"), Color("#CBD5E1")]
+
+		var cab_mm := MultiMesh.new()
+		cab_mm.transform_format = MultiMesh.TRANSFORM_3D
+		var cab_mesh := BoxMesh.new()
+		cab_mesh.size = Vector3(1.52, 0.56, 2.05)
+		cab_mm.mesh = cab_mesh
+		cab_mm.instance_count = car_xforms.size()
+
+		var wheel_mm := MultiMesh.new()
+		wheel_mm.transform_format = MultiMesh.TRANSFORM_3D
+		var w_mesh := CylinderMesh.new()
+		w_mesh.top_radius = 0.30; w_mesh.bottom_radius = 0.30; w_mesh.height = 0.22
+		wheel_mm.mesh = w_mesh
+		wheel_mm.instance_count = car_xforms.size() * 4
+
+		var car_palette := [Color("#E2E8F0"), Color("#4B5563"), Color("#1D4ED8"), Color("#B91C1C"), Color("#CBD5E1"), Color("#1E293B")]
+		var wheel_offsets := [Vector3(-0.88, -0.22, -1.25), Vector3(0.88, -0.22, -1.25), Vector3(-0.88, -0.22, 1.25), Vector3(0.88, -0.22, 1.25)]
 		for i in range(car_xforms.size()):
-			car_mm.set_instance_transform(i, car_xforms[i])
+			var xf := car_xforms[i]
+			xf.origin.y = 0.52
+			car_mm.set_instance_transform(i, xf)
 			car_mm.set_instance_color(i, car_palette[i % car_palette.size()])
+			cab_mm.set_instance_transform(i, xf * Transform3D(Basis(), Vector3(0.0, 0.56, -0.15)))
+			for wi in range(4):
+				var wxf := xf * Transform3D(Basis(Vector3.FORWARD, PI * 0.5), wheel_offsets[wi])
+				wheel_mm.set_instance_transform(i * 4 + wi, wxf)
+
 		var car_mmi := MultiMeshInstance3D.new()
 		car_mmi.multimesh = car_mm
 		var cmat := mats.get_material("metal", Color.WHITE)
 		cmat.vertex_color_use_as_albedo = true
-		cmat.metallic = 0.35
-		cmat.roughness = 0.3
+		cmat.metallic = 0.45
+		cmat.roughness = 0.28
 		car_mmi.material_override = cmat
 		props_root.add_child(car_mmi)
+
+		var cab_mmi := MultiMeshInstance3D.new()
+		cab_mmi.multimesh = cab_mm
+		cab_mmi.material_override = mats.get_material("metal", Color("#1F2937"))
+		props_root.add_child(cab_mmi)
+
+		var wheel_mmi := MultiMeshInstance3D.new()
+		wheel_mmi.multimesh = wheel_mm
+		wheel_mmi.material_override = mats.get_material("asphalt", Color("#18181B"))
+		props_root.add_child(wheel_mmi)
 
 	# 5. Sapucaia do Sul surrounding neighborhood houses via MultiMesh
 	var house_pts: Array[Vector2] = []
