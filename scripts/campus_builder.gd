@@ -241,12 +241,12 @@ func _build_courtyard_building(parent: Node3D, poly: PackedVector2Array, h: floa
 
 func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, col_wall: Color, col_trim: Color, floors: int, has_windows: bool, b: Dictionary) -> void:
 	var wall_mat := mats.get_material("wall", col_wall)
-	var roof_mat := mats.get_material("concrete", Color("#C9C8C2"))
+	var roof_mat := mats.get_material("concrete", Color("#6B6E73"))
 	var trim_mat := mats.get_material("ifsul_green") if col_trim == Color("#2F9E41") else (mats.get_material("ifsul_red") if col_trim == Color("#CD191E") else mats.get_material("wall", col_trim))
 	var wmat := win_mat
 	var btype := String(b.get("type", ""))
-	if btype == "auditorium":
-		roof_mat = mats.get_material("wall", Color("#EAEAE6"))
+	if btype in ["auditorium", "library", "student_center", "workshop"]:
+		roof_mat = mats.get_material("wall", Color("#E6E8EC")) if btype != "workshop" else mats.get_material("concrete", Color("#9EA4AB"))
 
 	if btype == "corridor":
 		# Open covered walkway on concrete pillars (passable on foot!)
@@ -284,7 +284,7 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 	body.add_child(col_shape)
 	parent.add_child(body)
 
-	# Roof parapet cap + solar/skylight ribs on large academic/workshop roofs
+	# Roof parapet cap + industrial shed skylights & library/student-center octagonal dome (MSS-00.442 / MSS-00.2609)
 	var cap := MeshInstance3D.new()
 	cap.mesh = _extrude_polygon_mesh(poly, 0.25, false)
 	cap.position.y = h
@@ -292,19 +292,29 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 	parent.add_child(cap)
 	if btype in ["academic", "workshop"] and poly.size() >= 4:
 		var c2 := _poly_centroid(poly)
-		var rib_mat := mats.get_material("metal", Color("#5B6770"))
-		for k in range(-2, 3):
+		var rib_mat := mats.get_material("wall", Color("#EBEEF2")) if btype == "workshop" else mats.get_material("metal", Color("#5B6770"))
+		var span := 10.5 if btype == "workshop" else 5.5
+		for k in range(-3, 4):
 			var rc := Vector2(c2.x, c2.y + k * 4.2)
-			if not (Geometry2D.is_point_in_polygon(rc + Vector2(-5.5, 0), poly) and Geometry2D.is_point_in_polygon(rc + Vector2(5.5, 0), poly)):
+			if not (Geometry2D.is_point_in_polygon(rc + Vector2(-span, 0), poly) and Geometry2D.is_point_in_polygon(rc + Vector2(span, 0), poly)):
 				continue
 			var rmi := MeshInstance3D.new()
 			var rbox := BoxMesh.new()
-			rbox.size = Vector3(11.0, 0.16, 1.35)
+			rbox.size = Vector3(span * 2.0, 0.35 if btype == "workshop" else 0.16, 1.55)
 			rmi.mesh = rbox
 			rmi.material_override = rib_mat
-			rmi.position = Vector3(rc.x, h + 0.30, rc.y)
+			rmi.position = Vector3(rc.x, h + 0.34, rc.y)
 			rmi.rotation.y = deg_to_rad(8.7)
 			parent.add_child(rmi)
+	elif btype in ["library", "student_center"]:
+		var c2 := _poly_centroid(poly)
+		var dome := MeshInstance3D.new()
+		var dm := CylinderMesh.new()
+		dm.top_radius = 2.6; dm.bottom_radius = 4.2; dm.height = 1.4; dm.radial_segments = 8
+		dome.mesh = dm
+		dome.position = Vector3(c2.x, h + 0.8, c2.y)
+		dome.material_override = mats.get_material("wall", Color("#D9E4F0"))
+		parent.add_child(dome)
 
 	# Architectural fascia trim + ribbon windows along long outer edges
 	var cw := _ensure_cw_screen(poly)
@@ -319,15 +329,30 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 		var angle := atan2(edge.x, edge.y)
 		var out_dir := Vector2(edge.y, -edge.x).normalized()
 
-		# Institutional top fascia band
+		# Institutional top fascia band + white structural pilasters on brick walls
 		var band := MeshInstance3D.new()
 		var bm := BoxMesh.new()
-		bm.size = Vector3(0.14, 0.45, len)
+		bm.size = Vector3(0.14, 0.52, len)
 		band.mesh = bm
 		band.material_override = trim_mat
-		band.position = Vector3(mid.x + out_dir.x * 0.08, h - 0.35, mid.y + out_dir.y * 0.08)
+		band.position = Vector3(mid.x + out_dir.x * 0.08, h - 0.32, mid.y + out_dir.y * 0.08)
 		band.rotation.y = angle
 		parent.add_child(band)
+
+		if btype in ["admin", "academic", "lab", "sports"] and len >= 6.5:
+			var pil_count := int(len / 7.0) + 1
+			var pil_mat := mats.get_material("wall", Color("#F2F1ED"))
+			for pi in range(pil_count):
+				var pt := lerpf(-0.46, 0.46, float(pi) / maxf(1.0, float(pil_count - 1)))
+				var along_p := edge.normalized() * (pt * len)
+				var pil_m := MeshInstance3D.new()
+				var pbm := BoxMesh.new()
+				pbm.size = Vector3(0.18, h, 0.34)
+				pil_m.mesh = pbm
+				pil_m.material_override = pil_mat
+				pil_m.position = Vector3(mid.x + along_p.x + out_dir.x * 0.09, h * 0.5, mid.y + along_p.y + out_dir.y * 0.09)
+				pil_m.rotation.y = angle
+				parent.add_child(pil_m)
 
 		# Auditório iconic terracotta wall + clerestory ribbon windows & white portico matching MSS-00.223 / MSS-00.2155
 		if String(b.get("type", "")) == "auditorium" and len > 8.0:
@@ -685,7 +710,7 @@ func _build_landmarks(root: Node3D, data: Dictionary) -> void:
 			rbm.size = Vector3(0.16, 0.52, 0.52)
 			rmi.mesh = rbm
 			rmi.material_override = mats.get_material("ifsul_green")
-		rmi.position = Vector3(-0.35, 5.1 - float(rc[1]) * 0.62, 1.2 + float(rc[0]) * 0.62)
+		rmi.position = Vector3(-0.75, 5.1 - float(rc[1]) * 0.62, 1.5 + float(rc[0]) * 0.62)
 		aud_front.add_child(rmi)
 	var aud_logo_txt := Label3D.new()
 	aud_logo_txt.text = "INSTITUTO FEDERAL\nSUL-RIO-GRANDENSE\nCâmpus Sapucaia do Sul"
@@ -694,7 +719,7 @@ func _build_landmarks(root: Node3D, data: Dictionary) -> void:
 	aud_logo_txt.double_sided = false
 	aud_logo_txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	aud_logo_txt.modulate = Color("#1D2E20")
-	aud_logo_txt.position = Vector3(-0.38, 3.85, 3.1)
+	aud_logo_txt.position = Vector3(-0.78, 3.85, 3.4)
 	aud_logo_txt.rotation.y = -PI * 0.5
 	aud_front.add_child(aud_logo_txt)
 
@@ -704,8 +729,8 @@ func _build_landmarks(root: Node3D, data: Dictionary) -> void:
 	mbox.size = Vector3(4.6, 2.2, 0.14)
 	mural_bg.mesh = mbox
 	mural_bg.material_override = mats.get_material("wall", Color("#F4F0E8"))
-	mural_bg.position = Vector3(5.8, 2.3, -6.2)
-	mural_bg.rotation.y = deg_to_rad(18.0)
+	mural_bg.position = Vector3(5.8, 2.3, -8.2)
+	mural_bg.rotation.y = deg_to_rad(-16.0)
 	aud_front.add_child(mural_bg)
 	var mural_cols := [Color("#E11D48"), Color("#F59E0B"), Color("#2563EB"), Color("#16A34A"), Color("#9333EA")]
 	for mi_c in range(5):
