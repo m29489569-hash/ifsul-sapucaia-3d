@@ -1,0 +1,31 @@
+# Normalização automática de quebras de linha
+* text=auto eol=lf
+
+# Godot Engine & GDScript (GitHub Linguist)
+*.gd text diff=gdscript linguist-language=GDScript
+*.tscn text
+*.tres text
+*.cfg text
+*.godot text
+*.import text
+*.uid text
+
+# Artefatos compilados do Export Web (não inflar estatísticas de linguagem no GitHub)
+site/public/game/** linguist-generated=true
+package-lock.json linguist-generated=true
+docs/** linguist-documentation=true
+assets/ref/** linguist-documentation=true
+
+# Arquivos binários
+*.pck binary
+*.wasm binary
+*.br binary
+*.gz binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.hdr binary
+*.wav binary
+*.ogg binary
+*.mp3 binary
+*.woff2 binary

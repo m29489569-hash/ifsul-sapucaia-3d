@@ -2,11 +2,30 @@
   "name": "ifsul-sapucaia-3d",
   "version": "1.0.0",
   "private": true,
-  "description": "IFSul Câmpus Sapucaia do Sul 3D — Web Shell & Server",
+  "description": "Gêmeo Digital e Exploração Interativa 3D do IFSul — Câmpus Sapucaia do Sul (Godot 4 + WebGL2)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/m29489569-hash/ifsul-sapucaia-3d.git"
+  },
+  "keywords": [
+    "godot",
+    "godot4",
+    "webgl2",
+    "digital-twin",
+    "3d",
+    "ifsul",
+    "sapucaia-do-sul",
+    "openstreetmap"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node site/server.js",
     "build:web": "bash tools/build_web.sh",
-    "test:web": "node tools/web_smoke.mjs"
+    "test:web": "node tools/web_smoke.mjs",
+    "capture": "bash tools/capture.sh"
   },
   "dependencies": {
     "express": "^4.21.2"

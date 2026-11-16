@@ -1,4 +1,25 @@
+# Godot 4+
 .godot/
+*.translation
+export_credentials.cfg
+
+# Node.js & Testes Web
 node_modules/
+npm-debug.log*
+playwright-report/
+test-results/
+
+# Capturas temporárias de QA / Regressão Visual
+shots/
+
+# Sistema Operacional & Editores
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.lnk
 *.tmp
 *.bak
+.vscode/
+.idea/
+.env
+.env.*
