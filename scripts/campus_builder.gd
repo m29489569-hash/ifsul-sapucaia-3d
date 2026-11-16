@@ -595,17 +595,20 @@ func _build_parking_lots(root: Node3D, lots: Array) -> void:
 	p_root.name = "ParkingLots"
 	root.add_child(p_root)
 	var asp := mats.get_material("asphalt", Color("#393C41"))
+	var paver_asp := mats.get_material("concrete", Color("#8F8B85"))
 	var line_mat := mats.get_material("line_white")
+	var yellow_line_mat := mats.get_material("wall", Color("#EAB308"))
 
 	for lot in lots:
+		var is_front := (String(lot.get("id", "")) == "estacionamento_principal")
 		var poly := _to_vec2_array(lot.get("polygon", []))
 		if poly.size() >= 3:
 			var mi := MeshInstance3D.new()
 			mi.mesh = _extrude_polygon_mesh(poly, 0.03, false)
-			mi.material_override = asp
+			mi.material_override = paver_asp if is_front else asp
 			p_root.add_child(mi)
 
-		# 2.5m x 5.0m parking bay markings
+		# 2.5m x 5.0m parking bay markings (yellow in front lot per MSS-00.223)
 		for row in lot.get("bay_rows", []):
 			var start := Vector2(float(row["start"][0]), float(row["start"][1]))
 			var count := int(row.get("count", 6))
@@ -619,7 +622,7 @@ func _build_parking_lots(root: Node3D, lots: Array) -> void:
 				var lb := BoxMesh.new()
 				lb.size = Vector3(0.12, 0.01, 5.0)
 				lmi.mesh = lb
-				lmi.material_override = line_mat
+				lmi.material_override = yellow_line_mat if is_front else line_mat
 				lmi.position = Vector3(p.x, 0.036, p.y)
 				lmi.rotation.y = ang
 				p_root.add_child(lmi)
@@ -879,6 +882,60 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 		opost.position = Vector3(-1.2, 0.8, oz)
 		opost.material_override = gate_mat
 		gate_root.add_child(opost)
+
+	# White crosswalk stripes on entrance driveway (MSS-00.444)
+	var cw_mat := mats.get_material("line_white")
+	for cwi in range(6):
+		_add_court_line(gate_root, Vector3(-5.5, 0.032, -1.0 + cwi * 0.9), Vector3(2.8, 0.01, 0.42), cw_mat)
+
+	# Bicycle rack behind Guarita with parked bikes (MSS-00.444 / MSS-00.223)
+	var bike_rack := Node3D.new()
+	bike_rack.position = Vector3(-54.8, 0.0, 12.6)
+	bike_rack.rotation.y = deg_to_rad(8.7)
+	root.add_child(bike_rack)
+	var dark_met := mats.get_material("metal", Color("#1F2937"))
+	_add_court_line(bike_rack, Vector3(0.0, 0.25, 0.0), Vector3(0.10, 0.5, 4.4), dark_met)
+	for bi in range(5):
+		var bz := -1.6 + bi * 0.8
+		for wx in [-0.45, 0.45]:
+			var wmi := MeshInstance3D.new()
+			var wtor := TorusMesh.new()
+			wtor.inner_radius = 0.22; wtor.outer_radius = 0.28
+			wmi.mesh = wtor
+			wmi.position = Vector3(wx, 0.30, bz)
+			wmi.rotation.x = PI * 0.5
+			wmi.material_override = dark_met
+			bike_rack.add_child(wmi)
+		_add_court_line(bike_rack, Vector3(0.0, 0.62, bz), Vector3(0.95, 0.06, 0.05), mats.get_material("ifsul_red") if bi % 2 == 0 else mats.get_material("ifsul_green"))
+
+	# Hedged green lawn with 3D topiary "IFSul" letters in front of Bloco Administrativo (MSS-00.442 / MSS-00.444)
+	var topiary := Node3D.new()
+	topiary.name = "TopiaryIFSul"
+	topiary.position = Vector3(-47.5, 0.0, -5.0)
+	topiary.rotation.y = deg_to_rad(9.5)
+	root.add_child(topiary)
+	var lawn_mat := mats.get_material("grass", Color("#4B8B3B"))
+	var hedge_mat := mats.get_material("wall", Color("#7CB342"))
+	var top_mat := mats.get_material("wall", Color("#A4C639"))
+	_add_court_line(topiary, Vector3(0.0, 0.04, 0.0), Vector3(17.5, 0.06, 4.6), lawn_mat)
+	_add_court_line(topiary, Vector3(0.0, 0.22, -2.2), Vector3(17.8, 0.38, 0.42), hedge_mat)
+	_add_court_line(topiary, Vector3(0.0, 0.22, 2.2), Vector3(17.8, 0.38, 0.42), hedge_mat)
+	_add_court_line(topiary, Vector3(-8.7, 0.22, 0.0), Vector3(0.42, 0.38, 4.4), hedge_mat)
+	_add_court_line(topiary, Vector3(8.7, 0.22, 0.0), Vector3(0.42, 0.38, 4.4), hedge_mat)
+	var top_lbl := Label3D.new()
+	top_lbl.text = "IFSul"
+	top_lbl.font_size = 160
+	top_lbl.pixel_size = 0.022
+	top_lbl.double_sided = false
+	top_lbl.modulate = Color("#C5E14B")
+	top_lbl.outline_modulate = Color("#2F6B28")
+	top_lbl.outline_size = 12
+	top_lbl.position = Vector3(0.0, 0.16, 0.0)
+	top_lbl.rotation.x = -PI * 0.5
+	topiary.add_child(top_lbl)
+	# Subtle 3D hedge blocks forming I-F-S-u-l relief for ground view visibility
+	for hx in [-5.4, -2.7, 0.0, 2.7, 5.4]:
+		_add_court_line(topiary, Vector3(hx, 0.20, 0.0), Vector3(1.6, 0.28, 2.2), top_mat)
 
 	# Totem monument at main gate
 	var totem_body := StaticBody3D.new()
