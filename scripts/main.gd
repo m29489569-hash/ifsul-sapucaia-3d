@@ -23,6 +23,9 @@ var is_compat := false
 
 var quality_mode := "auto"
 var resolved_quality := "high"
+var _quality_initialized := false
+var _applied_shadow_size := 1024
+var _pois_summary: Array = []
 var ft_ema_ms := 16.67
 var _auto_warmup := 2.5
 var _auto_cooldown := 0.0
@@ -35,17 +38,83 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	is_compat = RenderingServer.get_current_rendering_method() == "gl_compatibility" or OS.has_feature("web")
 	_ensure_input_map()
+	if OS.has_feature("web"):
+		set_process(false)
+		hud.set_start_visible(false)
+		hud.set_fade_alpha(0.0)
+		_read_web_init_prefs()
+		call_deferred("_boot_web_staged")
+		return
 	campus_data = _load_campus_json("res://data/campus.json")
+	_cache_pois_summary()
 	_setup_environment()
 	builder.build(world_node, campus_data)
 	_setup_audio()
 	_setup_player_and_hud()
 	_apply_resolved_quality("medium" if is_compat else "high")
-	if OS.has_feature("web"):
-		hud.set_start_visible(false)
-		_setup_web_bridge()
-		RenderingServer.viewport_set_active(get_viewport().get_viewport_rid(), false)
 	hud.play_fade_in()
+
+func _read_web_init_prefs() -> void:
+	var q_raw: Variant = JavaScriptBridge.eval("(window.__ifsulInitPrefs && window.__ifsulInitPrefs.quality) || localStorage.getItem('ifsul.quality') || 'auto'", false)
+	var q_str := String(q_raw).to_lower() if q_raw != null else "auto"
+	if q_str in ["auto", "high", "medium", "low"]:
+		quality_mode = q_str
+	var m_raw: Variant = JavaScriptBridge.eval("Boolean((window.__ifsulInitPrefs && window.__ifsulInitPrefs.muted) ?? (localStorage.getItem('ifsul.muted') === '1'))", false)
+	is_muted = bool(m_raw)
+
+func _notify_boot_stage(pct: int, status_text: String) -> void:
+	if not OS.has_feature("web"):
+		return
+	var safe_txt := JSON.stringify(status_text)
+	JavaScriptBridge.eval("window.__ifsulShell && window.__ifsulShell.onBootProgress && window.__ifsulShell.onBootProgress(" + str(pct) + ", " + safe_txt + ");", false)
+
+func _boot_web_staged() -> void:
+	var vp_rid := get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_active(vp_rid, false)
+
+	_notify_boot_stage(82, "Configurando iluminação e ambiente 3D...")
+	campus_data = _load_campus_json("res://data/campus.json")
+	_cache_pois_summary()
+	_setup_environment()
+	builder.begin_build(world_node)
+	await get_tree().process_frame
+
+	_notify_boot_stage(87, "Construindo vias, pátios e quadras...")
+	builder.build_stage_terrain(world_node, campus_data)
+	await get_tree().process_frame
+
+	_notify_boot_stage(92, "Erguendo os 16 blocos e pórticos...")
+	builder.build_stage_structures(world_node, campus_data)
+	await get_tree().process_frame
+
+	_notify_boot_stage(96, "Preparando vegetação, áudio e interface...")
+	builder.build_stage_props(world_node, campus_data)
+	_setup_audio()
+	_setup_player_and_hud()
+	var init_tier := ("medium" if is_compat else "high") if quality_mode == "auto" else quality_mode
+	_apply_resolved_quality(init_tier)
+	var master := AudioServer.get_bus_index("Master")
+	if master >= 0:
+		AudioServer.set_bus_mute(master, is_muted)
+	hud.set_muted(is_muted)
+	await get_tree().process_frame
+
+	_notify_boot_stage(99, "Compilando shaders e aquecendo placa gráfica...")
+	RenderingServer.viewport_set_active(vp_rid, true)
+	await RenderingServer.frame_post_draw
+
+	if not started:
+		RenderingServer.viewport_set_active(vp_rid, false)
+	_setup_web_bridge()
+
+func _cache_pois_summary() -> void:
+	_pois_summary.clear()
+	for p in campus_data.get("pois", []):
+		_pois_summary.append({
+			"id": String(p.get("id", "")),
+			"title": String(p.get("title", "")),
+			"position": p.get("position", [0, 0, 0])
+		})
 
 func _load_campus_json(path: String) -> Dictionary:
 	var txt := FileAccess.get_file_as_string(path)
@@ -56,43 +125,54 @@ func _setup_environment() -> void:
 	world_env = WorldEnvironment.new()
 	var env := Environment.new()
 	var sky := Sky.new()
-	var hdr_res := "res://assets/hdri/sky_1k.hdr"
+	sky_mat = ProceduralSkyMaterial.new()
+	sky_mat.sky_top_color = Color("#3B82C4")
+	sky_mat.sky_horizon_color = Color("#A8D2F0")
+	sky_mat.ground_bottom_color = Color("#2C3B28")
+	sky_mat.ground_horizon_color = Color("#8EA38E")
 	var used_hdr := false
-	if ResourceLoader.exists(hdr_res):
-		var hdr_tex: Resource = ResourceLoader.load(hdr_res)
-		if hdr_tex is Texture2D:
-			var pmat := PanoramaSkyMaterial.new()
-			pmat.panorama = hdr_tex
-			sky.sky_material = pmat
-			used_hdr = true
-	if not used_hdr:
-		var hdr_path := ProjectSettings.globalize_path(hdr_res)
-		if FileAccess.file_exists(hdr_path):
-			var hdr_img := Image.load_from_file(hdr_path)
-			if hdr_img != null and not hdr_img.is_empty():
+	if not is_compat:
+		var hdr_res := "res://assets/hdri/sky_1k.hdr"
+		if ResourceLoader.exists(hdr_res):
+			var hdr_tex: Resource = ResourceLoader.load(hdr_res)
+			if hdr_tex is Texture2D:
 				var pmat := PanoramaSkyMaterial.new()
-				pmat.panorama = ImageTexture.create_from_image(hdr_img)
+				pmat.panorama = hdr_tex
 				sky.sky_material = pmat
 				used_hdr = true
+		if not used_hdr:
+			var hdr_path := ProjectSettings.globalize_path(hdr_res)
+			if FileAccess.file_exists(hdr_path):
+				var hdr_img := Image.load_from_file(hdr_path)
+				if hdr_img != null and not hdr_img.is_empty():
+					var pmat := PanoramaSkyMaterial.new()
+					pmat.panorama = ImageTexture.create_from_image(hdr_img)
+					sky.sky_material = pmat
+					used_hdr = true
 	if not used_hdr:
-		sky_mat = ProceduralSkyMaterial.new()
-		sky_mat.sky_top_color = Color("#3B82C4")
-		sky_mat.sky_horizon_color = Color("#A8D2F0")
-		sky_mat.ground_bottom_color = Color("#2C3B28")
-		sky_mat.ground_horizon_color = Color("#8EA38E")
 		sky.sky_material = sky_mat
+	if is_compat:
+		sky.radiance_size = Sky.RADIANCE_SIZE_64
+		sky.process_mode = Sky.PROCESS_MODE_REALTIME
 
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.background_energy_multiplier = 1.05
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.tonemap_exposure = 1.05
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	if is_compat:
+		# Avoid sky cubemap glReadPixels GPU stalls on WebGL2
+		env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+		env.ambient_light_color = Color("#C4D7E8")
+		env.ambient_light_sky_contribution = 0.0
+		env.reflected_light_source = Environment.REFLECTION_SOURCE_DISABLED
+	else:
+		env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 	env.ambient_light_energy = 0.58 if is_compat else 0.55
 	env.ssao_enabled = not is_compat
 	env.ssao_radius = 1.4
 	env.ssao_intensity = 1.15
-	env.glow_enabled = true
+	env.glow_enabled = not is_compat
 	env.glow_intensity = 0.28 if is_compat else 0.35
 	env.glow_bloom = 0.08 if is_compat else 0.12
 	if is_compat:
@@ -110,11 +190,11 @@ func _setup_environment() -> void:
 	sun_light.light_color = Color("#FFF6E5")
 	sun_light.light_energy = 1.78 if is_compat else 1.55
 	sun_light.shadow_enabled = true
-	sun_light.directional_shadow_max_distance = 150.0 if is_compat else 190.0
+	sun_light.directional_shadow_max_distance = 120.0 if is_compat else 190.0
 	if is_compat:
 		sun_light.shadow_bias = 0.02
 		sun_light.shadow_normal_bias = 1.0
-	sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if is_compat else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	add_child(sun_light)
 
 func _setup_audio() -> void:
@@ -126,7 +206,8 @@ func _setup_audio() -> void:
 		amb_stream = _synth_fallback_wav(true)
 	ambient_audio.stream = amb_stream
 	add_child(ambient_audio)
-	ambient_audio.play()
+	if not OS.has_feature("web"):
+		ambient_audio.play()
 
 func _setup_player_and_hud() -> void:
 	var sp: Dictionary = campus_data.get("spawn", {})
@@ -194,6 +275,7 @@ func _start_exploration() -> void:
 	started = true
 	paused = false
 	get_tree().paused = false
+	set_process(true)
 	if OS.has_feature("web"):
 		RenderingServer.viewport_set_active(get_viewport().get_viewport_rid(), true)
 	if ambient_audio and not ambient_audio.playing:
@@ -294,12 +376,15 @@ func toggle_day_night() -> void:
 			tw.tween_property(sky_mat, "sky_horizon_color", Color("#1A243B"), 1.6)
 		tw.tween_property(world_env.environment, "background_energy_multiplier", 0.12, 1.6)
 		tw.tween_property(world_env.environment, "ambient_light_energy", 0.24, 1.6)
+		if is_compat:
+			tw.tween_property(world_env.environment, "ambient_light_color", Color("#1A243B"), 1.6)
 		tw.tween_property(world_env.environment, "fog_light_color", Color("#141D2E"), 1.6)
 		if builder.lamp_mat:
 			tw.tween_property(builder.lamp_mat, "emission_energy_multiplier", 4.5, 1.6)
 		if builder.win_mat:
 			tw.tween_property(builder.win_mat, "emission_energy_multiplier", 1.35, 1.6)
 		for l in builder.night_lights:
+			l.visible = true
 			tw.tween_property(l, "light_energy", 6.5, 1.6)
 	else:
 		tw.tween_property(sun_light, "rotation_degrees:x", -42.0, 1.6)
@@ -310,6 +395,8 @@ func toggle_day_night() -> void:
 			tw.tween_property(sky_mat, "sky_horizon_color", Color("#A8D2F0"), 1.6)
 		tw.tween_property(world_env.environment, "background_energy_multiplier", 1.05, 1.6)
 		tw.tween_property(world_env.environment, "ambient_light_energy", 0.58 if is_compat else 0.55, 1.6)
+		if is_compat:
+			tw.tween_property(world_env.environment, "ambient_light_color", Color("#C4D7E8"), 1.6)
 		tw.tween_property(world_env.environment, "fog_light_color", Color("#C8DCEB"), 1.6)
 		if builder.lamp_mat:
 			tw.tween_property(builder.lamp_mat, "emission_energy_multiplier", 0.0, 1.6)
@@ -317,13 +404,18 @@ func toggle_day_night() -> void:
 			tw.tween_property(builder.win_mat, "emission_energy_multiplier", 0.0, 1.6)
 		for l in builder.night_lights:
 			tw.tween_property(l, "light_energy", 0.0, 1.6)
+		tw.chain().tween_callback(func():
+			if not is_night:
+				for l in builder.night_lights:
+					l.visible = false
+		)
 
 func _load_wav_stream(res_path: String, loop: bool) -> AudioStream:
 	if ResourceLoader.exists(res_path):
 		var res: Resource = ResourceLoader.load(res_path)
 		if res is AudioStreamWAV:
-			var wav_res := (res as AudioStreamWAV).duplicate() as AudioStreamWAV
-			if loop:
+			var wav_res := res as AudioStreamWAV
+			if loop and wav_res.loop_mode != AudioStreamWAV.LOOP_FORWARD:
 				wav_res.loop_mode = AudioStreamWAV.LOOP_FORWARD
 				var bps := (2 if wav_res.format == AudioStreamWAV.FORMAT_16_BITS else 1) * (2 if wav_res.stereo else 1)
 				wav_res.loop_end = int(wav_res.data.size() / maxf(1.0, float(bps)))
@@ -403,12 +495,16 @@ func set_quality_mode(mode: String) -> void:
 	_notify_web_shell()
 
 func _apply_resolved_quality(tier: String) -> void:
-	resolved_quality = tier
+	var norm_tier := tier if tier in ["low", "medium", "high"] else "high"
+	if _quality_initialized and resolved_quality == norm_tier:
+		return
+	_quality_initialized = true
+	resolved_quality = norm_tier
 	var vp := get_viewport()
 	if vp == null:
 		return
 	var env := world_env.environment if world_env else null
-	match tier:
+	match norm_tier:
 		"low":
 			vp.scaling_3d_scale = 0.72
 			vp.msaa_3d = Viewport.MSAA_DISABLED
@@ -418,17 +514,18 @@ func _apply_resolved_quality(tier: String) -> void:
 				sun_light.shadow_enabled = false
 			builder.set_vegetation_density(0.35)
 		"medium":
-			vp.scaling_3d_scale = 0.90
+			vp.scaling_3d_scale = 0.82 if is_compat else 0.90
 			vp.msaa_3d = Viewport.MSAA_DISABLED
 			if env:
 				env.glow_enabled = not is_compat
 			if sun_light:
 				sun_light.shadow_enabled = true
 				sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
-			RenderingServer.directional_shadow_atlas_set_size(1024, true)
+			if _applied_shadow_size != 1024:
+				_applied_shadow_size = 1024
+				RenderingServer.directional_shadow_atlas_set_size(1024, true)
 			builder.set_vegetation_density(0.75)
 		_:
-			resolved_quality = "high"
 			vp.scaling_3d_scale = 1.0
 			vp.msaa_3d = Viewport.MSAA_2X
 			if env:
@@ -436,7 +533,9 @@ func _apply_resolved_quality(tier: String) -> void:
 			if sun_light:
 				sun_light.shadow_enabled = true
 				sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if is_compat else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-			RenderingServer.directional_shadow_atlas_set_size(2048, true)
+			if _applied_shadow_size != 2048:
+				_applied_shadow_size = 2048
+				RenderingServer.directional_shadow_atlas_set_size(2048, true)
 			builder.set_vegetation_density(1.0)
 
 func _update_adaptive_quality(delta: float) -> void:
@@ -479,13 +578,8 @@ func _update_adaptive_quality(delta: float) -> void:
 
 func _build_state_dict() -> Dictionary:
 	var pos: Vector3 = player.get_view_position() if player else Vector3.ZERO
-	var pois_summary: Array = []
-	for p in campus_data.get("pois", []):
-		pois_summary.append({
-			"id": String(p.get("id", "")),
-			"title": String(p.get("title", "")),
-			"position": p.get("position", [0, 0, 0])
-		})
+	if _pois_summary.is_empty() and not campus_data.is_empty():
+		_cache_pois_summary()
 	return {
 		"fps": int(round(Engine.get_frames_per_second())),
 		"frametimeMs": snappedf(ft_ema_ms, 0.01),
@@ -501,12 +595,12 @@ func _build_state_dict() -> Dictionary:
 		"completeVisible": hud.complete_panel.visible if hud else false,
 		"pauseVisible": hud.pause_panel.visible if hud else false,
 		"visitedCount": visited_pois.size(),
-		"totalPois": campus_data.get("pois", []).size(),
+		"totalPois": _pois_summary.size(),
 		"visitedIds": visited_pois.keys(),
 		"tourText": hud.tour_lbl.text if hud else "",
 		"position": [snappedf(pos.x, 0.01), snappedf(pos.y, 0.01), snappedf(pos.z, 0.01)],
 		"yaw": snappedf(player.get_view_yaw() if player else 0.0, 0.001),
-		"pois": pois_summary,
+		"pois": _pois_summary,
 		"renderer": RenderingServer.get_current_rendering_method()
 	}
 
@@ -633,8 +727,12 @@ func _setup_web_bridge() -> void:
 
 func _exit_tree() -> void:
 	_js_callbacks.clear()
+	builder._build_root = null
+	builder._box_batches.clear()
+	builder._unit_box_mesh = null
 	builder.tree_mmi_list.clear()
 	builder.poi_nodes.clear()
 	builder.night_lights.clear()
 	builder.mats.cache.clear()
 	builder.mats._noise_cache.clear()
+	builder.mats._tex_cache.clear()

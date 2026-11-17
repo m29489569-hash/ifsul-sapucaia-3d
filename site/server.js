@@ -115,9 +115,9 @@ app.use((req, res, next) => {
     const meta = readBuildMeta();
     if (meta) {
       const preloads = [
+        `<link rel="preload" href="/fonts/archivo-black-latin.woff2" as="font" type="font/woff2" crossorigin>`,
+        `<link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>`,
         `<link rel="preload" as="script" href="/game/${meta.files.js}">`,
-        `<link rel="preload" as="fetch" crossorigin href="/game/${meta.files.wasm}">`,
-        `<link rel="preload" as="fetch" crossorigin href="/game/${meta.files.pck}">`,
         `<script>window.__BUILD_META__=${JSON.stringify(meta)};</script>`
       ].join('\n  ');
       html = html.replace('</head>', `  ${preloads}\n</head>`);

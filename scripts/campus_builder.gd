@@ -10,8 +10,19 @@ var win_mat: StandardMaterial3D
 var building_polys: Array = []
 var tree_mmi_list: Array[MultiMeshInstance3D] = []
 var full_tree_count: int = 0
+var _build_root: Node3D = null
+var _box_batches: Dictionary = {}
+var _unit_box_mesh: BoxMesh = null
 
 func build(root: Node3D, data: Dictionary) -> void:
+	begin_build(root)
+	build_stage_terrain(root, data)
+	build_stage_structures(root, data)
+	build_stage_props(root, data)
+
+func begin_build(root: Node3D) -> void:
+	_build_root = root
+	_box_batches.clear()
 	poi_nodes.clear()
 	night_lights.clear()
 	building_polys.clear()
@@ -20,6 +31,7 @@ func build(root: Node3D, data: Dictionary) -> void:
 	lamp_mat = mats.get_material("lamp_glow")
 	win_mat = mats.get_material("glass")
 
+func build_stage_terrain(root: Node3D, data: Dictionary) -> void:
 	_build_ground(root)
 	_build_streets(root, data.get("streets", []))
 	_build_campus_pad(root, data.get("perimeter", []))
@@ -28,11 +40,53 @@ func build(root: Node3D, data: Dictionary) -> void:
 	_build_paths(root, data.get("footways", []), "concrete", 0.036, Color("#CBC6BC"))
 	_build_paths(root, data.get("driveways", []), "asphalt", 0.023, Color("#323539"))
 	_build_courts(root, data.get("courts", []))
+
+func build_stage_structures(root: Node3D, data: Dictionary) -> void:
 	_build_buildings(root, data.get("buildings", []))
 	_build_landmarks(root, data)
 	_build_entrance_signage(root, data)
+
+func build_stage_props(root: Node3D, data: Dictionary) -> void:
 	_build_vegetation_and_props(root, data)
 	_build_pois(root, data.get("pois", []))
+	_flush_static_batches(root)
+
+func _add_static_box(parent: Node3D, pos: Vector3, sz: Vector3, rot: Vector3, mat: Material) -> void:
+	var local_basis := (Basis.from_euler(rot) if rot != Vector3.ZERO else Basis.IDENTITY) * Basis.from_scale(sz)
+	var xf := Transform3D(local_basis, pos)
+	var cur: Node3D = parent
+	while cur != null and cur != _build_root:
+		xf = cur.transform * xf
+		cur = cur.get_parent() as Node3D
+	if not _box_batches.has(mat):
+		_box_batches[mat] = []
+	(_box_batches[mat] as Array).append(xf)
+
+func _flush_static_batches(root: Node3D) -> void:
+	if _box_batches.is_empty():
+		return
+	if _unit_box_mesh == null:
+		_unit_box_mesh = BoxMesh.new()
+		_unit_box_mesh.size = Vector3.ONE
+	var batch_root := Node3D.new()
+	batch_root.name = "StaticBatches"
+	root.add_child(batch_root)
+	for mat in _box_batches.keys():
+		var xforms: Array = _box_batches[mat]
+		if xforms.is_empty():
+			continue
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = _unit_box_mesh
+		mm.instance_count = xforms.size()
+		for i in range(xforms.size()):
+			mm.set_instance_transform(i, xforms[i])
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		mmi.material_override = mat
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		batch_root.add_child(mmi)
+	_box_batches.clear()
 
 func _build_ground(root: Node3D) -> void:
 	var body := StaticBody3D.new()
@@ -125,14 +179,7 @@ func _build_streets(root: Node3D, streets: Array) -> void:
 		var cz := float(cs[0])
 		var clen := float(cs[1])
 		var cx := -80.25 + (cz - 13.0) * slope
-		var pad := MeshInstance3D.new()
-		var pbox := BoxMesh.new()
-		pbox.size = Vector3(14.0, 0.02, clen)
-		pad.mesh = pbox
-		pad.position = Vector3(cx, 0.022, cz)
-		pad.rotation.y = bou_ang
-		pad.material_override = road_mat
-		st_root.add_child(pad)
+		_add_static_box(st_root, Vector3(cx, 0.022, cz), Vector3(14.0, 0.02, clen), Vector3(0.0, bou_ang, 0.0), road_mat)
 
 	for s in streets:
 		var pts: Array = s.get("points", [])
@@ -176,21 +223,25 @@ func _build_streets(root: Node3D, streets: Array) -> void:
 		_add_court_line(m_node, Vector3(0.0, 0.09, 0.0), Vector3(grass_w, 0.18, body_len), grass_mat)
 
 		var end_off := body_len * 0.5
+		var cc_m := CylinderMesh.new()
+		cc_m.top_radius = curb_r; cc_m.bottom_radius = curb_r; cc_m.height = 0.16; cc_m.radial_segments = 16
+		var cg_m := CylinderMesh.new()
+		cg_m.top_radius = grass_r; cg_m.bottom_radius = grass_r; cg_m.height = 0.18; cg_m.radial_segments = 16
+		var sm := SphereMesh.new()
+		sm.radius = 0.55; sm.height = 0.78; sm.radial_segments = 8; sm.rings = 5
 		for sgn in [-1.0, 1.0]:
 			var cap_c := MeshInstance3D.new()
-			var cc_m := CylinderMesh.new()
-			cc_m.top_radius = curb_r; cc_m.bottom_radius = curb_r; cc_m.height = 0.16; cc_m.radial_segments = 16
 			cap_c.mesh = cc_m
 			cap_c.position = Vector3(0.0, 0.08, sgn * end_off)
 			cap_c.material_override = curb_mat
+			cap_c.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			m_node.add_child(cap_c)
 
 			var cap_g := MeshInstance3D.new()
-			var cg_m := CylinderMesh.new()
-			cg_m.top_radius = grass_r; cg_m.bottom_radius = grass_r; cg_m.height = 0.18; cg_m.radial_segments = 16
 			cap_g.mesh = cg_m
 			cap_g.position = Vector3(0.0, 0.09, sgn * end_off)
 			cap_g.material_override = grass_mat
+			cap_g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			m_node.add_child(cap_g)
 
 		var shrub_n := int((seg_len - 4.0) / 6.0)
@@ -199,12 +250,11 @@ func _build_streets(root: Node3D, streets: Array) -> void:
 			if sz > end_off - 0.5:
 				break
 			var sh := MeshInstance3D.new()
-			var sm := SphereMesh.new()
-			sm.radius = 0.55; sm.height = 0.78; sm.radial_segments = 8; sm.rings = 5
 			sh.mesh = sm
 			sh.position = Vector3(0.0 if si % 2 == 0 else (0.55 if si % 4 == 1 else -0.55), 0.45, sz)
 			var mat_idx := (si % 2) if si % 3 != 2 else (2 if si % 6 == 2 else 3)
 			sh.material_override = shrub_mats[mat_idx]
+			sh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			m_node.add_child(sh)
 		var _unused := sin_b
 
@@ -248,15 +298,7 @@ func _add_polyline_ribbon(parent: Node3D, pts: Array, width: float, y: float, ma
 					continue
 				dash_xforms.append(Transform3D(Basis(Vector3.UP, angle), wp + Vector3(0.0, y, 0.0)))
 		else:
-			var mi := MeshInstance3D.new()
-			var box := BoxMesh.new()
-			box.size = Vector3(width, 0.02, length + pad)
-			mi.mesh = box
-			mi.material_override = mat
-			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			mi.position = (a + b) * 0.5 + Vector3(0.0, y, 0.0)
-			mi.rotation.y = angle
-			parent.add_child(mi)
+			_add_static_box(parent, (a + b) * 0.5 + Vector3(0.0, y, 0.0), Vector3(width, 0.02, length + pad), Vector3(0.0, angle, 0.0), mat)
 	if dashed and not dash_xforms.is_empty():
 		var dmm := MultiMesh.new()
 		dmm.transform_format = MultiMesh.TRANSFORM_3D
@@ -418,6 +460,7 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 	cap.mesh = _extrude_polygon_mesh(poly, 0.25, false)
 	cap.position.y = h
 	cap.material_override = roof_mat
+	cap.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	parent.add_child(cap)
 	if btype in ["academic", "workshop"] and poly.size() >= 4:
 		var c2 := _poly_centroid(poly)
@@ -427,14 +470,7 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 			var rc := Vector2(c2.x, c2.y + k * 4.2)
 			if not (Geometry2D.is_point_in_polygon(rc + Vector2(-span, 0), poly) and Geometry2D.is_point_in_polygon(rc + Vector2(span, 0), poly)):
 				continue
-			var rmi := MeshInstance3D.new()
-			var rbox := BoxMesh.new()
-			rbox.size = Vector3(span * 2.0, 0.35 if btype == "workshop" else 0.16, 1.55)
-			rmi.mesh = rbox
-			rmi.material_override = rib_mat
-			rmi.position = Vector3(rc.x, h + 0.34, rc.y)
-			rmi.rotation.y = deg_to_rad(8.7)
-			parent.add_child(rmi)
+			_add_static_box(parent, Vector3(rc.x, h + 0.34, rc.y), Vector3(span * 2.0, 0.35 if btype == "workshop" else 0.16, 1.55), Vector3(0.0, deg_to_rad(8.7), 0.0), rib_mat)
 	elif btype in ["library", "student_center"]:
 		var c2 := _poly_centroid(poly)
 		var dome := MeshInstance3D.new()
@@ -443,6 +479,7 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 		dome.mesh = dm
 		dome.position = Vector3(c2.x, h + 0.8, c2.y)
 		dome.material_override = mats.get_material("wall", Color("#D9E4F0"))
+		dome.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(dome)
 
 	# Architectural fascia trim + ribbon windows along long outer edges
@@ -457,16 +494,10 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 		var mid := (p1 + p2) * 0.5
 		var angle := atan2(edge.x, edge.y)
 		var out_dir := Vector2(edge.y, -edge.x).normalized()
+		var rot_v := Vector3(0.0, angle, 0.0)
 
 		# Institutional top fascia band + white structural pilasters on brick walls
-		var band := MeshInstance3D.new()
-		var bm := BoxMesh.new()
-		bm.size = Vector3(0.14, 0.52, len)
-		band.mesh = bm
-		band.material_override = trim_mat
-		band.position = Vector3(mid.x + out_dir.x * 0.08, h - 0.32, mid.y + out_dir.y * 0.08)
-		band.rotation.y = angle
-		parent.add_child(band)
+		_add_static_box(parent, Vector3(mid.x + out_dir.x * 0.08, h - 0.32, mid.y + out_dir.y * 0.08), Vector3(0.14, 0.52, len), rot_v, trim_mat)
 
 		if btype in ["admin", "academic", "lab", "sports"] and len >= 6.5:
 			var pil_count := int(len / 7.0) + 1
@@ -474,47 +505,18 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 			for pi in range(pil_count):
 				var pt := lerpf(-0.46, 0.46, float(pi) / maxf(1.0, float(pil_count - 1)))
 				var along_p := edge.normalized() * (pt * len)
-				var pil_m := MeshInstance3D.new()
-				var pbm := BoxMesh.new()
-				pbm.size = Vector3(0.18, h, 0.34)
-				pil_m.mesh = pbm
-				pil_m.material_override = pil_mat
-				pil_m.position = Vector3(mid.x + along_p.x + out_dir.x * 0.09, h * 0.5, mid.y + along_p.y + out_dir.y * 0.09)
-				pil_m.rotation.y = angle
-				parent.add_child(pil_m)
+				_add_static_box(parent, Vector3(mid.x + along_p.x + out_dir.x * 0.09, h * 0.5, mid.y + along_p.y + out_dir.y * 0.09), Vector3(0.18, h, 0.34), rot_v, pil_mat)
 
 		# Auditório iconic terracotta wall + clerestory ribbon windows & white portico matching MSS-00.223 / MSS-00.2155
 		if String(b.get("type", "")) == "auditorium" and len > 8.0:
-			var panel := MeshInstance3D.new()
-			var pm := BoxMesh.new()
-			pm.size = Vector3(0.12, h * 0.60, len * 0.88)
-			panel.mesh = pm
-			panel.material_override = mats.get_material("wall", Color("#BA715C"))
-			panel.position = Vector3(mid.x + out_dir.x * 0.07, h * 0.31, mid.y + out_dir.y * 0.07)
-			panel.rotation.y = angle
-			parent.add_child(panel)
-
-			var clere := MeshInstance3D.new()
-			var cm := BoxMesh.new()
-			cm.size = Vector3(0.10, 1.05, len * 0.88)
-			clere.mesh = cm
-			clere.material_override = wmat
-			clere.position = Vector3(mid.x + out_dir.x * 0.07, h * 0.72, mid.y + out_dir.y * 0.07)
-			clere.rotation.y = angle
-			parent.add_child(clere)
+			_add_static_box(parent, Vector3(mid.x + out_dir.x * 0.07, h * 0.31, mid.y + out_dir.y * 0.07), Vector3(0.12, h * 0.60, len * 0.88), rot_v, mats.get_material("wall", Color("#BA715C")))
+			_add_static_box(parent, Vector3(mid.x + out_dir.x * 0.07, h * 0.72, mid.y + out_dir.y * 0.07), Vector3(0.10, 1.05, len * 0.88), rot_v, wmat)
 
 			var mull_mat := mats.get_material("metal", Color("#23272A"))
 			for m_i in range(9):
 				var t := lerpf(-0.42, 0.42, float(m_i) / 8.0)
 				var along := edge.normalized() * (t * len)
-				var mull := MeshInstance3D.new()
-				var mm := BoxMesh.new()
-				mm.size = Vector3(0.14, 1.12, 0.10)
-				mull.mesh = mm
-				mull.material_override = mull_mat
-				mull.position = Vector3(mid.x + along.x + out_dir.x * 0.08, h * 0.72, mid.y + along.y + out_dir.y * 0.08)
-				mull.rotation.y = angle
-				parent.add_child(mull)
+				_add_static_box(parent, Vector3(mid.x + along.x + out_dir.x * 0.08, h * 0.72, mid.y + along.y + out_dir.y * 0.08), Vector3(0.14, 1.12, 0.10), rot_v, mull_mat)
 
 		# Floor window strips, vertical mullions, AC split units & 2.1m entrance door on longest facade
 		if has_windows:
@@ -524,60 +526,34 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 				var wy := 1.9 + fl * (h / maxf(1.0, float(floors)))
 				if wy + 0.8 > h - 0.5:
 					continue
-				var win := MeshInstance3D.new()
-				var wm := BoxMesh.new()
-				wm.size = Vector3(0.08, 1.35, len * 0.78)
-				win.mesh = wm
-				win.material_override = wmat
-				win.position = Vector3(mid.x + out_dir.x * 0.06, wy, mid.y + out_dir.y * 0.06)
-				win.rotation.y = angle
-				parent.add_child(win)
+				_add_static_box(parent, Vector3(mid.x + out_dir.x * 0.06, wy, mid.y + out_dir.y * 0.06), Vector3(0.08, 1.35, len * 0.78), rot_v, wmat)
 				if len >= 6.0:
 					var m_cnt := mini(8, int(len / 3.4))
 					for mi_w in range(m_cnt):
 						var mt := lerpf(-0.36, 0.36, float(mi_w) / maxf(1.0, float(m_cnt - 1)))
 						var along_m := edge.normalized() * (mt * len)
-						var mm_w := MeshInstance3D.new()
-						var mb_w := BoxMesh.new()
-						mb_w.size = Vector3(0.11, 1.38, 0.08)
-						mm_w.mesh = mb_w
-						mm_w.material_override = mull_mat2
-						mm_w.position = Vector3(mid.x + along_m.x + out_dir.x * 0.07, wy, mid.y + along_m.y + out_dir.y * 0.07)
-						mm_w.rotation.y = angle
-						parent.add_child(mm_w)
+						_add_static_box(parent, Vector3(mid.x + along_m.x + out_dir.x * 0.07, wy, mid.y + along_m.y + out_dir.y * 0.07), Vector3(0.11, 1.38, 0.08), rot_v, mull_mat2)
 				if fl == 1 and len >= 10.0:
 					for ac_t: float in [-0.24, 0.24]:
 						var along_ac: Vector2 = edge.normalized() * (ac_t * len)
-						var ac := MeshInstance3D.new()
-						var acb := BoxMesh.new()
-						acb.size = Vector3(0.26, 0.45, 0.68)
-						ac.mesh = acb
-						ac.material_override = ac_mat
-						ac.position = Vector3(mid.x + along_ac.x + out_dir.x * 0.14, wy - 0.92, mid.y + along_ac.y + out_dir.y * 0.14)
-						ac.rotation.y = angle
-						parent.add_child(ac)
+						_add_static_box(parent, Vector3(mid.x + along_ac.x + out_dir.x * 0.14, wy - 0.92, mid.y + along_ac.y + out_dir.y * 0.14), Vector3(0.26, 0.45, 0.68), rot_v, ac_mat)
 
 		if i == 0 and len >= 5.0 and String(b.get("type", "")) != "corridor":
-			var door := MeshInstance3D.new()
-			var dm := BoxMesh.new()
-			dm.size = Vector3(0.14, 2.1, 2.4) # 2.1m door scale anchor
-			door.mesh = dm
-			door.material_override = mats.get_material("metal", Color("#223228"))
-			door.position = Vector3(mid.x + out_dir.x * 0.09, 1.05, mid.y + out_dir.y * 0.09)
-			door.rotation.y = angle
-			parent.add_child(door)
+			_add_static_box(parent, Vector3(mid.x + out_dir.x * 0.09, 1.05, mid.y + out_dir.y * 0.09), Vector3(0.14, 2.1, 2.4), rot_v, mats.get_material("metal", Color("#223228")))
 
 func _add_building_sign(parent: Node3D, poly: PackedVector2Array, h: float, text: String, trim_col: Color) -> void:
 	var c := _poly_centroid(poly)
 	var lbl := Label3D.new()
 	lbl.text = text
-	lbl.font_size = 46
-	lbl.pixel_size = 0.0095
+	lbl.font_size = 32
+	lbl.pixel_size = 0.0136
 	lbl.modulate = Color.WHITE
 	lbl.outline_modulate = trim_col.darkened(0.55)
-	lbl.outline_size = 10
+	lbl.outline_size = 6
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.no_depth_test = false
+	lbl.visibility_range_end = 110.0
+	lbl.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 	lbl.position = Vector3(c.x, h + 1.15, c.y)
 	parent.add_child(lbl)
 
@@ -592,8 +568,9 @@ func _add_building_sign(parent: Node3D, poly: PackedVector2Array, h: float, text
 		parent.add_child(plaque)
 		var flbl := Label3D.new()
 		flbl.text = "BIBLIOTECA • IFSul"
-		flbl.font_size = 42
-		flbl.pixel_size = 0.008
+		flbl.font_size = 32
+		flbl.pixel_size = 0.0105
+		flbl.outline_size = 0
 		flbl.double_sided = false
 		flbl.modulate = Color.WHITE
 		flbl.position = Vector3(0.0, 0.0, 0.09)
@@ -737,13 +714,7 @@ func _build_courts(root: Node3D, courts: Array) -> void:
 			_add_court_line(node, Vector3(-w * 0.54, 2.0, -d * 0.45), Vector3(3.4, 3.8, 0.45), curb_mat)
 
 func _add_court_line(parent: Node3D, pos: Vector3, sz: Vector3, mat: Material) -> void:
-	var mi := MeshInstance3D.new()
-	var b := BoxMesh.new()
-	b.size = sz
-	mi.mesh = b
-	mi.position = pos
-	mi.material_override = mat
-	parent.add_child(mi)
+	_add_static_box(parent, pos, sz, Vector3.ZERO, mat)
 
 func _build_parking_lots(root: Node3D, lots: Array) -> void:
 	var p_root := Node3D.new()
@@ -761,6 +732,7 @@ func _build_parking_lots(root: Node3D, lots: Array) -> void:
 			var mi := MeshInstance3D.new()
 			mi.mesh = _extrude_polygon_mesh(poly, 0.03, false)
 			mi.material_override = paver_asp if is_front else asp
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			p_root.add_child(mi)
 
 		# 2.5m x 5.0m parking bay markings (yellow in front lot per MSS-00.223)
@@ -773,14 +745,7 @@ func _build_parking_lots(root: Node3D, lots: Array) -> void:
 			var bay_fwd := Vector2(sin(ang), cos(ang))
 			for i in range(count + 1):
 				var p := start + dir * (i * step) + bay_fwd * 2.5
-				var lmi := MeshInstance3D.new()
-				var lb := BoxMesh.new()
-				lb.size = Vector3(0.12, 0.01, 5.0)
-				lmi.mesh = lb
-				lmi.material_override = yellow_line_mat if is_front else line_mat
-				lmi.position = Vector3(p.x, 0.036, p.y)
-				lmi.rotation.y = ang
-				p_root.add_child(lmi)
+				_add_static_box(p_root, Vector3(p.x, 0.036, p.y), Vector3(0.12, 0.01, 5.0), Vector3(0.0, ang, 0.0), yellow_line_mat if is_front else line_mat)
 
 func _build_landmarks(root: Node3D, data: Dictionary) -> void:
 	var lm: Dictionary = data.get("landmarks", {})
@@ -856,8 +821,9 @@ func _build_landmarks(root: Node3D, data: Dictionary) -> void:
 		col_node.add_child(pil)
 	var motto := Label3D.new()
 	motto.text = "Educação Pública e Gratuita: Profissionais para o mundo."
-	motto.font_size = 34
-	motto.pixel_size = 0.0085
+	motto.font_size = 32
+	motto.pixel_size = 0.009
+	motto.outline_size = 0
 	motto.double_sided = false
 	motto.modulate = Color("#1F3524")
 	motto.position = (c_start + c_end) * 0.5 + Vector3(-1.25, 3.65, 0.65)
@@ -907,8 +873,9 @@ func _build_landmarks(root: Node3D, data: Dictionary) -> void:
 		aud_front.add_child(rmi)
 	var aud_logo_txt := Label3D.new()
 	aud_logo_txt.text = "INSTITUTO FEDERAL\nSUL-RIO-GRANDENSE\nCâmpus Sapucaia do Sul"
-	aud_logo_txt.font_size = 38
-	aud_logo_txt.pixel_size = 0.0085
+	aud_logo_txt.font_size = 32
+	aud_logo_txt.pixel_size = 0.0101
+	aud_logo_txt.outline_size = 0
 	aud_logo_txt.double_sided = false
 	aud_logo_txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	aud_logo_txt.modulate = Color("#1D2E20")
@@ -1092,12 +1059,12 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 	_add_court_line(topiary, Vector3(8.7, 0.22, 0.0), Vector3(0.42, 0.38, 4.4), hedge_mat)
 	var top_lbl := Label3D.new()
 	top_lbl.text = "IFSul"
-	top_lbl.font_size = 160
-	top_lbl.pixel_size = 0.022
+	top_lbl.font_size = 32
+	top_lbl.pixel_size = 0.11
 	top_lbl.double_sided = false
 	top_lbl.modulate = Color("#C5E14B")
 	top_lbl.outline_modulate = Color("#2F6B28")
-	top_lbl.outline_size = 12
+	top_lbl.outline_size = 6
 	top_lbl.position = Vector3(0.0, 0.16, 0.0)
 	top_lbl.rotation.x = -PI * 0.5
 	topiary.add_child(top_lbl)
@@ -1209,8 +1176,9 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 
 		var title := Label3D.new()
 		title.text = "IFSul — Câmpus Sapucaia do Sul\nINSTITUTO FEDERAL Sul-rio-grandense\nAv. Copacabana, 100"
-		title.font_size = 34
-		title.pixel_size = 0.0046
+		title.font_size = 32
+		title.pixel_size = 0.0049
+		title.outline_size = 0
 		title.double_sided = false
 		title.modulate = Color("#16381D")
 		title.position = Vector3(side * 0.23, 1.8, -0.7 * side)
@@ -1290,6 +1258,7 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 	var crown2_mmi := MultiMeshInstance3D.new()
 	crown2_mmi.multimesh = crown2_mm
 	crown2_mmi.material_override = fmat
+	crown2_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	props_root.add_child(crown2_mmi)
 
 	full_tree_count = tree_positions.size()
@@ -1326,6 +1295,7 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 			light.position = Vector3(p.x + 0.2, 5.9, p.y)
 			light.light_color = Color("#FFD794")
 			light.light_energy = 0.0
+			light.visible = false
 			light.omni_range = 34.0
 			light.shadow_enabled = false
 			props_root.add_child(light)
@@ -1337,6 +1307,7 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 		fl.position = fp
 		fl.light_color = Color("#FFF0D6")
 		fl.light_energy = 0.0
+		fl.visible = false
 		fl.omni_range = 42.0
 		fl.shadow_enabled = false
 		props_root.add_child(fl)
@@ -1345,11 +1316,13 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 	var pole_mmi := MultiMeshInstance3D.new()
 	pole_mmi.multimesh = pole_mm
 	pole_mmi.material_override = mats.get_material("metal", Color("#7B8187"))
+	pole_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	props_root.add_child(pole_mmi)
 
 	var head_mmi := MultiMeshInstance3D.new()
 	head_mmi.multimesh = head_mm
 	head_mmi.material_override = lamp_mat
+	head_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	props_root.add_child(head_mmi)
 
 	# 3. Campus green benches & trash bins via MultiMesh
@@ -1383,11 +1356,13 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 	var bench_mmi := MultiMeshInstance3D.new()
 	bench_mmi.multimesh = bench_mm
 	bench_mmi.material_override = mats.get_material("ifsul_green")
+	bench_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	props_root.add_child(bench_mmi)
 
 	var bin_mmi := MultiMeshInstance3D.new()
 	bin_mmi.multimesh = bin_mm
 	bin_mmi.material_override = mats.get_material("metal", Color("#2B3036"))
+	bin_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	props_root.add_child(bin_mmi)
 
 	# 4. Parked cars in both parking lots via MultiMeshInstance3D
@@ -1454,11 +1429,13 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 		cab_mat.metallic = 0.2
 		cab_mat.roughness = 0.12
 		cab_mmi.material_override = cab_mat
+		cab_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		props_root.add_child(cab_mmi)
 
 		var wheel_mmi := MultiMeshInstance3D.new()
 		wheel_mmi.multimesh = wheel_mm
 		wheel_mmi.material_override = mats.get_material("asphalt", Color("#18181B"))
+		wheel_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		props_root.add_child(wheel_mmi)
 
 	# 5. Sapucaia do Sul surrounding neighborhood houses via MultiMesh
@@ -1633,8 +1610,8 @@ func _build_pois(root: Node3D, pois: Array) -> void:
 		var lbl := Label3D.new()
 		lbl.text = "%d. %s\n[E] Explorar" % [i + 1, String(p.get("title", ""))]
 		lbl.position.y = 2.95
-		lbl.font_size = 28
-		lbl.pixel_size = 0.0048
+		lbl.font_size = 32
+		lbl.pixel_size = 0.0042
 		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		lbl.visibility_range_end = 30.0
 		lbl.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF

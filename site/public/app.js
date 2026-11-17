@@ -28,14 +28,23 @@
   let savedQuality = localStorage.getItem('ifsul.quality') || 'auto';
   if (!QUALITY_ORDER.includes(savedQuality)) savedQuality = 'auto';
   let savedMuted = localStorage.getItem('ifsul.muted') === '1';
+  window.__ifsulInitPrefs = { quality: savedQuality, muted: savedMuted };
 
   let engineReady = false;
   let godotReady = false;
   let initialSyncDone = false;
   let gameStarted = false;
-  let latestState = { started: false, paused: false, modalOpen: false, muted: savedMuted, quality: savedQuality, resolvedQuality: 'high', fps: 0 };
+  let latestState = { started: false, paused: false, modalOpen: false, muted: savedMuted, quality: savedQuality, resolvedQuality: 'medium', fps: 0 };
   let wasPointerLocked = false;
   let expectedTotalBytes = 0;
+
+  async function yieldToMain() {
+    if ('scheduler' in window && 'yield' in window.scheduler) {
+      await window.scheduler.yield();
+    } else {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  }
 
   function showCrash(msg) {
     if (dlgCrashMsg && msg) dlgCrashMsg.textContent = msg;
@@ -106,17 +115,24 @@
     } catch {}
   }
 
-  function startOrEnterGame() {
-    if (!godotReady || !window.__ifsulGodot) return;
-    unlockAudio();
+  async function startOrEnterGame() {
+    if (!godotReady || !window.__ifsulGodot || gameStarted) return;
     gameStarted = true;
+    unlockAudio();
     overlay.setAttribute('data-hidden', 'true');
     webChips.setAttribute('data-visible', 'true');
     canvas.focus({ preventScroll: true });
-    window.__ifsulGodot.setQuality(savedQuality);
-    window.__ifsulGodot.setMuted(savedMuted);
-    window.__ifsulGodot.start();
     requestCanvasLock();
+
+    await yieldToMain();
+
+    if (latestState.quality !== savedQuality) {
+      window.__ifsulGodot.setQuality(savedQuality);
+    }
+    if (Boolean(latestState.muted) !== savedMuted) {
+      window.__ifsulGodot.setMuted(savedMuted);
+    }
+    window.__ifsulGodot.start();
   }
 
   btnPlay.addEventListener('click', startOrEnterGame);
@@ -172,12 +188,22 @@
 
   // Shell bridge consumed by scripts/main.gd
   window.__ifsulShell = {
+    onBootProgress(pct, statusText) {
+      if (godotReady) return;
+      const clamped = Math.max(0, Math.min(99, Math.round(Number(pct) || 80)));
+      loadFill.removeAttribute('data-indeterminate');
+      loadFill.style.setProperty('--progress', `${clamped}%`);
+      loadProgress.setAttribute('aria-valuenow', String(clamped));
+      if (statusText) loadStatus.textContent = statusText;
+      if (expectedTotalBytes > 0) {
+        const mb = (expectedTotalBytes / 1048576).toFixed(1);
+        loadBytes.textContent = `${clamped}% • ${mb} / ${mb} MB`;
+      } else {
+        loadBytes.textContent = `${clamped}%`;
+      }
+    },
     onGodotReady() {
       godotReady = true;
-      if (window.__ifsulGodot) {
-        window.__ifsulGodot.setQuality(savedQuality);
-        window.__ifsulGodot.setMuted(savedMuted);
-      }
       initialSyncDone = true;
       loadFill.removeAttribute('data-indeterminate');
       loadFill.style.setProperty('--progress', '100%');
@@ -255,22 +281,35 @@
         document.head.appendChild(sc);
       });
 
+      const fileSizes = {};
+      if (meta?.sizes?.wasm && meta?.executable) {
+        fileSizes[`${meta.executable}.wasm`] = meta.sizes.wasm;
+      }
+      if (meta?.sizes?.pck && meta?.mainPack) {
+        fileSizes[meta.mainPack] = meta.sizes.pck;
+      }
+
       const engine = new Engine({
         canvas,
         executable: meta.executable,
         mainPack: meta.mainPack,
+        fileSizes,
         canvasResizePolicy: 2,
-        focusCanvas: true,
+        focusCanvas: false,
         onProgress(current, total) {
+          if (godotReady) return;
           const denom = total > 0 ? total : expectedTotalBytes;
           if (denom > 0) {
-            const pct = Math.min(99, Math.round((current / denom) * 100));
-            const curMB = (current / 1048576).toFixed(1);
+            const ratio = Math.min(1, current / denom);
+            const pct = Math.min(80, Math.round(ratio * 80));
+            const curMB = (Math.min(current, denom) / 1048576).toFixed(1);
             const totMB = (denom / 1048576).toFixed(1);
             loadFill.removeAttribute('data-indeterminate');
             loadFill.style.setProperty('--progress', `${pct}%`);
             loadProgress.setAttribute('aria-valuenow', String(pct));
-            loadStatus.textContent = 'Baixando arquivos do câmpus...';
+            loadStatus.textContent = ratio >= 0.995
+              ? 'Inicializando motor 3D...'
+              : 'Baixando arquivos do câmpus...';
             loadBytes.textContent = `${pct}% • ${curMB} / ${totMB} MB`;
           } else {
             const curMB = (current / 1048576).toFixed(1);

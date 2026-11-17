@@ -126,6 +126,7 @@ body.viewport-locked {
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08);
   overflow: hidden;
   padding: 1.5rem 1.75rem 1.35rem;
+  contain: layout style paint;
 }
 
 .plaque-stripe {
@@ -317,6 +318,7 @@ body.viewport-locked {
   justify-content: flex-end;
   gap: 6px;
   pointer-events: none;
+  contain: layout style;
 }
 
 .web-chips[data-visible="false"] {

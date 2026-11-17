@@ -3,6 +3,7 @@ extends RefCounted
 
 var cache: Dictionary = {}
 var _noise_cache: Dictionary = {}
+var _tex_cache: Dictionary = {}
 
 func _is_compat() -> bool:
 	return OS.has_feature("web") or RenderingServer.get_current_rendering_method() == "gl_compatibility"
@@ -14,9 +15,9 @@ func get_material(key: String, tint: Color = Color.WHITE, uv_scale: Vector3 = Ve
 
 	var compat := _is_compat()
 	var mat := StandardMaterial3D.new()
-	var default_uv := Vector3(0.14, 0.14, 0.14) if key in ["grass", "asphalt", "concrete", "sidewalk", "wall"] else Vector3.ONE
+	var default_uv := Vector3(0.14, 0.14, 0.14) if key in ["grass", "asphalt", "concrete", "sidewalk", "wall", "metal"] else Vector3.ONE
 	mat.uv1_scale = uv_scale if uv_scale != Vector3.ONE else default_uv
-	var use_triplanar := (key in ["grass", "asphalt", "concrete", "sidewalk", "brick"]) or (key == "wall" and not compat)
+	var use_triplanar := (key in ["grass", "asphalt", "concrete", "sidewalk", "brick", "metal"]) or (key == "wall" and not compat)
 	mat.uv1_triplanar = use_triplanar
 	mat.uv1_world_triplanar = use_triplanar
 
@@ -86,38 +87,46 @@ func get_material(key: String, tint: Color = Color.WHITE, uv_scale: Vector3 = Ve
 func _apply_pbr(mat: StandardMaterial3D, diff: String, nor: String, rough: String, default_rough: float, metal: float, noise_freq: float, bump_amp: float) -> void:
 	mat.roughness = default_rough
 	mat.metallic = metal
+	var compat := _is_compat()
 
 	var diff_tex := _load_tex(diff)
 	if diff_tex != null:
 		mat.albedo_texture = diff_tex
-	else:
+	elif not compat:
 		mat.albedo_texture = _make_procedural_albedo(noise_freq, bump_amp)
 
-	var nor_tex := _load_tex(nor)
-	if nor_tex != null:
-		mat.normal_enabled = true
-		mat.normal_texture = nor_tex
-	elif not _is_compat():
-		mat.normal_enabled = true
-		mat.normal_texture = _make_procedural_normal(noise_freq)
+	if not compat:
+		var nor_tex := _load_tex(nor)
+		if nor_tex != null:
+			mat.normal_enabled = true
+			mat.normal_texture = nor_tex
+		else:
+			mat.normal_enabled = true
+			mat.normal_texture = _make_procedural_normal(noise_freq)
 
-	var rough_tex := _load_tex(rough)
-	if rough_tex != null:
-		mat.roughness_texture = rough_tex
+		var rough_tex := _load_tex(rough)
+		if rough_tex != null:
+			mat.roughness_texture = rough_tex
 
 func _load_tex(filename: String) -> Texture2D:
 	if filename.is_empty():
 		return null
+	if _tex_cache.has(filename):
+		return _tex_cache[filename]
 	var res_path := "res://assets/textures/" + filename
 	if ResourceLoader.exists(res_path):
 		var res := ResourceLoader.load(res_path)
 		if res is Texture2D:
+			_tex_cache[filename] = res
 			return res
 	var abs_path := ProjectSettings.globalize_path(res_path)
 	if FileAccess.file_exists(abs_path):
 		var img := Image.load_from_file(abs_path)
 		if img != null and not img.is_empty():
-			return ImageTexture.create_from_image(img)
+			var tex := ImageTexture.create_from_image(img)
+			_tex_cache[filename] = tex
+			return tex
+	_tex_cache[filename] = null
 	return null
 
 func _make_procedural_albedo(freq: float, amp: float) -> NoiseTexture2D:
@@ -159,12 +168,13 @@ func _make_procedural_normal(freq: float) -> NoiseTexture2D:
 	return tex
 
 static func create_ifsul_logo_texture(size: int = 256) -> ImageTexture:
-	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	var eff_size := mini(size, 128) if OS.has_feature("web") else size
+	var img := Image.create(eff_size, eff_size, false, Image.FORMAT_RGBA8)
 	img.fill(Color(1.0, 1.0, 1.0, 1.0))
 	var green := Color("#2F9E41")
 	var red := Color("#CD191E")
-	var pad := int(size * 0.08)
-	var cell := int((size - pad * 2) / 4.4)
+	var pad := int(eff_size * 0.08)
+	var cell := int((eff_size - pad * 2) / 4.4)
 	var gap := int(cell * 0.14)
 	var r := int(cell * 0.16)
 
@@ -179,20 +189,26 @@ static func create_ifsul_logo_texture(size: int = 256) -> ImageTexture:
 	for c in cells:
 		var cx0: int = pad + int(c[0]) * (cell + gap) + int(cell * 0.2)
 		var cy0: int = pad + int(c[1]) * (cell + gap)
-		var cx1: int = mini(cx0 + cell, size)
-		var cy1: int = mini(cy0 + cell, size)
+		var cx1: int = mini(cx0 + cell, eff_size)
+		var cy1: int = mini(cy0 + cell, eff_size)
 		if c[0] == 0 and c[1] == 0:
 			var rad: float = cell * 0.48
+			var rad_sq: float = rad * rad
 			var center := Vector2(cx0 + cell * 0.5, cy0 + cell * 0.5)
 			for y in range(cy0, cy1):
 				for x in range(cx0, cx1):
-					if Vector2(x, y).distance_to(center) <= rad:
+					if Vector2(x, y).distance_squared_to(center) <= rad_sq:
 						img.set_pixel(x, y, red)
 		else:
+			img.fill_rect(Rect2i(cx0 + r, cy0, maxi(0, (cx1 - cx0) - r * 2), cy1 - cy0), green)
+			img.fill_rect(Rect2i(cx0, cy0 + r, cx1 - cx0, maxi(0, (cy1 - cy0) - r * 2)), green)
+			var r_sq := float(r * r)
 			for y in range(cy0, cy1):
+				var dy := mini(y - cy0, cy0 + cell - 1 - y)
+				if dy >= r:
+					continue
 				for x in range(cx0, cx1):
 					var dx := mini(x - cx0, cx0 + cell - 1 - x)
-					var dy := mini(y - cy0, cy0 + cell - 1 - y)
-					if dx >= r or dy >= r or Vector2(r - dx, r - dy).length() <= float(r):
+					if dx < r and float((r - dx) * (r - dx) + (r - dy) * (r - dy)) <= r_sq:
 						img.set_pixel(x, y, green)
 	return ImageTexture.create_from_image(img)

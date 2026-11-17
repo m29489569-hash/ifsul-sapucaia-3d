@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/asphalt_rough.jpg-0ebe5543a8bf8180f5a6cfd653a
 
 [params]
 
-compress/mode=3
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.75
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

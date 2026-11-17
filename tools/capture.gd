@@ -28,6 +28,7 @@ func _apply_time_instant(main: Node3D, is_night: bool) -> void:
 		if main.builder.win_mat:
 			main.builder.win_mat.emission_energy_multiplier = 1.35
 		for l in main.builder.night_lights:
+			l.visible = true
 			l.light_energy = 6.5
 	else:
 		main.sun_light.rotation_degrees.x = -42.0
@@ -45,6 +46,7 @@ func _apply_time_instant(main: Node3D, is_night: bool) -> void:
 			main.builder.win_mat.emission_energy_multiplier = 0.0
 		for l in main.builder.night_lights:
 			l.light_energy = 0.0
+			l.visible = false
 
 func _run_capture() -> void:
 	var iter_name := _parse_iter_arg()

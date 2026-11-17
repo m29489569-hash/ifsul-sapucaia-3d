@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/concrete_rough.jpg-fa0b9317233d7d33c9834e14b2
 
 [params]
 
-compress/mode=3
+compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.7
+compress/lossy_quality=0.75
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

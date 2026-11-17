@@ -262,6 +262,12 @@ func play_fade_in() -> void:
 	fade_tween = create_tween()
 	fade_tween.tween_property(fade_rect, "color:a", 0.0, 0.85)
 
+func set_fade_alpha(a: float) -> void:
+	if fade_tween:
+		fade_tween.kill()
+	if fade_rect:
+		fade_rect.color.a = a
+
 func setup_minimap(data: Dictionary) -> void:
 	total_pois = maxi(1, data.get("pois", []).size())
 	minimap.setup(data)
