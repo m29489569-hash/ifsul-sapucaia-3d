@@ -192,7 +192,7 @@
       if (godotReady) return;
       const clamped = Math.max(0, Math.min(99, Math.round(Number(pct) || 80)));
       loadFill.removeAttribute('data-indeterminate');
-      loadFill.style.setProperty('--progress', `${clamped}%`);
+      loadFill.style.setProperty('--progress-scale', String(clamped / 100));
       loadProgress.setAttribute('aria-valuenow', String(clamped));
       if (statusText) loadStatus.textContent = statusText;
       if (expectedTotalBytes > 0) {
@@ -206,7 +206,7 @@
       godotReady = true;
       initialSyncDone = true;
       loadFill.removeAttribute('data-indeterminate');
-      loadFill.style.setProperty('--progress', '100%');
+      loadFill.style.setProperty('--progress-scale', '1');
       loadProgress.setAttribute('aria-valuenow', '100');
       loadStatus.textContent = 'Câmpus pronto para visitação';
       if (expectedTotalBytes > 0) {
@@ -289,6 +289,7 @@
         fileSizes[meta.mainPack] = meta.sizes.pck;
       }
 
+      let lastProgressUiAt = 0;
       const engine = new Engine({
         canvas,
         executable: meta.executable,
@@ -299,13 +300,16 @@
         onProgress(current, total) {
           if (godotReady) return;
           const denom = total > 0 ? total : expectedTotalBytes;
+          const ratio = denom > 0 ? Math.min(1, current / denom) : 0;
+          const now = performance.now();
+          if (ratio < 0.995 && now - lastProgressUiAt < 100) return;
+          lastProgressUiAt = now;
           if (denom > 0) {
-            const ratio = Math.min(1, current / denom);
             const pct = Math.min(80, Math.round(ratio * 80));
             const curMB = (Math.min(current, denom) / 1048576).toFixed(1);
             const totMB = (denom / 1048576).toFixed(1);
             loadFill.removeAttribute('data-indeterminate');
-            loadFill.style.setProperty('--progress', `${pct}%`);
+            loadFill.style.setProperty('--progress-scale', String(pct / 100));
             loadProgress.setAttribute('aria-valuenow', String(pct));
             loadStatus.textContent = ratio >= 0.995
               ? 'Inicializando motor 3D...'
@@ -326,6 +330,7 @@
       });
 
       engineReady = true;
+      await yieldToMain();
       await engine.startGame({
         canvas,
         executable: meta.executable,

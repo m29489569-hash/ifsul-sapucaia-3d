@@ -79,16 +79,34 @@ func _boot_web_staged() -> void:
 	builder.begin_build(world_node)
 	await get_tree().process_frame
 
-	_notify_boot_stage(87, "Construindo vias, pátios e quadras...")
-	builder.build_stage_terrain(world_node, campus_data)
+	_notify_boot_stage(85, "Construindo terreno e vias...")
+	builder.build_stage_terrain_base(world_node, campus_data)
 	await get_tree().process_frame
 
-	_notify_boot_stage(92, "Erguendo os 16 blocos e pórticos...")
-	builder.build_stage_structures(world_node, campus_data)
+	_notify_boot_stage(88, "Finalizando pátios e quadras...")
+	builder.build_stage_terrain_details(world_node, campus_data)
 	await get_tree().process_frame
 
-	_notify_boot_stage(96, "Preparando vegetação, áudio e interface...")
-	builder.build_stage_props(world_node, campus_data)
+	var buildings: Array = campus_data.get("buildings", [])
+	var b_total := buildings.size()
+	var b_chunk := 5
+	for b_start in range(0, b_total, b_chunk):
+		var b_end := mini(b_start + b_chunk, b_total)
+		var pct := 89 + int(round(5.0 * float(b_end) / maxf(1.0, float(b_total))))
+		_notify_boot_stage(pct, "Erguendo blocos (%d/%d)..." % [b_end, b_total])
+		builder.build_stage_buildings_range(world_node, campus_data, b_start, b_end)
+		await get_tree().process_frame
+
+	_notify_boot_stage(95, "Construindo pórticos e marcos...")
+	builder.build_stage_landmarks(world_node, campus_data)
+	await get_tree().process_frame
+
+	_notify_boot_stage(97, "Plantando vegetação e mobiliário...")
+	builder.build_stage_vegetation(world_node, campus_data)
+	await get_tree().process_frame
+
+	_notify_boot_stage(98, "Preparando áudio e interface...")
+	builder.build_stage_finalize_props(world_node, campus_data)
 	_setup_audio()
 	_setup_player_and_hud()
 	var init_tier := ("medium" if is_compat else "high") if quality_mode == "auto" else quality_mode
@@ -105,6 +123,8 @@ func _boot_web_staged() -> void:
 
 	if not started:
 		RenderingServer.viewport_set_active(vp_rid, false)
+		Engine.max_fps = 10
+		get_tree().paused = true
 	_setup_web_bridge()
 
 func _cache_pois_summary() -> void:
@@ -153,7 +173,7 @@ func _setup_environment() -> void:
 		sky.sky_material = sky_mat
 	if is_compat:
 		sky.radiance_size = Sky.RADIANCE_SIZE_64
-		sky.process_mode = Sky.PROCESS_MODE_REALTIME
+		sky.process_mode = Sky.PROCESS_MODE_INCREMENTAL
 
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
@@ -274,6 +294,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _start_exploration() -> void:
 	started = true
 	paused = false
+	Engine.max_fps = 0
 	get_tree().paused = false
 	set_process(true)
 	if OS.has_feature("web"):

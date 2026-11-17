@@ -32,22 +32,41 @@ func begin_build(root: Node3D) -> void:
 	win_mat = mats.get_material("glass")
 
 func build_stage_terrain(root: Node3D, data: Dictionary) -> void:
+	build_stage_terrain_base(root, data)
+	build_stage_terrain_details(root, data)
+
+func build_stage_terrain_base(root: Node3D, data: Dictionary) -> void:
 	_build_ground(root)
 	_build_streets(root, data.get("streets", []))
 	_build_campus_pad(root, data.get("perimeter", []))
 	_build_perimeter_walls(root, data.get("perimeter", []), data.get("gates", []))
+
+func build_stage_terrain_details(root: Node3D, data: Dictionary) -> void:
 	_build_parking_lots(root, data.get("parking_lots", []))
 	_build_paths(root, data.get("footways", []), "concrete", 0.036, Color("#CBC6BC"))
 	_build_paths(root, data.get("driveways", []), "asphalt", 0.023, Color("#323539"))
 	_build_courts(root, data.get("courts", []))
 
 func build_stage_structures(root: Node3D, data: Dictionary) -> void:
-	_build_buildings(root, data.get("buildings", []))
+	var buildings: Array = data.get("buildings", [])
+	build_stage_buildings_range(root, data, 0, buildings.size())
+	build_stage_landmarks(root, data)
+
+func build_stage_buildings_range(root: Node3D, data: Dictionary, start_idx: int, end_idx: int) -> void:
+	_build_buildings_slice(root, data.get("buildings", []), start_idx, end_idx)
+
+func build_stage_landmarks(root: Node3D, data: Dictionary) -> void:
 	_build_landmarks(root, data)
 	_build_entrance_signage(root, data)
 
 func build_stage_props(root: Node3D, data: Dictionary) -> void:
+	build_stage_vegetation(root, data)
+	build_stage_finalize_props(root, data)
+
+func build_stage_vegetation(root: Node3D, data: Dictionary) -> void:
 	_build_vegetation_and_props(root, data)
+
+func build_stage_finalize_props(root: Node3D, data: Dictionary) -> void:
 	_build_pois(root, data.get("pois", []))
 	_flush_static_batches(root)
 
@@ -372,11 +391,19 @@ func _is_gate_segment(p1: Vector2, p2: Vector2, gates: Array) -> bool:
 	return false
 
 func _build_buildings(root: Node3D, buildings: Array) -> void:
-	var b_root := Node3D.new()
-	b_root.name = "Buildings"
-	root.add_child(b_root)
+	_build_buildings_slice(root, buildings, 0, buildings.size())
 
-	for b in buildings:
+func _build_buildings_slice(root: Node3D, buildings: Array, start_idx: int, end_idx: int) -> void:
+	var b_root := root.get_node_or_null("Buildings") as Node3D
+	if b_root == null:
+		b_root = Node3D.new()
+		b_root.name = "Buildings"
+		root.add_child(b_root)
+
+	var lo := maxi(0, start_idx)
+	var hi := mini(buildings.size(), end_idx)
+	for i in range(lo, hi):
+		var b: Dictionary = buildings[i]
 		var poly := _to_vec2_array(b.get("polygon", []))
 		if poly.size() < 3:
 			continue

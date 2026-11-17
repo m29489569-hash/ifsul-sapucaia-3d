@@ -221,13 +221,17 @@ body.viewport-locked {
 
 .corridor-fill {
   height: 100%;
-  width: var(--progress, 0%);
+  width: 100%;
+  transform: scaleX(var(--progress-scale, 0));
+  transform-origin: left center;
+  will-change: transform;
   background: linear-gradient(90deg, var(--if-green-dark), var(--if-green));
-  transition: width 0.18s ease-out;
+  transition: transform 0.16s ease-out;
 }
 
 .corridor-fill[data-indeterminate="true"] {
   width: 35%;
+  will-change: transform;
   animation: corridor-slide 1.15s ease-in-out infinite;
 }
 
