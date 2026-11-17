@@ -10,12 +10,21 @@ var _last_drawn_pos := Vector3(1e9, 0.0, 1e9)
 var _last_drawn_yaw := 999.0
 var _last_visited_count := -1
 var _last_drone := false
+var _cached_size := Vector2.ZERO
+var _cached_streets: Array[PackedVector2Array] = []
+var _cached_perim: PackedVector2Array = PackedVector2Array()
+var _cached_perim_closed: PackedVector2Array = PackedVector2Array()
+var _cached_parking: Array[PackedVector2Array] = []
+var _cached_courts: Array[Dictionary] = []
+var _cached_buildings: Array[Dictionary] = []
+var _cached_pois: Array[Dictionary] = []
 
 const MAP_BOUNDS := Rect2(-115.0, -180.0, 220.0, 370.0)
 
 func setup(data: Dictionary) -> void:
 	campus_data = data
 	_last_visited_count = -1
+	_cached_size = Vector2.ZERO
 	queue_redraw()
 
 func update_state(pos: Vector3, yaw: float, visited: Dictionary, drone: bool) -> void:
@@ -44,61 +53,86 @@ func _world_to_map(wx: float, wz: float) -> Vector2:
 		offset.y + (wz - MAP_BOUNDS.position.y) * scale
 	)
 
-func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.08, 0.11, 0.10, 0.86), true)
-	draw_rect(Rect2(Vector2.ZERO, size), Color("#2F9E41"), false, 2.0)
-	if campus_data.is_empty():
-		return
+func _rebuild_cache() -> void:
+	_cached_size = size
+	_cached_streets.clear()
+	_cached_parking.clear()
+	_cached_courts.clear()
+	_cached_buildings.clear()
+	_cached_pois.clear()
 
-	# Streets
 	for st in campus_data.get("streets", []):
-		var pts: PackedVector2Array = PackedVector2Array()
+		var pts := PackedVector2Array()
 		for p in st.get("points", []):
 			pts.append(_world_to_map(float(p[0]), float(p[1])))
 		if pts.size() >= 2:
-			draw_polyline(pts, Color(0.32, 0.34, 0.37, 0.9), 4.0)
+			_cached_streets.append(pts)
 
-	# Campus perimeter
-	var perim_pts := PackedVector2Array()
+	_cached_perim = PackedVector2Array()
 	for p in campus_data.get("perimeter", []):
-		perim_pts.append(_world_to_map(float(p[0]), float(p[1])))
-	if perim_pts.size() >= 3:
-		draw_colored_polygon(perim_pts, Color(0.20, 0.34, 0.20, 0.65))
-		var closed := perim_pts.duplicate()
-		closed.append(perim_pts[0])
-		draw_polyline(closed, Color("#2F9E41"), 1.6)
+		_cached_perim.append(_world_to_map(float(p[0]), float(p[1])))
+	_cached_perim_closed = PackedVector2Array()
+	if _cached_perim.size() >= 3:
+		_cached_perim_closed = _cached_perim.duplicate()
+		_cached_perim_closed.append(_cached_perim[0])
 
-	# Parking lots
 	for pk in campus_data.get("parking_lots", []):
 		var poly := PackedVector2Array()
 		for p in pk.get("polygon", []):
 			poly.append(_world_to_map(float(p[0]), float(p[1])))
 		if poly.size() >= 3:
-			draw_colored_polygon(poly, Color(0.28, 0.30, 0.33, 0.85))
+			_cached_parking.append(poly)
 
-	# Courts
 	for c in campus_data.get("courts", []):
 		var poly := PackedVector2Array()
 		for p in c.get("polygon", []):
 			poly.append(_world_to_map(float(p[0]), float(p[1])))
 		if poly.size() >= 3:
 			var col := Color("#255B8A") if c.get("sport", "") == "multi" else Color("#A34F3A")
-			draw_colored_polygon(poly, col)
+			_cached_courts.append({"poly": poly, "col": col})
 
-	# Buildings
 	for b in campus_data.get("buildings", []):
 		var poly := PackedVector2Array()
 		for p in b.get("polygon", []):
 			poly.append(_world_to_map(float(p[0]), float(p[1])))
 		if poly.size() >= 3:
 			var bcol := Color("#D8D4CC") if b.get("type", "") != "auditorium" else Color("#C89B96")
-			draw_colored_polygon(poly, bcol)
+			_cached_buildings.append({"poly": poly, "col": bcol})
 
-	# POIs
 	for poi in campus_data.get("pois", []):
 		var pos_arr: Array = poi.get("position", [0, 0, 0])
-		var mp := _world_to_map(float(pos_arr[0]), float(pos_arr[2]))
-		var is_vis := visited_pois.has(poi.get("id", ""))
+		_cached_pois.append({
+			"id": String(poi.get("id", "")),
+			"mp": _world_to_map(float(pos_arr[0]), float(pos_arr[2]))
+		})
+
+func _draw() -> void:
+	draw_rect(Rect2(Vector2.ZERO, size), Color(0.08, 0.11, 0.10, 0.86), true)
+	draw_rect(Rect2(Vector2.ZERO, size), Color("#2F9E41"), false, 2.0)
+	if campus_data.is_empty():
+		return
+	if _cached_size != size:
+		_rebuild_cache()
+
+	for pts in _cached_streets:
+		draw_polyline(pts, Color(0.32, 0.34, 0.37, 0.9), 4.0)
+
+	if _cached_perim.size() >= 3:
+		draw_colored_polygon(_cached_perim, Color(0.20, 0.34, 0.20, 0.65))
+		draw_polyline(_cached_perim_closed, Color("#2F9E41"), 1.6)
+
+	for poly in _cached_parking:
+		draw_colored_polygon(poly, Color(0.28, 0.30, 0.33, 0.85))
+
+	for c in _cached_courts:
+		draw_colored_polygon(c["poly"], c["col"])
+
+	for b in _cached_buildings:
+		draw_colored_polygon(b["poly"], b["col"])
+
+	for poi in _cached_pois:
+		var mp: Vector2 = poi["mp"]
+		var is_vis := visited_pois.has(poi["id"])
 		var pcol := Color("#2F9E41") if is_vis else Color("#F5C43D")
 		draw_circle(mp, 4.5, pcol)
 		draw_arc(mp, 5.5, 0.0, TAU, 16, Color.WHITE, 1.2)

@@ -123,7 +123,7 @@ func _boot_web_staged() -> void:
 
 	if not started:
 		RenderingServer.viewport_set_active(vp_rid, false)
-		Engine.max_fps = 10
+		Engine.max_fps = 20
 		get_tree().paused = true
 	_setup_web_bridge()
 
@@ -210,11 +210,11 @@ func _setup_environment() -> void:
 	sun_light.light_color = Color("#FFF6E5")
 	sun_light.light_energy = 1.78 if is_compat else 1.55
 	sun_light.shadow_enabled = true
-	sun_light.directional_shadow_max_distance = 120.0 if is_compat else 190.0
+	sun_light.directional_shadow_max_distance = 85.0 if is_compat else 190.0
 	if is_compat:
 		sun_light.shadow_bias = 0.02
 		sun_light.shadow_normal_bias = 1.0
-	sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if is_compat else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL if is_compat else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	add_child(sun_light)
 
 func _setup_audio() -> void:
@@ -300,11 +300,11 @@ func _start_exploration() -> void:
 	if OS.has_feature("web"):
 		RenderingServer.viewport_set_active(get_viewport().get_viewport_rid(), true)
 	if ambient_audio and not ambient_audio.playing:
-		ambient_audio.play()
+		ambient_audio.call_deferred("play")
 	hud.set_start_visible(false)
 	hud.set_pause_visible(false)
 	player.set_gameplay_active(true)
-	_auto_warmup = 2.5
+	_auto_warmup = 1.0
 	_notify_web_shell()
 
 func _toggle_pause() -> void:
@@ -535,13 +535,13 @@ func _apply_resolved_quality(tier: String) -> void:
 				sun_light.shadow_enabled = false
 			builder.set_vegetation_density(0.35)
 		"medium":
-			vp.scaling_3d_scale = 0.82 if is_compat else 0.90
+			vp.scaling_3d_scale = 0.78 if is_compat else 0.90
 			vp.msaa_3d = Viewport.MSAA_DISABLED
 			if env:
 				env.glow_enabled = not is_compat
 			if sun_light:
 				sun_light.shadow_enabled = true
-				sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+				sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL if is_compat else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 			if _applied_shadow_size != 1024:
 				_applied_shadow_size = 1024
 				RenderingServer.directional_shadow_atlas_set_size(1024, true)

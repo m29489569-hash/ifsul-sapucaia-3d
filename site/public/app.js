@@ -115,16 +115,13 @@
     } catch {}
   }
 
-  async function startOrEnterGame() {
+  function startOrEnterGame() {
     if (!godotReady || !window.__ifsulGodot || gameStarted) return;
     gameStarted = true;
-    unlockAudio();
     overlay.setAttribute('data-hidden', 'true');
     webChips.setAttribute('data-visible', 'true');
     canvas.focus({ preventScroll: true });
     requestCanvasLock();
-
-    await yieldToMain();
 
     if (latestState.quality !== savedQuality) {
       window.__ifsulGodot.setQuality(savedQuality);
