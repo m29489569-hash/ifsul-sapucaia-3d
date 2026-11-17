@@ -43,6 +43,13 @@
   --border-subtle: rgba(47, 158, 65, 0.35);
   --font-display: 'Archivo Black', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --target-size: 24px;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --target-size: 44px;
+  }
 }
 
 *, *::before, *::after {
@@ -71,6 +78,8 @@ body.viewport-locked {
   height: 100dvh;
   overflow: hidden;
   background: var(--bg-deep);
+  container-type: inline-size;
+  container-name: stage;
 }
 
 #game-canvas {
@@ -256,9 +265,10 @@ body.viewport-locked {
   background: var(--if-green);
   color: #FFFFFF;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: clamp(0.92rem, 0.85rem + 0.35vw, 1.05rem);
   letter-spacing: 0.02em;
-  padding: 0.78rem 1.45rem;
+  min-block-size: max(var(--target-size), 42px);
+  padding: 0.72rem 1.4rem;
   cursor: pointer;
   box-shadow: 0 4px 0 var(--if-black);
   transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
@@ -314,13 +324,14 @@ body.viewport-locked {
 /* Discrete Web HUD Chips */
 .web-chips {
   position: fixed;
-  top: 58px;
-  right: 16px;
+  top: var(--chips-top, max(54px, calc(env(safe-area-inset-top, 0px) + 52px)));
+  right: max(14px, env(safe-area-inset-right, 0px));
   z-index: 15;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 6px;
+  max-inline-size: calc(100vw - 28px);
+  gap: clamp(4px, 0.5vw, 8px);
   pointer-events: none;
   contain: layout style;
 }
@@ -334,16 +345,29 @@ body.viewport-locked {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 10px;
+  min-block-size: var(--target-size);
+  padding: clamp(3px, 0.38vw, 6px) clamp(7px, 0.72vw, 12px);
   border-radius: 7px;
   border: 1.5px solid rgba(47, 158, 65, 0.7);
   background: rgba(12, 22, 16, 0.92);
   color: var(--ink-light);
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: var(--chip-font, clamp(0.7rem, 0.55rem + 0.35vw, 0.88rem));
   font-weight: 600;
   line-height: 1.2;
+  white-space: nowrap;
   text-decoration: none;
+}
+
+@supports (font-size: 1cqi) {
+  .web-chips {
+    max-inline-size: calc(100cqi - 28px);
+    gap: clamp(4px, 0.5cqi, 8px);
+  }
+  .chip-btn, .chip-stat {
+    padding: clamp(3px, 0.38cqi, 6px) clamp(7px, 0.72cqi, 12px);
+    font-size: var(--chip-font, clamp(0.7rem, 0.55rem + 0.35cqi, 0.88rem));
+  }
 }
 
 .chip-btn {
@@ -372,13 +396,6 @@ body.viewport-locked {
 }
 
 @media (max-width: 640px) {
-  .web-chips {
-    top: auto;
-    bottom: 54px;
-    left: 12px;
-    right: auto;
-    justify-content: flex-start;
-  }
   .campus-plaque {
     padding: 1.15rem;
   }

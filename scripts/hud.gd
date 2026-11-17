@@ -16,6 +16,12 @@ var start_panel: Control
 var pause_panel: Control
 var poi_panel: PanelContainer
 var complete_panel: PanelContainer
+var top_bar: HBoxContainer
+var left_flow: HFlowContainer
+var brand_lbl: Label
+var logo_rect: TextureRect
+var hint_box: PanelContainer
+var hint_lbl: Label
 var prompt_lbl: Label
 var tour_lbl: Label
 var mode_lbl: Label
@@ -27,9 +33,13 @@ var poi_title: Label
 var poi_sub: Label
 var poi_desc: RichTextLabel
 var total_pois := 6
+var _modal_specs: Array[Dictionary] = []
 
 func _ready() -> void:
 	_build_ui()
+	if get_viewport():
+		get_viewport().size_changed.connect(_on_viewport_resized)
+	call_deferred("_on_viewport_resized")
 
 func _build_ui() -> void:
 	# Subtle edge vignette
@@ -49,77 +59,90 @@ func _build_ui() -> void:
 	cross.offset_right = 2.5; cross.offset_bottom = 2.5
 	add_child(cross)
 
-	# Top HUD bar
-	var top_bar := HBoxContainer.new()
+	# Top HUD bar (left wraps cleanly via HFlowContainer; right stays anchored for [N] Dia + web chips)
+	top_bar = HBoxContainer.new()
 	top_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	top_bar.offset_left = 16; top_bar.offset_top = 14
 	top_bar.offset_right = -16; top_bar.offset_bottom = 54
 	top_bar.add_theme_constant_override("separation", 10)
+	top_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(top_bar)
+
+	left_flow = HFlowContainer.new()
+	left_flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_flow.add_theme_constant_override("h_separation", 8)
+	left_flow.add_theme_constant_override("v_separation", 6)
+	left_flow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top_bar.add_child(left_flow)
 
 	var brand_box := _make_pill_panel(Color(0.08, 0.14, 0.10, 0.90), Color("#2F9E41"))
 	var brand_row := HBoxContainer.new()
 	brand_row.add_theme_constant_override("separation", 8)
-	var logo_rect := TextureRect.new()
+	logo_rect = TextureRect.new()
 	logo_rect.texture = MaterialsLib.create_ifsul_logo_texture(64)
 	logo_rect.custom_minimum_size = Vector2(22, 22)
 	logo_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	logo_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	brand_row.add_child(logo_rect)
-	var brand_lbl := Label.new()
+	brand_lbl = Label.new()
 	brand_lbl.text = "IFSul • Sapucaia do Sul"
 	brand_lbl.add_theme_font_size_override("font_size", 15)
 	brand_row.add_child(brand_lbl)
 	brand_box.add_child(brand_row)
-	top_bar.add_child(brand_box)
+	left_flow.add_child(brand_box)
 
 	var tour_box := _make_pill_panel(Color(0.08, 0.14, 0.10, 0.88), Color("#2F9E41"))
 	tour_lbl = Label.new()
 	tour_lbl.text = "Tour do Campus 0/6"
 	tour_lbl.add_theme_font_size_override("font_size", 15)
 	tour_box.add_child(tour_lbl)
-	top_bar.add_child(tour_box)
+	left_flow.add_child(tour_box)
 
 	var mode_box := _make_pill_panel(Color(0.09, 0.12, 0.15, 0.85), Color("#64748B"))
 	mode_lbl = Label.new()
 	mode_lbl.text = "[F] Modo: A pé"
 	mode_lbl.add_theme_font_size_override("font_size", 14)
 	mode_box.add_child(mode_lbl)
-	top_bar.add_child(mode_box)
+	left_flow.add_child(mode_box)
 
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top_bar.add_child(spacer)
+	var right_actions := HBoxContainer.new()
+	right_actions.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	right_actions.add_theme_constant_override("separation", 8)
+	top_bar.add_child(right_actions)
 
 	time_btn = Button.new()
 	time_btn.text = "[N] Dia"
 	time_btn.focus_mode = Control.FOCUS_NONE
+	_style_hud_button(time_btn, Color("#2F9E41"))
 	time_btn.pressed.connect(func(): day_night_clicked.emit())
-	top_bar.add_child(time_btn)
+	right_actions.add_child(time_btn)
 
 	mute_btn = Button.new()
 	mute_btn.text = "[M] Som: ON"
 	mute_btn.focus_mode = Control.FOCUS_NONE
+	_style_hud_button(mute_btn, Color("#2F9E41"))
 	mute_btn.pressed.connect(func(): mute_clicked.emit())
 	if OS.has_feature("web"):
 		mute_btn.visible = false
-	top_bar.add_child(mute_btn)
+	right_actions.add_child(mute_btn)
 
 	# Bottom controls hint pill
-	var hint_box := _make_pill_panel(Color(0.06, 0.10, 0.08, 0.86), Color(0.18, 0.50, 0.28, 0.85))
-	hint_box.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	hint_box.offset_left = 16; hint_box.offset_bottom = -12; hint_box.offset_top = -44
+	hint_box = _make_pill_panel(Color(0.06, 0.10, 0.08, 0.86), Color(0.18, 0.50, 0.28, 0.85))
+	hint_box.anchor_left = 0.0; hint_box.anchor_right = 0.0
+	hint_box.anchor_top = 1.0; hint_box.anchor_bottom = 1.0
+	hint_box.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	hint_box.offset_left = 16; hint_box.offset_bottom = -16; hint_box.offset_top = -16
 	hint_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var hint := Label.new()
-	hint.text = "WASD Mover | Shift Correr | Espaço Pular | E Interagir | F Drone (Scroll Zoom) | N Dia/Noite | M Som | Esc Pausa"
-	hint.add_theme_font_size_override("font_size", 12)
-	hint.modulate = Color(0.95, 0.98, 0.95, 0.95)
-	hint_box.add_child(hint)
+	hint_lbl = Label.new()
+	hint_lbl.text = "WASD Mover | Shift Correr | Espaço Pular | E Interagir | F Drone (Scroll Zoom) | N Dia/Noite | M Som | Esc Pausa"
+	hint_lbl.add_theme_font_size_override("font_size", 12)
+	hint_lbl.modulate = Color(0.95, 0.98, 0.95, 0.95)
+	hint_box.add_child(hint_lbl)
 	add_child(hint_box)
 
 	# Minimap (bottom right)
 	minimap = MinimapView.new()
+	minimap.clip_contents = true
 	minimap.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	minimap.offset_left = -210; minimap.offset_top = -270
 	minimap.offset_right = -16; minimap.offset_bottom = -16
@@ -132,6 +155,7 @@ func _build_ui() -> void:
 	prompt_lbl.offset_left = -260; prompt_lbl.offset_right = 260
 	prompt_lbl.offset_top = -120; prompt_lbl.offset_bottom = -84
 	prompt_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	prompt_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	prompt_lbl.add_theme_font_size_override("font_size", 18)
 	prompt_lbl.modulate = Color("#FFFBE6")
 	prompt_lbl.visible = false
@@ -338,7 +362,119 @@ func _make_modal_panel(w: int, h: int, border: Color) -> PanelContainer:
 	sb.content_margin_left = 22; sb.content_margin_right = 22
 	sb.content_margin_top = 18; sb.content_margin_bottom = 18
 	pc.add_theme_stylebox_override("panel", sb)
+	_modal_specs.append({"panel": pc, "max_w": float(w), "max_h": float(h)})
 	return pc
+
+func _style_hud_button(btn: Button, border: Color) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.08, 0.14, 0.10, 0.90)
+	normal.border_color = border
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(8)
+	normal.content_margin_left = 12; normal.content_margin_right = 12
+	normal.content_margin_top = 6; normal.content_margin_bottom = 6
+	var hover := normal.duplicate() as StyleBoxFlat
+	hover.bg_color = Color(0.12, 0.22, 0.15, 0.95)
+	var pressed := normal.duplicate() as StyleBoxFlat
+	pressed.bg_color = Color(0.06, 0.11, 0.08, 0.95)
+	btn.add_theme_stylebox_override("normal", normal)
+	btn.add_theme_stylebox_override("hover", hover)
+	btn.add_theme_stylebox_override("pressed", pressed)
+	btn.add_theme_font_size_override("font_size", 14)
+
+func _on_viewport_resized() -> void:
+	var vp := get_viewport()
+	if vp == null:
+		return
+	var vp_size := vp.get_visible_rect().size
+	if vp_size.x <= 0.0 or vp_size.y <= 0.0:
+		return
+
+	var w_ratio := clampf(vp_size.x / 1280.0, 0.68, 1.15)
+	var margin := clampf(roundf(vp_size.x * 0.012), 10.0, 18.0)
+
+	if top_bar:
+		top_bar.offset_left = margin
+		top_bar.offset_top = margin
+		top_bar.offset_right = -margin
+
+	var pill_font := int(roundf(clampf(13.0 * w_ratio + 2.0, 12.0, 16.0)))
+	var sub_font := int(roundf(clampf(12.0 * w_ratio + 2.0, 11.0, 15.0)))
+	var hint_font := int(roundf(clampf(10.0 * w_ratio + 2.0, 10.0, 13.0)))
+
+	if brand_lbl:
+		brand_lbl.add_theme_font_size_override("font_size", pill_font)
+	if tour_lbl:
+		tour_lbl.add_theme_font_size_override("font_size", pill_font)
+	if mode_lbl:
+		mode_lbl.add_theme_font_size_override("font_size", sub_font)
+	if time_btn:
+		time_btn.add_theme_font_size_override("font_size", sub_font)
+	if mute_btn:
+		mute_btn.add_theme_font_size_override("font_size", sub_font)
+	if logo_rect:
+		var logo_sz := roundf(clampf(20.0 * w_ratio + 2.0, 16.0, 24.0))
+		logo_rect.custom_minimum_size = Vector2(logo_sz, logo_sz)
+
+	var map_w := clampf(roundf(vp_size.x * 0.155), 112.0, 194.0)
+	var map_h := minf(roundf(map_w * 1.31), vp_size.y * 0.36)
+	if minimap:
+		minimap.offset_left = -(map_w + margin)
+		minimap.offset_top = -(map_h + margin)
+		minimap.offset_right = -margin
+		minimap.offset_bottom = -margin
+
+	if hint_box and hint_lbl:
+		hint_lbl.add_theme_font_size_override("font_size", hint_font)
+		var max_hint_w := maxf(160.0, vp_size.x - map_w - margin * 3.0)
+		if vp_size.x < 780.0:
+			hint_lbl.text = "WASD Mover | E Interagir | F Drone | N Dia/Noite | Esc Pausa"
+		else:
+			hint_lbl.text = "WASD Mover | Shift Correr | Espaço Pular | E Interagir | F Drone (Scroll Zoom) | N Dia/Noite | M Som | Esc Pausa"
+		if max_hint_w < 640.0:
+			hint_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			hint_lbl.custom_minimum_size.x = maxf(140.0, max_hint_w - 28.0)
+		else:
+			hint_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
+			hint_lbl.custom_minimum_size.x = 0.0
+		hint_box.offset_left = margin
+		hint_box.offset_bottom = -margin
+		hint_box.offset_top = -margin
+
+	if prompt_lbl:
+		var prompt_half := minf(260.0, vp_size.x * 0.44)
+		prompt_lbl.offset_left = -prompt_half
+		prompt_lbl.offset_right = prompt_half
+		prompt_lbl.offset_top = -(margin + 96.0)
+		prompt_lbl.offset_bottom = -(margin + 60.0)
+		prompt_lbl.add_theme_font_size_override("font_size", int(roundf(clampf(16.0 * w_ratio + 2.0, 14.0, 19.0))))
+
+	for spec in _modal_specs:
+		var pc := spec["panel"] as PanelContainer
+		if not is_instance_valid(pc):
+			continue
+		var mw := minf(float(spec["max_w"]), maxf(260.0, vp_size.x - 28.0))
+		var mh := minf(float(spec["max_h"]), maxf(180.0, vp_size.y - 28.0))
+		pc.offset_left = -mw * 0.5; pc.offset_right = mw * 0.5
+		pc.offset_top = -mh * 0.5; pc.offset_bottom = mh * 0.5
+
+	if OS.has_feature("web"):
+		call_deferred("_emit_web_hud_metrics")
+
+func _emit_web_hud_metrics() -> void:
+	if not OS.has_feature("web") or time_btn == null:
+		return
+	var vp := get_viewport()
+	if vp == null:
+		return
+	var vp_size := vp.get_visible_rect().size
+	if vp_size.y <= 0.0:
+		return
+	var rect := time_btn.get_global_rect()
+	var top_ratio := clampf(rect.end.y / vp_size.y, 0.04, 0.25)
+	var sub_font := float(time_btn.get_theme_font_size("font_size"))
+	var font_ratio := clampf(sub_font / vp_size.y, 0.012, 0.03)
+	JavaScriptBridge.eval("window.__ifsulShell && window.__ifsulShell.onHudMetrics && window.__ifsulShell.onHudMetrics({topRatio:" + str(snappedf(top_ratio, 0.0001)) + ",fontRatio:" + str(snappedf(font_ratio, 0.0001)) + "});", false)
 
 func _make_backdrop_overlay() -> ColorRect:
 	var cr := ColorRect.new()

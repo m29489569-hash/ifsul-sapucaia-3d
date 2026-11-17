@@ -173,9 +173,43 @@
     wasPointerLocked = locked;
   });
 
-  // Coordinate responsive resizing across visualViewport, orientation & DPR changes
+  // Coordinate responsive resizing across ResizeObserver, visualViewport, orientation & DPR changes
+  const stage = document.getElementById('stage');
+  let lastStageW = 0;
+  let lastStageH = 0;
+  let resizeRaf = 0;
+  let lastHudMetrics = null;
+
+  function applyHudMetrics() {
+    if (!lastHudMetrics || !canvas.clientHeight) return;
+    const topPx = Math.round(lastHudMetrics.topRatio * canvas.clientHeight) + 8;
+    webChips.style.setProperty('--chips-top', `${Math.max(40, topPx)}px`);
+    if (typeof lastHudMetrics.fontRatio === 'number') {
+      const fontPx = Math.max(11, Math.min(16, Math.round(lastHudMetrics.fontRatio * canvas.clientHeight)));
+      webChips.style.setProperty('--chip-font', `${fontPx}px`);
+    }
+  }
+
   function syncViewport() {
-    window.dispatchEvent(new Event('resize'));
+    if (resizeRaf) return;
+    resizeRaf = requestAnimationFrame(() => {
+      resizeRaf = 0;
+      applyHudMetrics();
+      window.dispatchEvent(new Event('resize'));
+    });
+  }
+
+  if (stage && 'ResizeObserver' in window) {
+    new ResizeObserver((entries) => {
+      const rect = entries[0]?.contentRect;
+      const w = Math.round(rect ? rect.width : stage.clientWidth);
+      const h = Math.round(rect ? rect.height : stage.clientHeight);
+      if (w !== lastStageW || h !== lastStageH) {
+        lastStageW = w;
+        lastStageH = h;
+        syncViewport();
+      }
+    }).observe(stage);
   }
   window.visualViewport?.addEventListener('resize', syncViewport);
   window.addEventListener('orientationchange', () => setTimeout(syncViewport, 120));
@@ -185,6 +219,11 @@
 
   // Shell bridge consumed by scripts/main.gd
   window.__ifsulShell = {
+    onHudMetrics(metrics) {
+      if (!metrics || typeof metrics.topRatio !== 'number') return;
+      lastHudMetrics = metrics;
+      applyHudMetrics();
+    },
     onBootProgress(pct, statusText) {
       if (godotReady) return;
       const clamped = Math.max(0, Math.min(99, Math.round(Number(pct) || 80)));

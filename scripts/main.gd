@@ -115,6 +115,7 @@ func _boot_web_staged() -> void:
 	if master >= 0:
 		AudioServer.set_bus_mute(master, is_muted)
 	hud.set_muted(is_muted)
+	hud.call_deferred("_on_viewport_resized")
 	await get_tree().process_frame
 
 	_notify_boot_stage(99, "Compilando shaders e aquecendo placa gráfica...")
@@ -527,7 +528,7 @@ func _apply_resolved_quality(tier: String) -> void:
 	var env := world_env.environment if world_env else null
 	match norm_tier:
 		"low":
-			vp.scaling_3d_scale = 0.72
+			vp.scaling_3d_scale = 0.75
 			vp.msaa_3d = Viewport.MSAA_DISABLED
 			if env:
 				env.glow_enabled = false
@@ -535,7 +536,7 @@ func _apply_resolved_quality(tier: String) -> void:
 				sun_light.shadow_enabled = false
 			builder.set_vegetation_density(0.35)
 		"medium":
-			vp.scaling_3d_scale = 0.78 if is_compat else 0.90
+			vp.scaling_3d_scale = 0.90
 			vp.msaa_3d = Viewport.MSAA_DISABLED
 			if env:
 				env.glow_enabled = not is_compat
