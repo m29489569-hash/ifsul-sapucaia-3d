@@ -89,5 +89,61 @@ func _run_qa() -> void:
 	await process_frame
 	assert(main.hud.minimap.size.x > 100.0, "Minimapa invalido apos resize")
 
-	print("QA_PASS: 16 edificios, MultiMesh ok, 6 POIs acessiveis, tour 6/6 + reinicio, drone/dia-noite/mudo/pause/resize OK")
+	# 6. Verify optimization systems (batches, merged roads, occluders, light culling, quality scaling, minimap static layer)
+	var streets := world.get_node("Streets")
+	assert(streets.get_node_or_null("MergedSidewalks") != null, "MergedSidewalks ausente")
+	assert(streets.get_node_or_null("MergedAsphalt") != null, "MergedAsphalt ausente")
+	assert(streets.get_node_or_null("MergedFootways") != null, "MergedFootways ausente")
+	assert(world.get_node_or_null("StaticBatches") != null, "StaticBatches ausente")
+	assert(main.builder.detail_nodes.size() > 0, "detail_nodes vazio")
+	assert(root.use_occlusion_culling, "Occlusion culling deve estar ativo")
+	assert(root.positional_shadow_atlas_size == 0, "Positional shadow atlas deve ser 0")
+	assert(main.hud.minimap._static_layer != null, "Minimapa deve ter camada estatica separada")
+
+	var occ_count := 0
+	for bnode in bldgs.get_children():
+		for sub in bnode.get_children():
+			if sub is StaticBody3D:
+				for gc in sub.get_children():
+					if gc is OccluderInstance3D:
+						occ_count += 1
+	assert(occ_count >= 10, "Esperado >= 10 OccluderInstance3D nos edificios, obtido %d" % occ_count)
+
+	# Verify quality tiers & night light culler budget
+	main.set_quality_mode("low")
+	main.is_night = true
+	main.perf.notify_night_tween_finished(true)
+	main.perf.update_runtime_systems(0.5, root, main.builder, true, player)
+	var low_lights := 0
+	for l in main.builder.night_lights:
+		if l.visible:
+			low_lights += 1
+	assert(low_lights <= 2, "Low quality deve limitar luzes noturnas a <= 2, obteve %d" % low_lights)
+
+	main.set_quality_mode("medium")
+	main.perf.update_runtime_systems(0.5, root, main.builder, true, player)
+	var med_lights := 0
+	for l in main.builder.night_lights:
+		if l.visible:
+			med_lights += 1
+	assert(med_lights <= 6, "Medium quality deve limitar luzes noturnas a <= 6, obteve %d" % med_lights)
+
+	main.set_quality_mode("high")
+	main.perf.update_runtime_systems(0.5, root, main.builder, true, player)
+	var hi_lights := 0
+	for l in main.builder.night_lights:
+		if l.visible:
+			hi_lights += 1
+	assert(hi_lights <= 10, "High quality deve limitar luzes noturnas a <= 10, obteve %d" % hi_lights)
+	main.is_night = false
+	main.perf.notify_night_tween_finished(false)
+	main.perf.update_runtime_systems(0.5, root, main.builder, false, player)
+
+	# Verify spike rejection on adaptive quality
+	main.set_quality_mode("auto")
+	var pre_q: String = main.perf.resolved_quality
+	main.perf.update_adaptive_quality(2.5, true, false, false, root, main.world_env.environment, main.sun_light, main.builder, main.is_compat)
+	assert(main.perf.resolved_quality == pre_q, "Delta spike de tab switch nao deve rebaixar qualidade")
+
+	print("QA_PASS: 16 edificios, MultiMesh ok, 6 POIs acessiveis, tour 6/6 + reinicio, drone/dia-noite/mudo/pause/resize + otimizacoes OK")
 	quit(0)

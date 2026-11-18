@@ -22,14 +22,26 @@ var drone_pitch := -0.45
 var step_timer := 0.0
 var current_poi: Dictionary = {}
 var pois: Array = []
+var _poi_xz := PackedVector2Array()
+var _last_poi_pos := Vector3(1e9, 0.0, 1e9)
+var _last_poi_drone := false
+
+func _ready() -> void:
+	set_physics_process(false)
 
 func setup_pois(poi_list: Array, footstep_stream: AudioStream) -> void:
 	pois = poi_list
+	_poi_xz.resize(pois.size())
+	for i in range(pois.size()):
+		var a: Array = pois[i].get("position", [0, 0, 0])
+		_poi_xz[i] = Vector2(float(a[0]), float(a[2]))
+	_last_poi_pos = Vector3(1e9, 0.0, 1e9)
 	if footstep_stream != null:
 		footstep_audio.stream = footstep_stream
 
 func set_gameplay_active(enabled: bool) -> void:
 	active_gameplay = enabled
+	set_physics_process(enabled)
 	if enabled:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	else:
@@ -54,6 +66,7 @@ func toggle_drone_mode() -> bool:
 	else:
 		fps_cam.current = true
 		drone_cam.current = false
+	_update_nearest_poi(true)
 	return is_drone
 
 func get_view_position() -> Vector3:
@@ -100,7 +113,7 @@ func _process_walk(delta: float) -> void:
 	var basis := global_transform.basis
 	var move_dir := (basis.z * input_vec.y + basis.x * input_vec.x)
 	move_dir.y = 0.0
-	if move_dir.length() > 0.001:
+	if move_dir.length_squared() > 0.000001:
 		move_dir = move_dir.normalized()
 
 	var spd := SPRINT_SPEED if Input.is_action_pressed("sprint") else WALK_SPEED
@@ -108,8 +121,7 @@ func _process_walk(delta: float) -> void:
 	velocity.z = move_dir.z * spd
 	move_and_slide()
 
-	# Footstep cadence
-	if is_on_floor() and move_dir.length() > 0.1:
+	if is_on_floor() and move_dir.length_squared() > 0.01:
 		step_timer -= delta * (1.55 if Input.is_action_pressed("sprint") else 1.0)
 		if step_timer <= 0.0:
 			step_timer = 0.44
@@ -127,7 +139,7 @@ func _process_drone(delta: float) -> void:
 		move.y += 1.0
 	if Input.is_key_pressed(KEY_CTRL) or Input.is_key_pressed(KEY_C):
 		move.y -= 1.0
-	if move.length() > 0.001:
+	if move.length_squared() > 0.000001:
 		move = move.normalized()
 	var spd := DRONE_BASE_SPEED * (2.0 if Input.is_action_pressed("sprint") else 1.0)
 	drone_cam.global_position += move * spd * delta
@@ -135,16 +147,21 @@ func _process_drone(delta: float) -> void:
 	drone_cam.global_position.z = clampf(drone_cam.global_position.z, -280.0, 280.0)
 	drone_cam.global_position.y = clampf(drone_cam.global_position.y, 1.5, 160.0)
 
-func _update_nearest_poi() -> void:
+func _update_nearest_poi(force: bool = false) -> void:
 	var ref_pos := get_view_position()
+	if not force and is_drone == _last_poi_drone and Vector2(ref_pos.x - _last_poi_pos.x, ref_pos.z - _last_poi_pos.z).length_squared() < 0.02:
+		return
+	_last_poi_pos = ref_pos
+	_last_poi_drone = is_drone
+
+	var ref_xz := Vector2(ref_pos.x, ref_pos.z)
 	var best: Dictionary = {}
-	var best_dist := 6.5 if not is_drone else 14.0
-	for p in pois:
-		var a: Array = p.get("position", [0, 0, 0])
-		var d := Vector2(ref_pos.x, ref_pos.z).distance_to(Vector2(float(a[0]), float(a[2])))
-		if d < best_dist:
-			best_dist = d
-			best = p
+	var best_dist_sq := (14.0 * 14.0) if is_drone else (6.5 * 6.5)
+	for i in range(_poi_xz.size()):
+		var d_sq := ref_xz.distance_squared_to(_poi_xz[i])
+		if d_sq < best_dist_sq:
+			best_dist_sq = d_sq
+			best = pois[i]
 	if best.get("id", "") != current_poi.get("id", ""):
 		current_poi = best
 		nearby_poi_changed.emit(current_poi)

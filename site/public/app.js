@@ -173,6 +173,12 @@
     wasPointerLocked = locked;
   });
 
+  document.addEventListener('visibilitychange', () => {
+    if (window.__ifsulGodot?.setBackgroundHidden) {
+      window.__ifsulGodot.setBackgroundHidden(document.hidden);
+    }
+  });
+
   // Coordinate responsive resizing across ResizeObserver, visualViewport, orientation & DPR changes
   const stage = document.getElementById('stage');
   let lastStageW = 0;

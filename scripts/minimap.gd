@@ -1,11 +1,18 @@
 class_name CampusMinimap
 extends Control
 
+class _StaticMapLayer extends Control:
+	var owner_map: CampusMinimap
+	func _draw() -> void:
+		if owner_map != null:
+			owner_map._draw_static_layer(self)
+
 var campus_data: Dictionary = {}
 var visited_pois: Dictionary = {}
 var player_pos: Vector3 = Vector3.ZERO
 var player_yaw: float = 0.0
 var is_drone: bool = false
+
 var _last_drawn_pos := Vector3(1e9, 0.0, 1e9)
 var _last_drawn_yaw := 999.0
 var _last_visited_count := -1
@@ -18,13 +25,32 @@ var _cached_parking: Array[PackedVector2Array] = []
 var _cached_courts: Array[Dictionary] = []
 var _cached_buildings: Array[Dictionary] = []
 var _cached_pois: Array[Dictionary] = []
+var _static_layer: _StaticMapLayer
+var _arrow_poly := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
+var _arrow_line := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
 
 const MAP_BOUNDS := Rect2(-115.0, -180.0, 220.0, 370.0)
+
+func _ready() -> void:
+	_static_layer = _StaticMapLayer.new()
+	_static_layer.owner_map = self
+	_static_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_static_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_static_layer.show_behind_parent = true
+	add_child(_static_layer)
+	resized.connect(_on_resized)
+
+func _on_resized() -> void:
+	if _static_layer:
+		_static_layer.queue_redraw()
+	queue_redraw()
 
 func setup(data: Dictionary) -> void:
 	campus_data = data
 	_last_visited_count = -1
 	_cached_size = Vector2.ZERO
+	if _static_layer:
+		_static_layer.queue_redraw()
 	queue_redraw()
 
 func update_state(pos: Vector3, yaw: float, visited: Dictionary, drone: bool) -> void:
@@ -32,8 +58,9 @@ func update_state(pos: Vector3, yaw: float, visited: Dictionary, drone: bool) ->
 	player_yaw = yaw
 	visited_pois = visited
 	is_drone = drone
-	var moved := Vector2(pos.x - _last_drawn_pos.x, pos.z - _last_drawn_pos.z).length_squared() > 0.06
-	var turned := absf(yaw - _last_drawn_yaw) > 0.02
+	# 1px on the minimap spans ~1.5-2.0m in world space, so 0.45 m^2 (~0.67m) avoids sub-pixel redraws.
+	var moved := Vector2(pos.x - _last_drawn_pos.x, pos.z - _last_drawn_pos.z).length_squared() > 0.45
+	var turned := absf(yaw - _last_drawn_yaw) > 0.045
 	if moved or turned or visited.size() != _last_visited_count or drone != _last_drone:
 		_last_drawn_pos = pos
 		_last_drawn_yaw = yaw
@@ -106,29 +133,39 @@ func _rebuild_cache() -> void:
 			"mp": _world_to_map(float(pos_arr[0]), float(pos_arr[2]))
 		})
 
-func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.08, 0.11, 0.10, 0.86), true)
-	draw_rect(Rect2(Vector2.ZERO, size), Color("#2F9E41"), false, 2.0)
+func _draw_static_layer(canvas: Control) -> void:
+	canvas.draw_rect(Rect2(Vector2.ZERO, size), Color(0.08, 0.11, 0.10, 0.86), true)
+	canvas.draw_rect(Rect2(Vector2.ZERO, size), Color("#2F9E41"), false, 2.0)
 	if campus_data.is_empty():
 		return
 	if _cached_size != size:
 		_rebuild_cache()
 
 	for pts in _cached_streets:
-		draw_polyline(pts, Color(0.32, 0.34, 0.37, 0.9), 4.0)
+		canvas.draw_polyline(pts, Color(0.32, 0.34, 0.37, 0.9), 4.0)
 
 	if _cached_perim.size() >= 3:
-		draw_colored_polygon(_cached_perim, Color(0.20, 0.34, 0.20, 0.65))
-		draw_polyline(_cached_perim_closed, Color("#2F9E41"), 1.6)
+		canvas.draw_colored_polygon(_cached_perim, Color(0.20, 0.34, 0.20, 0.65))
+		canvas.draw_polyline(_cached_perim_closed, Color("#2F9E41"), 1.6)
 
 	for poly in _cached_parking:
-		draw_colored_polygon(poly, Color(0.28, 0.30, 0.33, 0.85))
+		canvas.draw_colored_polygon(poly, Color(0.28, 0.30, 0.33, 0.85))
 
 	for c in _cached_courts:
-		draw_colored_polygon(c["poly"], c["col"])
+		canvas.draw_colored_polygon(c["poly"], c["col"])
 
 	for b in _cached_buildings:
-		draw_colored_polygon(b["poly"], b["col"])
+		canvas.draw_colored_polygon(b["poly"], b["col"])
+
+	canvas.draw_string(ThemeDB.fallback_font, Vector2(size.x - 18, 16), "N", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.9, 0.95, 0.9))
+
+func _draw() -> void:
+	if campus_data.is_empty():
+		return
+	if _cached_size != size:
+		_rebuild_cache()
+		if _static_layer:
+			_static_layer.queue_redraw()
 
 	for poi in _cached_pois:
 		var mp: Vector2 = poi["mp"]
@@ -137,16 +174,14 @@ func _draw() -> void:
 		draw_circle(mp, 4.5, pcol)
 		draw_arc(mp, 5.5, 0.0, TAU, 16, Color.WHITE, 1.2)
 
-	# Player / Drone arrow
 	var pp := _world_to_map(player_pos.x, player_pos.z)
 	var fwd := Vector2(-sin(player_yaw), -cos(player_yaw)).normalized()
 	var right := Vector2(-fwd.y, fwd.x)
 	var tip := pp + fwd * 8.0
 	var left_pt := pp - fwd * 5.0 - right * 4.5
 	var right_pt := pp - fwd * 5.0 + right * 4.5
+	_arrow_poly[0] = tip; _arrow_poly[1] = right_pt; _arrow_poly[2] = left_pt
+	_arrow_line[0] = tip; _arrow_line[1] = right_pt; _arrow_line[2] = left_pt; _arrow_line[3] = tip
 	var arrow_col := Color("#38BDF8") if is_drone else Color("#CD191E")
-	draw_colored_polygon(PackedVector2Array([tip, right_pt, left_pt]), arrow_col)
-	draw_polyline(PackedVector2Array([tip, right_pt, left_pt, tip]), Color.WHITE, 1.2)
-
-	# Compass N
-	draw_string(ThemeDB.fallback_font, Vector2(size.x - 18, 16), "N", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.9, 0.95, 0.9))
+	draw_colored_polygon(_arrow_poly, arrow_col)
+	draw_polyline(_arrow_line, Color.WHITE, 1.2)

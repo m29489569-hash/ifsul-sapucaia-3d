@@ -2,8 +2,10 @@ class_name CampusMaterials
 extends RefCounted
 
 var cache: Dictionary = {}
+var batch_cache: Dictionary = {}
 var _noise_cache: Dictionary = {}
 var _tex_cache: Dictionary = {}
+static var _logo_cache: Dictionary = {}
 
 func _is_compat() -> bool:
 	return OS.has_feature("web") or RenderingServer.get_current_rendering_method() == "gl_compatibility"
@@ -17,13 +19,15 @@ func get_material(key: String, tint: Color = Color.WHITE, uv_scale: Vector3 = Ve
 	var mat := StandardMaterial3D.new()
 	var default_uv := Vector3(0.14, 0.14, 0.14) if key in ["grass", "asphalt", "concrete", "sidewalk", "wall", "metal"] else Vector3.ONE
 	mat.uv1_scale = uv_scale if uv_scale != Vector3.ONE else default_uv
-	var use_triplanar := (key in ["grass", "asphalt", "concrete", "sidewalk", "brick", "metal"]) or (key == "wall" and not compat)
+	# Planar/extruded surfaces already supply metric UVs; keep triplanar disabled to cut texture fetches by 3x.
+	var use_triplanar := (key == "metal" and not compat and uv_scale == Vector3.ONE)
 	mat.uv1_triplanar = use_triplanar
 	mat.uv1_world_triplanar = use_triplanar
 
 	match key:
 		"grass":
 			mat.albedo_color = tint if tint != Color.WHITE else Color("#528540")
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 			_apply_pbr(mat, "grass_diff.jpg", "", "grass_rough.jpg", 0.92, 0.0, 2.5, 0.04)
 		"asphalt":
 			mat.albedo_color = tint if tint != Color.WHITE else Color("#4C5056")
@@ -31,10 +35,12 @@ func get_material(key: String, tint: Color = Color.WHITE, uv_scale: Vector3 = Ve
 			mat.normal_scale = 0.45
 		"concrete", "sidewalk":
 			mat.albedo_color = tint if tint != Color.WHITE else Color("#D5D1C8")
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 			_apply_pbr(mat, "concrete_diff.jpg", "concrete_nor.jpg", "concrete_rough.jpg", 0.85, 0.0, 3.0, 0.04)
 			mat.normal_scale = 0.35
 		"wall":
 			mat.albedo_color = tint
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 			_apply_pbr(mat, "", "", "", 0.78, 0.0, 1.8, 0.015)
 			mat.normal_scale = 0.25
 		"tile":
@@ -44,44 +50,109 @@ func get_material(key: String, tint: Color = Color.WHITE, uv_scale: Vector3 = Ve
 			mat.albedo_color = tint if tint != Color.WHITE else Color("#4A5056")
 			_apply_pbr(mat, "metal_diff.jpg", "", "", 0.38, 0.82, 8.0, 0.015)
 		"glass":
-			mat.albedo_color = Color(0.16, 0.33, 0.46, 0.82)
-			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			mat.roughness = 0.08
+			# Opaque slate-blue reflective glass sits flush over solid exterior walls: avoids alpha sorting/overdraw.
+			mat.albedo_color = Color("#3A5B73")
+			mat.roughness = 0.10
 			mat.metallic = 0.35
 			mat.emission_enabled = true
 			mat.emission = Color("#FFE3A3")
 			mat.emission_energy_multiplier = 0.0
+		"fence":
+			mat.albedo_color = Color(0.75, 0.80, 0.85, 0.24)
+			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		"rubber":
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#18181B")
+			mat.roughness = 0.88
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		"ifsul_green":
 			mat.albedo_color = Color("#2F9E41")
 			mat.roughness = 0.55
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		"ifsul_red":
 			mat.albedo_color = Color("#CD191E")
 			mat.roughness = 0.50
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		"court_blue":
 			mat.albedo_color = tint if tint != Color.WHITE else Color("#255B8A")
 			mat.roughness = 0.75
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		"court_red":
 			mat.albedo_color = tint if tint != Color.WHITE else Color("#A34F3A")
 			mat.roughness = 0.78
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		"line_white":
 			mat.albedo_color = Color("#F5F5F0")
 			mat.roughness = 0.7
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		"trunk":
 			mat.albedo_color = Color("#5A4230")
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 			_apply_pbr(mat, "", "", "", 0.95, 0.0, 6.0, 0.03)
 		"foliage":
 			mat.albedo_color = tint if tint != Color.WHITE else Color("#3E7B34")
 			mat.roughness = 0.88
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		"lamp_glow":
 			mat.albedo_color = Color("#FFF4D6")
 			mat.emission_enabled = true
 			mat.emission = Color("#FFE3A8")
 			mat.emission_energy_multiplier = 0.0
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		_:
 			mat.albedo_color = tint
 			mat.roughness = 0.8
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 
 	cache[cache_key] = mat
+	return mat
+
+func get_planar_ground_material(key: String, tint: Color = Color.WHITE) -> StandardMaterial3D:
+	return get_material(key, tint, Vector3(0.999, 0.999, 1.0))
+
+func get_batch_material(bucket: String) -> StandardMaterial3D:
+	if batch_cache.has(bucket):
+		return batch_cache[bucket]
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	match bucket:
+		"vcol_wall":
+			mat.roughness = 0.78
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+			_apply_pbr(mat, "", "", "", 0.78, 0.0, 1.8, 0.015)
+			mat.normal_scale = 0.25
+		"vcol_roof":
+			mat.roughness = 0.84
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+			_apply_pbr(mat, "concrete_diff.jpg", "concrete_nor.jpg", "concrete_rough.jpg", 0.84, 0.0, 3.0, 0.04)
+			mat.normal_scale = 0.30
+		"batch_wall":
+			mat.roughness = 0.78
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		"batch_line":
+			mat.roughness = 0.70
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		"batch_concrete":
+			mat.roughness = 0.85
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		"batch_metal":
+			mat.roughness = 0.38
+			mat.metallic = 0.80
+		"batch_metal_painted":
+			mat.roughness = 0.40
+			mat.metallic = 0.42
+		"batch_foliage":
+			mat.roughness = 0.88
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		"batch_car":
+			mat.roughness = 0.22
+			mat.metallic = 0.35
+		_:
+			mat.roughness = 0.80
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+	batch_cache[bucket] = mat
 	return mat
 
 func _apply_pbr(mat: StandardMaterial3D, diff: String, nor: String, rough: String, default_rough: float, metal: float, noise_freq: float, bump_amp: float) -> void:
@@ -169,6 +240,8 @@ func _make_procedural_normal(freq: float) -> NoiseTexture2D:
 
 static func create_ifsul_logo_texture(size: int = 256) -> ImageTexture:
 	var eff_size := mini(size, 128) if OS.has_feature("web") else size
+	if _logo_cache.has(eff_size):
+		return _logo_cache[eff_size]
 	var img := Image.create(eff_size, eff_size, false, Image.FORMAT_RGBA8)
 	img.fill(Color(1.0, 1.0, 1.0, 1.0))
 	var green := Color("#2F9E41")
@@ -211,4 +284,13 @@ static func create_ifsul_logo_texture(size: int = 256) -> ImageTexture:
 					var dx := mini(x - cx0, cx0 + cell - 1 - x)
 					if dx < r and float((r - dx) * (r - dx) + (r - dy) * (r - dy)) <= r_sq:
 						img.set_pixel(x, y, green)
-	return ImageTexture.create_from_image(img)
+	var tex := ImageTexture.create_from_image(img)
+	_logo_cache[eff_size] = tex
+	return tex
+
+func clear_caches() -> void:
+	cache.clear()
+	batch_cache.clear()
+	_noise_cache.clear()
+	_tex_cache.clear()
+	_logo_cache.clear()

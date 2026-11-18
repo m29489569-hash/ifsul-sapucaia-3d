@@ -1,6 +1,7 @@
 extends Node3D
 
 const CampusBuilderLib = preload("res://scripts/campus_builder.gd")
+const PerfManagerLib = preload("res://scripts/perf_manager.gd")
 
 @onready var world_node: Node3D = $World
 @onready var player: CharacterBody3D = $Player
@@ -8,6 +9,7 @@ const CampusBuilderLib = preload("res://scripts/campus_builder.gd")
 
 var campus_data: Dictionary = {}
 var builder := CampusBuilderLib.new()
+var perf := PerfManagerLib.new()
 var sun_light: DirectionalLight3D
 var world_env: WorldEnvironment
 var sky_mat: ProceduralSkyMaterial
@@ -21,23 +23,17 @@ var started := false
 var paused := false
 var is_compat := false
 
-var quality_mode := "auto"
-var resolved_quality := "high"
-var _quality_initialized := false
-var _applied_shadow_size := 1024
 var _pois_summary: Array = []
-var ft_ema_ms := 16.67
-var _auto_warmup := 2.5
-var _auto_cooldown := 0.0
-var _low_perf_accum := 0.0
-var _high_perf_accum := 0.0
 var _telemetry_timer := 0.0
 var _js_callbacks: Array = []
+var _active_day_night_tween: Tween
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	is_compat = RenderingServer.get_current_rendering_method() == "gl_compatibility" or OS.has_feature("web")
 	_ensure_input_map()
+	if get_viewport():
+		get_viewport().size_changed.connect(_on_viewport_size_changed)
 	if OS.has_feature("web"):
 		set_process(false)
 		hud.set_start_visible(false)
@@ -52,13 +48,14 @@ func _ready() -> void:
 	_setup_audio()
 	_setup_player_and_hud()
 	_apply_resolved_quality("medium" if is_compat else "high")
+	_sync_idle_throttle()
 	hud.play_fade_in()
 
 func _read_web_init_prefs() -> void:
 	var q_raw: Variant = JavaScriptBridge.eval("(window.__ifsulInitPrefs && window.__ifsulInitPrefs.quality) || localStorage.getItem('ifsul.quality') || 'auto'", false)
 	var q_str := String(q_raw).to_lower() if q_raw != null else "auto"
 	if q_str in ["auto", "high", "medium", "low"]:
-		quality_mode = q_str
+		perf.quality_mode = q_str
 	var m_raw: Variant = JavaScriptBridge.eval("Boolean((window.__ifsulInitPrefs && window.__ifsulInitPrefs.muted) ?? (localStorage.getItem('ifsul.muted') === '1'))", false)
 	is_muted = bool(m_raw)
 
@@ -109,7 +106,7 @@ func _boot_web_staged() -> void:
 	builder.build_stage_finalize_props(world_node, campus_data)
 	_setup_audio()
 	_setup_player_and_hud()
-	var init_tier := ("medium" if is_compat else "high") if quality_mode == "auto" else quality_mode
+	var init_tier := ("medium" if is_compat else "high") if perf.quality_mode == "auto" else perf.quality_mode
 	_apply_resolved_quality(init_tier)
 	var master := AudioServer.get_bus_index("Master")
 	if master >= 0:
@@ -123,8 +120,7 @@ func _boot_web_staged() -> void:
 	await RenderingServer.frame_post_draw
 
 	if not started:
-		RenderingServer.viewport_set_active(vp_rid, false)
-		Engine.max_fps = 20
+		_sync_idle_throttle()
 		get_tree().paused = true
 	_setup_web_bridge()
 
@@ -213,8 +209,8 @@ func _setup_environment() -> void:
 	sun_light.shadow_enabled = true
 	sun_light.directional_shadow_max_distance = 85.0 if is_compat else 190.0
 	if is_compat:
-		sun_light.shadow_bias = 0.02
-		sun_light.shadow_normal_bias = 1.0
+		sun_light.shadow_bias = 0.03
+		sun_light.shadow_normal_bias = 0.28
 	sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL if is_compat else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	add_child(sun_light)
 
@@ -258,13 +254,19 @@ func _setup_player_and_hud() -> void:
 	hud.poi_closed.connect(_on_poi_modal_closed)
 
 func _process(delta: float) -> void:
-	for i in range(builder.poi_nodes.size()):
-		var beacon := builder.poi_nodes[i].get_node_or_null("Beacon") as Node3D
-		if beacon:
+	var ticks := Time.get_ticks_msec() * 0.003
+	var beacons := builder.poi_beacons
+	for i in range(beacons.size()):
+		var beacon := beacons[i]
+		if is_instance_valid(beacon):
 			beacon.rotate_y(delta * 1.4)
-			beacon.position.y = 2.2 + sin(Time.get_ticks_msec() * 0.003 + i) * 0.18
+			beacon.position.y = 2.2 + sin(ticks + i) * 0.18
 	hud.update_minimap(player.get_view_position(), player.get_view_yaw(), visited_pois, player.is_drone)
-	_update_adaptive_quality(delta)
+	var vp := get_viewport()
+	var env := world_env.environment if world_env else null
+	var modal_open: bool = hud.is_any_modal_open() if hud else false
+	perf.update_adaptive_quality(delta, started, paused, modal_open, vp, env, sun_light, builder, is_compat)
+	perf.update_runtime_systems(delta, vp, builder, is_night, player)
 	if OS.has_feature("web"):
 		_telemetry_timer += delta
 		if _telemetry_timer >= 0.25:
@@ -295,17 +297,15 @@ func _unhandled_input(event: InputEvent) -> void:
 func _start_exploration() -> void:
 	started = true
 	paused = false
-	Engine.max_fps = 0
 	get_tree().paused = false
 	set_process(true)
-	if OS.has_feature("web"):
-		RenderingServer.viewport_set_active(get_viewport().get_viewport_rid(), true)
 	if ambient_audio and not ambient_audio.playing:
 		ambient_audio.call_deferred("play")
 	hud.set_start_visible(false)
 	hud.set_pause_visible(false)
 	player.set_gameplay_active(true)
-	_auto_warmup = 1.0
+	perf.reset_auto_timers(1.0)
+	_sync_idle_throttle()
 	_notify_web_shell()
 
 func _toggle_pause() -> void:
@@ -313,6 +313,7 @@ func _toggle_pause() -> void:
 	get_tree().paused = paused
 	hud.set_pause_visible(paused)
 	player.set_gameplay_active(not paused)
+	_sync_idle_throttle()
 	_notify_web_shell()
 
 func _resume_game() -> void:
@@ -320,6 +321,7 @@ func _resume_game() -> void:
 	get_tree().paused = false
 	hud.set_pause_visible(false)
 	player.set_gameplay_active(not hud.is_any_modal_open())
+	_sync_idle_throttle()
 	_notify_web_shell()
 
 func _close_modals_and_resume() -> void:
@@ -327,6 +329,7 @@ func _close_modals_and_resume() -> void:
 	get_tree().paused = false
 	hud.set_pause_visible(false)
 	player.set_gameplay_active(true)
+	_sync_idle_throttle()
 	_notify_web_shell()
 
 func _on_poi_interacted(poi: Dictionary) -> void:
@@ -339,6 +342,7 @@ func _on_poi_interacted(poi: Dictionary) -> void:
 	hud.set_tour_progress(visited_pois.size(), total)
 	player.set_gameplay_active(false)
 	hud.show_poi_card(poi)
+	_sync_idle_throttle()
 	_notify_web_shell()
 
 func _on_poi_modal_closed() -> void:
@@ -348,6 +352,7 @@ func _on_poi_modal_closed() -> void:
 		hud.show_complete_modal()
 	else:
 		player.set_gameplay_active(true)
+	_sync_idle_throttle()
 	_notify_web_shell()
 
 func _restart_tour() -> void:
@@ -365,9 +370,10 @@ func _restart_tour() -> void:
 	_close_modals_and_resume()
 
 func _refresh_poi_visuals() -> void:
-	for area in builder.poi_nodes:
+	for i in range(builder.poi_nodes.size()):
+		var area := builder.poi_nodes[i]
 		var is_vis := visited_pois.has(area.name)
-		var beacon := area.get_node_or_null("Beacon") as MeshInstance3D
+		var beacon := (builder.poi_beacons[i] if i < builder.poi_beacons.size() else null) as MeshInstance3D
 		if beacon and beacon.material_override is StandardMaterial3D:
 			var bmat := beacon.material_override as StandardMaterial3D
 			var col := Color("#2F9E41") if is_vis else Color("#F5C43D")
@@ -388,7 +394,11 @@ func set_muted(muted: bool) -> void:
 func toggle_day_night() -> void:
 	is_night = not is_night
 	hud.set_day_night(is_night)
+	if _active_day_night_tween and _active_day_night_tween.is_valid():
+		_active_day_night_tween.kill()
+	perf.notify_night_tween_started()
 	var tw := create_tween().set_parallel(true)
+	_active_day_night_tween = tw
 	if is_night:
 		tw.tween_property(sun_light, "rotation_degrees:x", -15.0, 1.6)
 		tw.tween_property(sun_light, "light_energy", 0.22, 1.6)
@@ -405,9 +415,7 @@ func toggle_day_night() -> void:
 			tw.tween_property(builder.lamp_mat, "emission_energy_multiplier", 4.5, 1.6)
 		if builder.win_mat:
 			tw.tween_property(builder.win_mat, "emission_energy_multiplier", 1.35, 1.6)
-		for l in builder.night_lights:
-			l.visible = true
-			tw.tween_property(l, "light_energy", 6.5, 1.6)
+		tw.tween_property(perf, "night_factor", 1.0, 1.6)
 	else:
 		tw.tween_property(sun_light, "rotation_degrees:x", -42.0, 1.6)
 		tw.tween_property(sun_light, "light_energy", 1.78 if is_compat else 1.55, 1.6)
@@ -424,13 +432,11 @@ func toggle_day_night() -> void:
 			tw.tween_property(builder.lamp_mat, "emission_energy_multiplier", 0.0, 1.6)
 		if builder.win_mat:
 			tw.tween_property(builder.win_mat, "emission_energy_multiplier", 0.0, 1.6)
-		for l in builder.night_lights:
-			tw.tween_property(l, "light_energy", 0.0, 1.6)
-		tw.chain().tween_callback(func():
-			if not is_night:
-				for l in builder.night_lights:
-					l.visible = false
-		)
+		tw.tween_property(perf, "night_factor", 0.0, 1.6)
+	tw.chain().tween_callback(func():
+		perf.notify_night_tween_finished(is_night)
+		perf.update_runtime_systems(0.0, get_viewport(), builder, is_night, player)
+	)
 
 func _load_wav_stream(res_path: String, loop: bool) -> AudioStream:
 	if ResourceLoader.exists(res_path):
@@ -501,102 +507,36 @@ func _ensure_input_map() -> void:
 				ev.physical_keycode = kc
 				InputMap.action_add_event(action, ev)
 
+func _sync_idle_throttle() -> void:
+	var vp := get_viewport()
+	if vp == null:
+		return
+	var modal_open: bool = hud.is_any_modal_open() if hud else false
+	perf.update_idle_throttle(started, paused, modal_open, vp.get_viewport_rid())
+
+func _on_viewport_size_changed() -> void:
+	var vp := get_viewport()
+	if vp == null or world_env == null:
+		return
+	var env := world_env.environment
+	perf.apply_quality(perf.resolved_quality, vp, env, sun_light, builder, is_compat, true)
+
 func set_quality_mode(mode: String) -> void:
 	var norm := mode.to_lower()
 	if not (norm in ["auto", "high", "medium", "low"]):
 		norm = "auto"
-	quality_mode = norm
-	_low_perf_accum = 0.0
-	_high_perf_accum = 0.0
-	_auto_warmup = 2.0
-	_auto_cooldown = 0.0
-	if quality_mode == "auto":
+	perf.quality_mode = norm
+	perf.reset_auto_timers(2.0)
+	if perf.quality_mode == "auto":
 		_apply_resolved_quality("medium" if is_compat else "high")
 	else:
-		_apply_resolved_quality(quality_mode)
+		_apply_resolved_quality(perf.quality_mode)
 	_notify_web_shell()
 
 func _apply_resolved_quality(tier: String) -> void:
-	var norm_tier := tier if tier in ["low", "medium", "high"] else "high"
-	if _quality_initialized and resolved_quality == norm_tier:
-		return
-	_quality_initialized = true
-	resolved_quality = norm_tier
 	var vp := get_viewport()
-	if vp == null:
-		return
 	var env := world_env.environment if world_env else null
-	match norm_tier:
-		"low":
-			vp.scaling_3d_scale = 0.75
-			vp.msaa_3d = Viewport.MSAA_DISABLED
-			if env:
-				env.glow_enabled = false
-			if sun_light:
-				sun_light.shadow_enabled = false
-			builder.set_vegetation_density(0.35)
-		"medium":
-			vp.scaling_3d_scale = 0.90
-			vp.msaa_3d = Viewport.MSAA_DISABLED
-			if env:
-				env.glow_enabled = not is_compat
-			if sun_light:
-				sun_light.shadow_enabled = true
-				sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL if is_compat else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
-			if _applied_shadow_size != 1024:
-				_applied_shadow_size = 1024
-				RenderingServer.directional_shadow_atlas_set_size(1024, true)
-			builder.set_vegetation_density(0.75)
-		_:
-			vp.scaling_3d_scale = 1.0
-			vp.msaa_3d = Viewport.MSAA_2X
-			if env:
-				env.glow_enabled = true
-			if sun_light:
-				sun_light.shadow_enabled = true
-				sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if is_compat else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-			if _applied_shadow_size != 2048:
-				_applied_shadow_size = 2048
-				RenderingServer.directional_shadow_atlas_set_size(2048, true)
-			builder.set_vegetation_density(1.0)
-
-func _update_adaptive_quality(delta: float) -> void:
-	if not started or paused or hud.is_any_modal_open():
-		return
-	var frame_ms := clampf(delta * 1000.0, 1.0, 200.0)
-	ft_ema_ms = lerpf(ft_ema_ms, frame_ms, 0.12)
-	if quality_mode != "auto":
-		return
-	if _auto_warmup > 0.0:
-		_auto_warmup -= delta
-		return
-	if _auto_cooldown > 0.0:
-		_auto_cooldown -= delta
-	if ft_ema_ms > 20.5:
-		_low_perf_accum += delta
-		_high_perf_accum = 0.0
-		if _low_perf_accum >= 1.5 and _auto_cooldown <= 0.0:
-			if resolved_quality == "high":
-				_apply_resolved_quality("medium")
-				_auto_cooldown = 6.0
-			elif resolved_quality == "medium":
-				_apply_resolved_quality("low")
-				_auto_cooldown = 6.0
-			_low_perf_accum = 0.0
-	elif ft_ema_ms < 12.5:
-		_high_perf_accum += delta
-		_low_perf_accum = 0.0
-		if _high_perf_accum >= 4.0 and _auto_cooldown <= 0.0:
-			if resolved_quality == "low":
-				_apply_resolved_quality("medium")
-				_auto_cooldown = 10.0
-			elif resolved_quality == "medium":
-				_apply_resolved_quality("high")
-				_auto_cooldown = 10.0
-			_high_perf_accum = 0.0
-	else:
-		_low_perf_accum = maxf(0.0, _low_perf_accum - delta * 0.5)
-		_high_perf_accum = maxf(0.0, _high_perf_accum - delta * 0.5)
+	perf.apply_quality(tier, vp, env, sun_light, builder, is_compat)
 
 func _build_state_dict() -> Dictionary:
 	var pos: Vector3 = player.get_view_position() if player else Vector3.ZERO
@@ -604,9 +544,9 @@ func _build_state_dict() -> Dictionary:
 		_cache_pois_summary()
 	return {
 		"fps": int(round(Engine.get_frames_per_second())),
-		"frametimeMs": snappedf(ft_ema_ms, 0.01),
-		"quality": quality_mode,
-		"resolvedQuality": resolved_quality,
+		"frametimeMs": snappedf(perf.ft_ema_ms, 0.01),
+		"quality": perf.quality_mode,
+		"resolvedQuality": perf.resolved_quality,
 		"muted": is_muted,
 		"paused": paused,
 		"started": started,
@@ -673,6 +613,13 @@ func _setup_web_bridge() -> void:
 	add_cb.call(host, "restartTour", func(_args):
 		_restart_tour()
 	)
+	add_cb.call(host, "setBackgroundHidden", func(args):
+		var hidden := bool(args[0]) if args.size() > 0 else false
+		var vp := get_viewport()
+		if vp != null:
+			var modal_open: bool = hud.is_any_modal_open() if hud else false
+			perf.set_background_hidden(hidden, started, paused, modal_open, vp.get_viewport_rid())
+	)
 	add_cb.call(host, "getStateJson", func(_args):
 		return JSON.stringify(_build_state_dict())
 	)
@@ -688,12 +635,12 @@ func _setup_web_bridge() -> void:
 			if args.size() >= 3 and player:
 				player.global_position = Vector3(float(args[0]), float(args[1]), float(args[2]))
 				player.velocity = Vector3.ZERO
-				player._update_nearest_poi()
+				player._update_nearest_poi(true)
 				_notify_web_shell()
 		)
 		add_cb.call(test_api, "interact", func(_args):
 			if player:
-				player._update_nearest_poi()
+				player._update_nearest_poi(true)
 				if not player.current_poi.is_empty():
 					_on_poi_interacted(player.current_poi)
 					return true
@@ -748,13 +695,14 @@ func _setup_web_bridge() -> void:
 	_notify_web_shell()
 
 func _exit_tree() -> void:
+	Engine.max_fps = 0
+	if _active_day_night_tween and _active_day_night_tween.is_valid():
+		_active_day_night_tween.kill()
+	if ambient_audio:
+		ambient_audio.stop()
+		ambient_audio.stream = null
+	if player and player.footstep_audio:
+		player.footstep_audio.stop()
+		player.footstep_audio.stream = null
 	_js_callbacks.clear()
-	builder._build_root = null
-	builder._box_batches.clear()
-	builder._unit_box_mesh = null
-	builder.tree_mmi_list.clear()
-	builder.poi_nodes.clear()
-	builder.night_lights.clear()
-	builder.mats.cache.clear()
-	builder.mats._noise_cache.clear()
-	builder.mats._tex_cache.clear()
+	builder.cleanup()
