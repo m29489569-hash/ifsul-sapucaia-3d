@@ -2223,11 +2223,11 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 			_add_colored_torus(bike_rack, Vector3(wx, 0.30, bz), Vector3(0.28, 0.28, 0.28), Vector3(PI * 0.5, 0.0, 0.0), "batch_metal", dark_met_col, 1)
 		_add_colored_box(bike_rack, Vector3(0.0, 0.62, bz), Vector3(0.95, 0.06, 0.05), Vector3.ZERO, "batch_line", Color("#CD191E") if bi % 2 == 0 else Color("#2F9E41"), false, 1)
 
-	# Hedged green lawn with 3D topiary "IFSul"
+	# Hedged green lawn with 3D topiary "IFSul" (positioned cleanly in lawn south of covered walkway curb)
 	var topiary := Node3D.new()
 	topiary.name = "TopiaryIFSul"
-	topiary.position = Vector3(-47.5, 0.0, -5.0)
-	topiary.rotation.y = deg_to_rad(9.5)
+	topiary.position = Vector3(-47.0, 0.0, -1.8)
+	topiary.rotation.y = deg_to_rad(9.87)
 	root.add_child(topiary)
 	var lawn_col := Color("#4B8B3B")
 	var hedge_col := Color("#7CB342")
@@ -2387,6 +2387,379 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 		totem_body.add_child(title)
 
 	sign_node.add_child(totem_body)
+	_build_entrance_covered_walkway(root)
+
+func _add_walkway_arrow(parent: Node3D, pos: Vector3, yaw: float, col: Color) -> void:
+	var b := Basis(Vector3.UP, yaw)
+	var r := Vector3(0.0, yaw, 0.0)
+	# Arrow shaft
+	_add_colored_box(parent, pos + b * Vector3(0.0, 0.0, -0.10), Vector3(0.10, 0.008, 0.50), r, "batch_line", col)
+	# Arrowhead chevron wings meeting at tip (+0.32 along local +Z)
+	_add_colored_box(parent, pos + b * Vector3(-0.085, 0.0, 0.16), Vector3(0.085, 0.008, 0.32), Vector3(0.0, yaw - deg_to_rad(34.0), 0.0), "batch_line", col)
+	_add_colored_box(parent, pos + b * Vector3(0.085, 0.0, 0.16), Vector3(0.085, 0.008, 0.32), Vector3(0.0, yaw + deg_to_rad(34.0), 0.0), "batch_line", col)
+
+func _add_walkway_fluorescent_lamp(parent: Node3D, pos: Vector3, rot_v: Vector3, housing_col: Color, end_col: Color) -> void:
+	_add_colored_box(parent, pos, Vector3(0.08, 0.09, 1.24), rot_v, "batch_wall", housing_col, false, 1)
+	var b := Basis.from_euler(rot_v)
+	for sgn in [-1.0, 1.0]:
+		_add_colored_box(parent, pos + b * Vector3(0.0, -0.01, sgn * 0.59), Vector3(0.095, 0.10, 0.07), rot_v, "batch_metal", end_col, false, 1)
+	for ty in [-0.024, 0.024]:
+		_add_static_box(parent, pos + b * Vector3(-0.045, ty, 0.0), Vector3(0.032, 0.032, 1.10), rot_v, lamp_mat, false, 1)
+
+func _add_selective_waste_bin(parent: Node3D, pos: Vector3, bin_col: Color, mouth_col: Color, badge_col: Color) -> void:
+	# Horizontal curved-hood selective collector bin resting along the wall (matching photo)
+	_add_colored_box(parent, pos + Vector3(-0.02, 0.14, 0.0), Vector3(0.62, 0.26, 0.42), Vector3.ZERO, "batch_wall", bin_col, false, 1)
+	_add_colored_cylinder(parent, pos + Vector3(-0.02, 0.27, 0.0), Vector3(0.42, 0.62, 0.26), Vector3(0.0, 0.0, PI * 0.5), "batch_wall", bin_col, false, 1)
+	# Front hooded rim & dark collection opening facing the walkway (-X)
+	_add_colored_box(parent, pos + Vector3(-0.33, 0.20, 0.0), Vector3(0.05, 0.32, 0.44), Vector3(0.0, 0.0, deg_to_rad(10.0)), "batch_wall", bin_col.lightened(0.06), false, 1)
+	_add_colored_box(parent, pos + Vector3(-0.34, 0.21, 0.0), Vector3(0.04, 0.22, 0.34), Vector3(0.0, 0.0, deg_to_rad(10.0)), "batch_wall", mouth_col, false, 1)
+	# White recycling symbol badge on top hood
+	_add_colored_box(parent, pos + Vector3(-0.10, 0.405, 0.0), Vector3(0.15, 0.008, 0.14), Vector3.ZERO, "batch_line", badge_col, false, 1)
+
+func _add_walkway_white_planter(parent: Node3D, pos: Vector3, is_burgundy: bool, pot_col: Color, soil_col: Color) -> void:
+	_add_colored_cylinder(parent, pos + Vector3(0.0, 0.20, 0.0), Vector3(0.46, 0.40, 0.46), Vector3.ZERO, "batch_wall", pot_col, false, 1)
+	_add_colored_cylinder(parent, pos + Vector3(0.0, 0.38, 0.0), Vector3(0.50, 0.05, 0.50), Vector3.ZERO, "batch_wall", pot_col, false, 1)
+	_add_colored_cylinder(parent, pos + Vector3(0.0, 0.39, 0.0), Vector3(0.42, 0.04, 0.42), Vector3.ZERO, "batch_wall", soil_col, false, 1)
+	var leaf_cols: Array = [
+		Color("#421D28"), Color("#632637"), Color("#7E3548"), Color("#3B7233"), Color("#528C42")
+	] if is_burgundy else [
+		Color("#2B662E"), Color("#3C7D39"), Color("#519446"), Color("#347032"), Color("#63A352")
+	]
+	for li in range(7):
+		var ang := float(li) * (TAU / 7.0) + (0.25 if is_burgundy else 0.0)
+		var tilt := deg_to_rad(28.0 + float(li % 3) * 10.0)
+		var lcol: Color = leaf_cols[li % leaf_cols.size()]
+		var lpos := pos + Vector3(cos(ang) * 0.14, 0.52 + float(li % 2) * 0.08, sin(ang) * 0.14)
+		var lrot := Vector3(sin(ang) * tilt, ang, -cos(ang) * tilt)
+		_add_colored_box(parent, lpos, Vector3(0.32, 0.04, 0.13), lrot, "batch_foliage", lcol, false, 1)
+	_add_colored_sphere(parent, pos + Vector3(0.0, 0.56, 0.0), Vector3(0.42, 0.38, 0.42), "batch_foliage", leaf_cols[1], false, 1)
+
+func _build_corrugated_canopy_mesh(length: float, width: float, x_center: float, z_start: float, base_y: float) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var wave_step := 0.24
+	var steps := maxi(8, int(ceil(length / wave_step)))
+	var dz := length / float(steps)
+	var x0 := x_center - width * 0.5
+	var x1 := x_center + width * 0.5
+	var col_peak := Color(0.95, 0.92, 0.70, 0.88)
+	var col_valley := Color(0.85, 0.81, 0.55, 0.92)
+	for i in range(steps):
+		var za := z_start + float(i) * dz
+		var zb := za + dz
+		var ya := base_y + (0.024 if (i % 2 == 0) else -0.024)
+		var yb := base_y + (0.024 if ((i + 1) % 2 == 0) else -0.024)
+		var ca := col_peak if (i % 2 == 0) else col_valley
+		var cb := col_peak if ((i + 1) % 2 == 0) else col_valley
+		var v0 := Vector3(x0, ya, za)
+		var v1 := Vector3(x1, ya, za)
+		var v2 := Vector3(x1, yb, zb)
+		var v3 := Vector3(x0, yb, zb)
+		var n := (v1 - v0).cross(v3 - v0).normalized()
+		if n.y < 0.0:
+			n = -n
+		st.set_normal(n)
+		st.set_color(ca); st.set_uv(Vector2(0.0, float(i) * 0.25)); st.add_vertex(v0)
+		st.set_color(ca); st.set_uv(Vector2(1.0, float(i) * 0.25)); st.add_vertex(v1)
+		st.set_color(cb); st.set_uv(Vector2(1.0, float(i + 1) * 0.25)); st.add_vertex(v2)
+		st.set_color(ca); st.set_uv(Vector2(0.0, float(i) * 0.25)); st.add_vertex(v0)
+		st.set_color(cb); st.set_uv(Vector2(1.0, float(i + 1) * 0.25)); st.add_vertex(v2)
+		st.set_color(cb); st.set_uv(Vector2(0.0, float(i + 1) * 0.25)); st.add_vertex(v3)
+		# Side eave fascia strips so the corrugated milky-yellow roof profile is visible from ground eye-level too
+		var drop_a := ya - 0.065
+		var drop_b := yb - 0.065
+		for side_x in [x0, x1]:
+			var sv0 := Vector3(side_x, drop_a, za)
+			var sv1 := Vector3(side_x, drop_b, zb)
+			var sv2 := Vector3(side_x, yb, zb)
+			var sv3 := Vector3(side_x, ya, za)
+			st.set_normal(Vector3(-1.0 if side_x == x0 else 1.0, 0.0, 0.0))
+			st.set_color(col_peak); st.set_uv(Vector2(0.0, 0.0)); st.add_vertex(sv0)
+			st.set_color(col_peak); st.set_uv(Vector2(1.0, 0.0)); st.add_vertex(sv1)
+			st.set_color(col_valley); st.set_uv(Vector2(1.0, 1.0)); st.add_vertex(sv2)
+			st.set_color(col_peak); st.set_uv(Vector2(0.0, 0.0)); st.add_vertex(sv0)
+			st.set_color(col_valley); st.set_uv(Vector2(1.0, 1.0)); st.add_vertex(sv2)
+			st.set_color(col_valley); st.set_uv(Vector2(0.0, 1.0)); st.add_vertex(sv3)
+	st.index()
+	return st.commit()
+
+func _build_entrance_covered_walkway(root: Node3D) -> void:
+	var ww_root := Node3D.new()
+	ww_root.name = "EntranceCoveredWalkway"
+	root.add_child(ww_root)
+
+	var floor_col := Color("#4E5258")
+	var groove_col := Color("#3E4248")
+	var joint_col := Color("#2D3035")
+	var curb_col_a := Color("#8C8A84")
+	var curb_col_b := Color("#7E7C76")
+	var arrow_col := Color("#EAB308")
+	var divider_col := Color("#C29B22")
+	var green_frame_col := Color("#2E6E36")
+	var wall_siding_col := Color("#ECE6D2")
+	var wall_rib_col := Color("#DDD6C0")
+	var fire_pipe_col := Color("#C82222")
+	var fire_dark_col := Color("#991818")
+	var lamp_body_col := Color("#F4F4F0")
+	var lamp_cap_col := Color("#9CA3AF")
+	var pot_white := Color("#F0EFEA")
+	var soil_dark := Color("#3B2D22")
+
+	# --- 1. Main East-West Covered Walkway along Setor 100 (bloco_adm) South Facade ---
+	var w_sw := Vector2(-60.9, -6.6)
+	var w_se := Vector2(-31.6, -11.7)
+	var ew_vec := w_se - w_sw
+	var ew_dir := ew_vec.normalized()
+	var ew_rot_y := atan2(ew_dir.x, ew_dir.y)
+
+	var leg_ew := Node3D.new()
+	leg_ew.name = "WalkwayLegEastWest"
+	leg_ew.position = Vector3(w_sw.x, 0.0, w_sw.y)
+	leg_ew.rotation.y = ew_rot_y
+	ww_root.add_child(leg_ew)
+
+	# In leg_ew local space: +Z runs East along bloco_adm south wall (0..29.74m), -X runs South toward garden (0..-2.80m)
+	var s_start := -1.05
+	var s_end := 30.15
+	var ew_len := s_end - s_start
+	var ew_mid := (s_start + s_end) * 0.5
+	var s_door := 14.87 # bloco_adm south entrance at [-46.25, -9.15]
+
+	# Cream-beige vertical ribbed wall cladding under the canopy (leaving the central doorway completely clear)
+	for span in [[0.12, s_door - 1.52], [s_door + 1.52, 29.62]]:
+		var sa := float(span[0])
+		var sb := float(span[1])
+		var slen := sb - sa
+		var smid := (sa + sb) * 0.5
+		_add_colored_box(leg_ew, Vector3(-0.135, 1.54, smid), Vector3(0.035, 3.00, slen), Vector3.ZERO, "batch_wall", wall_siding_col)
+		var rib_n := int(slen / 0.55)
+		for ri in range(rib_n + 1):
+			var rz := sa + 0.20 + float(ri) * 0.55
+			if rz <= sb - 0.15:
+				_add_colored_box(leg_ew, Vector3(-0.156, 1.54, rz), Vector3(0.016, 2.98, 0.045), Vector3.ZERO, "batch_wall", wall_rib_col, false, 1)
+
+	# Dark gray grooved concrete slab floor (y_top = 0.058m, cleanly above MergedFootways at 0.046m)
+	_add_colored_box(leg_ew, Vector3(-1.42, 0.040, ew_mid), Vector3(2.68, 0.036, ew_len), Vector3.ZERO, "batch_concrete", floor_col)
+	# East connecting apron joining ColonnadeAndAuditorioPortico ([-31.5, -7.2]) & corredor_convivencia entrance ([-28.0, -10.3])
+	_add_colored_box(leg_ew, Vector3(-3.45, 0.040, 29.35), Vector3(1.50, 0.036, 2.60), Vector3.ZERO, "batch_concrete", floor_col)
+	_add_colored_box(leg_ew, Vector3(-1.42, 0.040, 31.85), Vector3(2.68, 0.036, 3.40), Vector3.ZERO, "batch_concrete", floor_col)
+
+	# Longitudinal comb grooves on dark gray floor
+	for gx in [-0.55, -0.92, -1.30, -1.68, -2.06, -2.44]:
+		_add_colored_box(leg_ew, Vector3(gx, 0.059, ew_mid), Vector3(0.03, 0.004, ew_len - 0.2), Vector3.ZERO, "batch_wall", groove_col, false, 1)
+	# Faded yellow longitudinal two-way lane divider line
+	_add_colored_box(leg_ew, Vector3(-1.72, 0.060, ew_mid), Vector3(0.045, 0.005, ew_len - 1.2), Vector3.ZERO, "batch_line", divider_col, false, 1)
+
+	# Raised stone/concrete curb blocks along South (garden) side (open at West corner s_start..1.55 for Leg 1 and East end 28.2..30.15)
+	var curb_s := 1.62
+	var curb_idx := 0
+	while curb_s < 28.15:
+		var ccol := curb_col_a if (curb_idx % 2 == 0) else curb_col_b
+		_add_colored_box(leg_ew, Vector3(-2.76, 0.082, curb_s + 0.31), Vector3(0.16, 0.135, 0.62), Vector3.ZERO, "batch_concrete", ccol)
+		curb_s += 0.67
+		curb_idx += 1
+
+	# Lush garden strip & low ornamental shrubs right outside the South stone curb
+	_add_colored_box(leg_ew, Vector3(-3.28, 0.032, 14.8), Vector3(0.88, 0.03, 26.2), Vector3.ZERO, "batch_foliage", Color("#488239"))
+	for gsi in range(14):
+		var gsz := 2.4 + float(gsi) * 1.85
+		if absf(gsz - s_door) < 1.8:
+			continue
+		var gcol := Color("#3D7D31") if (gsi % 2 == 0) else Color("#55963E")
+		_add_colored_sphere(leg_ew, Vector3(-3.26, 0.26, gsz), Vector3(0.68, 0.44, 0.68), "batch_foliage", gcol, false, 1)
+
+	# Green tubular steel structure (#2E6E36): 11 bays (~2.836m each) + longitudinal beams + wall rails + transverse crossbars
+	var ew_bays := 11
+	var ew_step := ew_len / float(ew_bays)
+	for bi in range(ew_bays + 1):
+		var sz := s_start + float(bi) * ew_step
+		# Transverse floor expansion joint at each bay
+		_add_colored_box(leg_ew, Vector3(-1.42, 0.060, sz), Vector3(2.66, 0.005, 0.04), Vector3.ZERO, "batch_wall", joint_col)
+		# Garden-side vertical green tubular post
+		_add_colored_box(leg_ew, Vector3(-2.66, 1.525, sz), Vector3(0.08, 3.05, 0.08), Vector3.ZERO, "batch_metal_painted", green_frame_col, true)
+		# Wall-side vertical green tubular post (nudge away from bloco_adm south doorway if needed)
+		var wall_post_z := sz
+		if absf(wall_post_z - s_door) < 1.48:
+			wall_post_z = (s_door - 1.52) if (wall_post_z < s_door) else (s_door + 1.52)
+		_add_colored_box(leg_ew, Vector3(-0.19, 1.525, wall_post_z), Vector3(0.08, 3.05, 0.08), Vector3.ZERO, "batch_metal_painted", green_frame_col, true)
+		# Transverse upper green crossbar (travessa)
+		_add_colored_box(leg_ew, Vector3(-1.425, 3.05, sz), Vector3(2.55, 0.075, 0.075), Vector3.ZERO, "batch_metal_painted", green_frame_col)
+
+		# Two-way painted yellow directional arrows in each bay
+		if bi < ew_bays:
+			var bay_mid := sz + ew_step * 0.5
+			# Garden lane (-2.14): pointing East (+Z, yaw = 0.0) toward Main Building
+			_add_walkway_arrow(leg_ew, Vector3(-2.14, 0.062, bay_mid), 0.0, arrow_col)
+			# Inner lane (-1.30): pointing West (-Z, yaw = PI) toward Portaria
+			_add_walkway_arrow(leg_ew, Vector3(-1.30, 0.062, bay_mid), PI, arrow_col)
+
+	# Top longitudinal green tubular beams (longarinas superiores)
+	_add_colored_box(leg_ew, Vector3(-0.19, 3.05, ew_mid), Vector3(0.08, 0.085, ew_len + 0.08), Vector3.ZERO, "batch_metal_painted", green_frame_col)
+	_add_colored_box(leg_ew, Vector3(-1.425, 3.08, ew_mid), Vector3(0.055, 0.055, ew_len + 0.08), Vector3.ZERO, "batch_metal_painted", green_frame_col)
+	_add_colored_box(leg_ew, Vector3(-2.66, 3.05, ew_mid), Vector3(0.08, 0.085, ew_len + 0.08), Vector3.ZERO, "batch_metal_painted", green_frame_col)
+
+	# Intermediate horizontal green rails along the wall side (y = 1.05m and y = 2.15m, split around doorway)
+	for rail_y in [1.05, 2.15]:
+		for rspan in [[s_start, s_door - 1.52], [s_door + 1.52, s_end]]:
+			var ra := float(rspan[0])
+			var rb := float(rspan[1])
+			_add_colored_box(leg_ew, Vector3(-0.19, rail_y, (ra + rb) * 0.5), Vector3(0.065, 0.065, rb - ra), Vector3.ZERO, "batch_metal_painted", green_frame_col)
+
+	# White fluorescent tube light fixtures mounted on the upper-middle green wall rail (y = 2.18m)
+	for lz in [2.35, 7.90, 12.10, 18.25, 24.60, 28.50]:
+		_add_walkway_fluorescent_lamp(leg_ew, Vector3(-0.24, 2.18, lz), Vector3.ZERO, lamp_body_col, lamp_cap_col)
+	for nl_z in [7.90, 23.00]:
+		var wlight := OmniLight3D.new()
+		wlight.position = leg_ew.transform * Vector3(-1.35, 2.65, nl_z)
+		wlight.light_color = Color("#FFF5D6")
+		wlight.light_energy = 0.0
+		wlight.visible = false
+		wlight.omni_range = 14.0
+		wlight.omni_attenuation = 1.2
+		wlight.shadow_enabled = false
+		wlight.distance_fade_enabled = true
+		wlight.distance_fade_begin = 75.0
+		wlight.distance_fade_length = 25.0
+		wlight.set_meta("is_floodlight", false)
+		ww_root.add_child(wlight)
+		night_lights.append(wlight)
+
+	# Red Fire Hydrant Pipe (#C82222) running along the base of bloco_adm south wall + wall Fire Hose Cabinet
+	for fspan in [[0.25, s_door - 1.55], [s_door + 1.55, 26.20]]:
+		var fa := float(fspan[0])
+		var fb := float(fspan[1])
+		var flen := fb - fa
+		_add_colored_cylinder(leg_ew, Vector3(-0.20, 0.15, (fa + fb) * 0.5), Vector3(0.075, flen, 0.075), Vector3(PI * 0.5, 0.0, 0.0), "batch_metal_painted", fire_pipe_col)
+		var clamp_n := int(flen / 2.2)
+		for ci in range(clamp_n + 1):
+			var cz := fa + 0.3 + float(ci) * 2.2
+			if cz <= fb - 0.2:
+				_add_colored_box(leg_ew, Vector3(-0.17, 0.15, cz), Vector3(0.09, 0.09, 0.05), Vector3.ZERO, "batch_metal", fire_dark_col, false, 1)
+	# Vertical riser pipe & Red Fire Hose Cabinet (Abrigo de Mangueira de Incêndio) at s = 26.2m
+	_add_colored_cylinder(leg_ew, Vector3(-0.20, 0.72, 26.20), Vector3(0.07, 1.15, 0.07), Vector3.ZERO, "batch_metal_painted", fire_pipe_col)
+	_add_colored_box(leg_ew, Vector3(-0.24, 1.42, 26.55), Vector3(0.20, 0.82, 0.68), Vector3.ZERO, "batch_metal_painted", fire_pipe_col, false, 1)
+	_add_colored_box(leg_ew, Vector3(-0.345, 1.42, 26.55), Vector3(0.02, 0.56, 0.46), Vector3.ZERO, "batch_wall", Color("#EAB308"), false, 1)
+
+	# Agratto Split AC Outdoor Condenser Units on Wall Brackets + Galvanized Metal Rain Hood + Floor Condensate Drain Pipe
+	var ac_body_col := Color("#E4E0D2")
+	var ac_dark_col := Color("#2B2E2A")
+	var hood_col := Color("#C4C8CE")
+	for ac_z: float in [3.65, 17.55]:
+		for b_off in [-0.30, 0.30]:
+			_add_colored_box(leg_ew, Vector3(-0.34, 0.30, ac_z + b_off), Vector3(0.42, 0.04, 0.05), Vector3.ZERO, "batch_metal", Color("#D6D3C9"), false, 1)
+			_add_colored_box(leg_ew, Vector3(-0.16, 0.20, ac_z + b_off), Vector3(0.04, 0.24, 0.05), Vector3.ZERO, "batch_metal", Color("#D6D3C9"), false, 1)
+		_add_colored_box(leg_ew, Vector3(-0.37, 0.59, ac_z), Vector3(0.36, 0.54, 0.78), Vector3.ZERO, "batch_wall", ac_body_col, false, 1)
+		for row_y in [0.46, 0.62]:
+			for col_i in range(6):
+				var vz := ac_z - 0.28 + float(col_i) * 0.112
+				_add_colored_box(leg_ew, Vector3(-0.552, row_y, vz), Vector3(0.015, 0.12, 0.088), Vector3.ZERO, "batch_wall", ac_dark_col, false, 1)
+		_add_colored_cylinder(leg_ew, Vector3(-0.37, 0.865, ac_z - 0.04), Vector3(0.28, 0.015, 0.28), Vector3.ZERO, "batch_metal", ac_dark_col, false, 1)
+		_add_colored_box(leg_ew, Vector3(-0.50, 0.868, ac_z + 0.26), Vector3(0.05, 0.012, 0.22), Vector3.ZERO, "batch_metal", ac_dark_col, false, 1)
+		_add_colored_box(leg_ew, Vector3(-0.74, 0.85, ac_z), Vector3(0.44, 0.022, 0.54), Vector3(0.0, 0.0, deg_to_rad(5.0)), "batch_metal", hood_col, false, 1)
+		_add_colored_box(leg_ew, Vector3(-0.98, 0.78, ac_z), Vector3(0.16, 0.022, 0.54), Vector3(0.0, 0.0, deg_to_rad(32.0)), "batch_metal", hood_col, false, 1)
+		_add_colored_cylinder(leg_ew, Vector3(-1.45, 0.070, ac_z - 0.60), Vector3(0.028, 2.52, 0.028), Vector3(0.0, 0.0, PI * 0.5), "batch_metal", Color("#7C8086"), false, 1)
+
+	# Row of 5 Colored Selective Waste Bins + White Planters with Burgundy/Green Foliage along the wall (West & East spans)
+	var bin_mouth := Color("#1C2024")
+	var bin_badge := Color("#F4F4F0")
+	for base_s: float in [0.0, 14.15]:
+		_add_walkway_white_planter(leg_ew, Vector3(-0.46, 0.058, base_s + 2.05), true, pot_white, soil_dark)
+		_add_selective_waste_bin(leg_ew, Vector3(-0.48, 0.058, base_s + 5.55), Color("#7C5841"), bin_mouth, bin_badge)
+		_add_selective_waste_bin(leg_ew, Vector3(-0.48, 0.058, base_s + 6.22), Color("#2E7D32"), bin_mouth, bin_badge)
+		_add_selective_waste_bin(leg_ew, Vector3(-0.48, 0.058, base_s + 6.89), Color("#C62828"), bin_mouth, bin_badge)
+		_add_walkway_white_planter(leg_ew, Vector3(-0.46, 0.058, base_s + 7.56), false, pot_white, soil_dark)
+		_add_selective_waste_bin(leg_ew, Vector3(-0.48, 0.058, base_s + 8.32), Color("#1565C0"), bin_mouth, bin_badge)
+		_add_selective_waste_bin(leg_ew, Vector3(-0.48, 0.058, base_s + 9.52), Color("#616161"), bin_mouth, bin_badge)
+		_add_walkway_white_planter(leg_ew, Vector3(-0.46, 0.058, base_s + 10.35), false, pot_white, soil_dark)
+		_add_walkway_white_planter(leg_ew, Vector3(-0.46, 0.058, base_s + 11.85), true, pot_white, soil_dark)
+
+	# --- 2. North-South Entrance Segment connecting Portaria Principal (guarita) to SW Corner of Leg 2 ---
+	var ns_south := Vector2(-60.45, 7.42)
+	var ns_north := Vector2(-60.182, -3.934)
+	var ns_vec := ns_north - ns_south
+	var ns_len := ns_vec.length()
+	var ns_dir := ns_vec / ns_len
+	var ns_rot_y := atan2(ns_dir.x, ns_dir.y)
+
+	var leg_ns := Node3D.new()
+	leg_ns.name = "WalkwayLegNorthSouth"
+	leg_ns.position = Vector3(ns_south.x, 0.0, ns_south.y)
+	leg_ns.rotation.y = ns_rot_y
+	ww_root.add_child(leg_ns)
+
+	# Dark gray grooved concrete slab floor on North-South leg
+	_add_colored_box(leg_ns, Vector3(0.0, 0.040, ns_len * 0.5), Vector3(2.60, 0.036, ns_len), Vector3.ZERO, "batch_concrete", floor_col)
+	for gx_ns in [-0.95, -0.58, -0.22, 0.22, 0.58, 0.95]:
+		_add_colored_box(leg_ns, Vector3(gx_ns, 0.059, ns_len * 0.5), Vector3(0.03, 0.004, ns_len - 0.2), Vector3.ZERO, "batch_wall", groove_col, false, 1)
+	_add_colored_box(leg_ns, Vector3(0.0, 0.060, ns_len * 0.5), Vector3(0.045, 0.005, ns_len - 0.8), Vector3.ZERO, "batch_line", divider_col, false, 1)
+
+	# Raised stone/concrete curbs along West (+1.28) and East (-1.28, with 2.4m plaza opening near Portaria) edges
+	var c_ns := 0.10
+	var c_ns_i := 0
+	while c_ns < ns_len - 0.45:
+		var ccol_ns := curb_col_a if (c_ns_i % 2 == 0) else curb_col_b
+		_add_colored_box(leg_ns, Vector3(1.28, 0.082, c_ns + 0.31), Vector3(0.16, 0.135, 0.62), Vector3.ZERO, "batch_concrete", ccol_ns)
+		if c_ns > 2.45:
+			_add_colored_box(leg_ns, Vector3(-1.28, 0.082, c_ns + 0.31), Vector3(0.16, 0.135, 0.62), Vector3.ZERO, "batch_concrete", ccol_ns)
+		c_ns += 0.67
+		c_ns_i += 1
+
+	# Green tubular steel posts, top beams, crossbars & two-way yellow arrows on North-South leg (4 bays)
+	var ns_bays := 4
+	var ns_step := ns_len / float(ns_bays)
+	for bi_ns in range(ns_bays + 1):
+		var z_ns := float(bi_ns) * ns_step
+		_add_colored_box(leg_ns, Vector3(0.0, 0.060, z_ns), Vector3(2.58, 0.005, 0.04), Vector3.ZERO, "batch_wall", joint_col)
+		if bi_ns < ns_bays:
+			for sx_ns in [-1.22, 1.22]:
+				_add_colored_box(leg_ns, Vector3(sx_ns, 1.525, z_ns), Vector3(0.08, 3.05, 0.08), Vector3.ZERO, "batch_metal_painted", green_frame_col, true)
+			_add_colored_box(leg_ns, Vector3(0.0, 3.05, z_ns), Vector3(2.52, 0.075, 0.075), Vector3.ZERO, "batch_metal_painted", green_frame_col)
+			var mid_ns := z_ns + ns_step * 0.5
+			# East lane (-0.58): pointing North (+Z, yaw = 0.0) toward Setor 100 / Main Building
+			_add_walkway_arrow(leg_ns, Vector3(-0.58, 0.062, mid_ns), 0.0, arrow_col)
+			# West lane (+0.58): pointing South (-Z, yaw = PI) toward Portaria
+			_add_walkway_arrow(leg_ns, Vector3(0.58, 0.062, mid_ns), PI, arrow_col)
+
+	for sx_beam in [-1.22, 0.0, 1.22]:
+		var by_ns := 3.08 if is_zero_approx(sx_beam) else 3.05
+		var bsz_ns := 0.055 if is_zero_approx(sx_beam) else 0.08
+		_add_colored_box(leg_ns, Vector3(sx_beam, by_ns, ns_len * 0.5), Vector3(bsz_ns, bsz_ns, ns_len + 0.06), Vector3.ZERO, "batch_metal_painted", green_frame_col)
+
+	for lz_ns in [2.85, 8.45]:
+		_add_walkway_fluorescent_lamp(leg_ns, Vector3(0.0, 3.01, lz_ns), Vector3(0.0, 0.0, PI * 0.5), lamp_body_col, lamp_cap_col)
+
+	# --- 3. Corrugated Translucent Milky-Yellow Canopy Roof (#EBE3A8) inside roof_nodes ---
+	var roof_holder := Node3D.new()
+	roof_holder.name = "EntranceWalkwayRoof"
+	ww_root.add_child(roof_holder)
+	roof_nodes.append(roof_holder)
+
+	var canopy_mat := StandardMaterial3D.new()
+	canopy_mat.albedo_color = Color(0.92, 0.89, 0.66, 0.88)
+	canopy_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	canopy_mat.vertex_color_use_as_albedo = true
+	canopy_mat.vertex_color_is_srgb = true
+	canopy_mat.roughness = 0.34
+	canopy_mat.emission_enabled = true
+	canopy_mat.emission = Color("#EBE3A8")
+	canopy_mat.emission_energy_multiplier = 0.16
+	canopy_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+
+	var ew_canopy := MeshInstance3D.new()
+	ew_canopy.name = "CanopyEastWest"
+	ew_canopy.transform = leg_ew.transform
+	ew_canopy.mesh = _build_corrugated_canopy_mesh(ew_len + 0.24, 2.82, -1.42, s_start - 0.12, 3.12)
+	ew_canopy.material_override = canopy_mat
+	ew_canopy.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	roof_holder.add_child(ew_canopy)
+
+	var ns_canopy := MeshInstance3D.new()
+	ns_canopy.name = "CanopyNorthSouth"
+	ns_canopy.transform = leg_ns.transform
+	ns_canopy.mesh = _build_corrugated_canopy_mesh(ns_len + 0.10, 2.74, 0.0, -0.08, 3.12)
+	ns_canopy.material_override = canopy_mat
+	ns_canopy.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	roof_holder.add_child(ns_canopy)
 
 func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 	var props_root := Node3D.new()
@@ -2496,7 +2869,7 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 	# 2. Light poles via MultiMeshInstance3D + key OmniLight3D night lights
 	var pole_pts := [
 		Vector2(-75, -100), Vector2(-70, -40), Vector2(-64, 15), Vector2(-56, 60), Vector2(-50, 110),
-		Vector2(-48, -10), Vector2(-24, -10), Vector2(-10, 6), Vector2(14, -42), Vector2(14, -84),
+		Vector2(-65, -22), Vector2(-24, -10), Vector2(-10, 6), Vector2(14, -42), Vector2(14, -84),
 		Vector2(-38, -72), Vector2(-4, 60), Vector2(-18, 95), Vector2(36, 18), Vector2(20, 74)
 	]
 	var pole_mm := MultiMesh.new()

@@ -193,6 +193,14 @@ def draw_blueprint(sat_path: str, sat_bounds):
         hpx, hpy = w2p(hcx, hcy)
         d.text((hpx - 28, hpy - 8), "Horta", fill="#1B5E20", font=font_sm)
 
+    # Entrance Covered Walkway (Passarela Coberta da Portaria)
+    walkway = CAMPUS.get("landmarks", {}).get("passarela_entrada", {})
+    if walkway and walkway.get("polygon"):
+        wpts = [w2p(p[0], p[1]) for p in walkway["polygon"]]
+        d.polygon(wpts, fill="#EBE3A8", outline="#2E6E36", width=2)
+        wpx, wpy = w2p(-46.5, -5.8)
+        d.text((wpx - 44, wpy - 6), "Passarela Coberta", fill="#1B4D22", font=font_xs)
+
     # Courts
     for c in CAMPUS.get("courts", []):
         pts = [w2p(p[0], p[1]) for p in c["polygon"]]
@@ -206,6 +214,9 @@ def draw_blueprint(sat_path: str, sat_bounds):
 
     # Buildings colored by official Mapa das Salas sector palette
     svg_elems = []
+    if walkway and walkway.get("polygon"):
+        w_svg_pts = " ".join(f"{w2p(p[0], p[1])[0]:.1f},{w2p(p[0], p[1])[1]:.1f}" for p in walkway["polygon"])
+        svg_elems.append(f'<polygon points="{w_svg_pts}" fill="#EBE3A8" stroke="#2E6E36" stroke-width="2"/>')
     for idx, b in enumerate(CAMPUS.get("buildings", []), start=1):
         poly = b["polygon"]
         pts = [w2p(p[0], p[1]) for p in poly]
@@ -294,6 +305,9 @@ def draw_blueprint(sat_path: str, sat_bounds):
         if horta and horta.get("polygon"):
             hp_sat = [s2p(p[0], p[1]) for p in horta["polygon"]]
             od.polygon(hp_sat, fill=(102, 187, 106, 75), outline=(129, 230, 134, 235), width=2)
+        if walkway and walkway.get("polygon"):
+            wp_sat = [s2p(p[0], p[1]) for p in walkway["polygon"]]
+            od.polygon(wp_sat, fill=(235, 227, 168, 125), outline=(46, 110, 54, 240), width=2)
         for idx, b in enumerate(CAMPUS.get("buildings", []), start=1):
             bp = [s2p(p[0], p[1]) for p in b["polygon"]]
             col_rgba = hex_to_rgba(b.get("map_color", "#FFFFFF"), 80)

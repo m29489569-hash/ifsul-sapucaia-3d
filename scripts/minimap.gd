@@ -41,10 +41,12 @@ var _cached_buildings: Array[Dictionary] = []
 var _cached_pois: Array[Dictionary] = []
 var _cached_horta: PackedVector2Array = PackedVector2Array()
 var _cached_pond: PackedVector2Array = PackedVector2Array()
+var _cached_walkway: PackedVector2Array = PackedVector2Array()
 
 var _world_buildings: Array[Dictionary] = []
 var _world_rooms: Array[Dictionary] = []
 var _world_courtyards: Array[PackedVector2Array] = []
+var _world_walkway: PackedVector2Array = PackedVector2Array()
 var _world_pois: Array[Dictionary] = []
 
 var _static_layer: _StaticMapLayer
@@ -164,7 +166,14 @@ func _parse_world_geometry() -> void:
 	_world_buildings.clear()
 	_world_rooms.clear()
 	_world_courtyards.clear()
+	_world_walkway = PackedVector2Array()
 	_world_pois.clear()
+
+	var lms_init: Dictionary = campus_data.get("landmarks", {})
+	if lms_init.has("passarela_entrada") and lms_init["passarela_entrada"] is Dictionary:
+		var pe: Dictionary = lms_init["passarela_entrada"]
+		for p in pe.get("polygon", []):
+			_world_walkway.append(Vector2(float(p[0]), float(p[1])))
 
 	for b in campus_data.get("buildings", []):
 		var wpoly := PackedVector2Array()
@@ -356,6 +365,7 @@ func _rebuild_cache() -> void:
 	_cached_pois.clear()
 	_cached_horta = PackedVector2Array()
 	_cached_pond = PackedVector2Array()
+	_cached_walkway = _poly_to_map(_world_walkway, MAP_BOUNDS) if _world_walkway.size() >= 3 else PackedVector2Array()
 
 	for st in campus_data.get("streets", []):
 		var pts := PackedVector2Array()
@@ -462,6 +472,10 @@ func _draw_static_layer(canvas: Control) -> void:
 		canvas.draw_colored_polygon(_cached_horta, Color("#3B6E2A"))
 		canvas.draw_polyline(_close_poly(_cached_horta), Color("#86EFAC"), 1.2)
 
+	if _cached_walkway.size() >= 3:
+		canvas.draw_colored_polygon(_cached_walkway, Color(0.92, 0.89, 0.66, 0.86))
+		canvas.draw_polyline(_close_poly(_cached_walkway), Color("#2E6E36"), 1.3)
+
 	for c in _cached_courts:
 		canvas.draw_colored_polygon(c["poly"], c["col"])
 		canvas.draw_polyline(c["closed"], Color(0.95, 0.98, 1.0, 0.55), 1.0)
@@ -537,6 +551,11 @@ func _draw_zoomed_indoor_world(bounds: Rect2) -> void:
 		if mpoly.size() >= 3:
 			draw_colored_polygon(mpoly, Color(0.22, 0.44, 0.24, 0.92))
 			draw_polyline(_close_poly(mpoly), Color("#86EFAC"), 1.2)
+
+	if _world_walkway.size() >= 3:
+		var wpoly := _poly_to_map(_world_walkway, bounds)
+		draw_colored_polygon(wpoly, Color(0.92, 0.89, 0.66, 0.78))
+		draw_polyline(_close_poly(wpoly), Color("#2E6E36"), 1.5)
 
 	for r in _world_rooms:
 		var mpoly := _poly_to_map(r["poly"], bounds)
