@@ -173,13 +173,10 @@ func set_room_beacon(world_pos: Vector3, label_text: String) -> void:
 	beam.mesh = _make_cylinder_mesh(0.16, 0.24, 16.0, 12)
 	beam.position.y = 8.1
 	var bmat := StandardMaterial3D.new()
-	bmat.albedo_color = Color(0.12, 0.78, 0.76, 0.34)
+	bmat.albedo_color = Color(0.18, 0.90, 0.88, 0.38)
 	bmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	bmat.emission_enabled = true
-	bmat.emission = Color("#1EC7C3")
-	bmat.emission_energy_multiplier = 1.2
-	bmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	bmat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	bmat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 	beam.material_override = bmat
 	beam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	beacon.add_child(beam)
@@ -195,6 +192,7 @@ func set_room_beacon(world_pos: Vector3, label_text: String) -> void:
 	dmat.emission_enabled = true
 	dmat.emission = Color("#F5C43D")
 	dmat.emission_energy_multiplier = 1.4
+	dmat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 	diamond.material_override = dmat
 	diamond.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	beacon.add_child(diamond)
@@ -205,6 +203,7 @@ func set_room_beacon(world_pos: Vector3, label_text: String) -> void:
 	lbl_in.font_size = 32
 	lbl_in.pixel_size = 0.0055
 	lbl_in.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl_in.double_sided = false
 	lbl_in.no_depth_test = true
 	lbl_in.visibility_range_end = 42.0
 	lbl_in.modulate = Color("#FFFBE6")
@@ -218,6 +217,7 @@ func set_room_beacon(world_pos: Vector3, label_text: String) -> void:
 	lbl_top.font_size = 32
 	lbl_top.pixel_size = 0.0125
 	lbl_top.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl_top.double_sided = false
 	lbl_top.no_depth_test = true
 	lbl_top.visibility_range_end = 260.0
 	lbl_top.modulate = Color("#A7F3D0")
@@ -1666,6 +1666,7 @@ func _add_building_sign(parent: Node3D, poly: PackedVector2Array, h: float, text
 	lbl.outline_modulate = trim_col.darkened(0.55)
 	lbl.outline_size = 6
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.double_sided = false
 	lbl.no_depth_test = false
 	lbl.visibility_range_end = 110.0
 	lbl.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
@@ -2166,6 +2167,7 @@ func _build_horta(root: Node3D, horta: Dictionary) -> void:
 	hlbl.font_size = 28
 	hlbl.pixel_size = 0.0085
 	hlbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	hlbl.double_sided = false
 	hlbl.visibility_range_end = 55.0
 	hlbl.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 	hlbl.modulate = Color("#F5F9F0")
@@ -2263,6 +2265,8 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 	water_mat.albedo_color = Color("#2D5F5B")
 	water_mat.roughness = 0.08
 	water_mat.metallic = 0.30
+	if mats._is_compat():
+		water_mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 	var pond_mi := MeshInstance3D.new()
 	pond_mi.mesh = _make_cylinder_mesh(6.5, 6.5, 0.05, 28)
 	pond_mi.scale = Vector3(1.9, 1.0, 1.0)
@@ -2362,6 +2366,8 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 	var logo_mat := StandardMaterial3D.new()
 	logo_mat.albedo_texture = MaterialsLib.create_ifsul_logo_texture(256)
 	logo_mat.roughness = 0.4
+	if mats._is_compat():
+		logo_mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 	for side in [-1.0, 1.0]:
 		var logo_mi := MeshInstance3D.new()
 		var qm := QuadMesh.new()
@@ -2735,15 +2741,11 @@ func _build_entrance_covered_walkway(root: Node3D) -> void:
 	roof_nodes.append(roof_holder)
 
 	var canopy_mat := StandardMaterial3D.new()
-	canopy_mat.albedo_color = Color(0.92, 0.89, 0.66, 0.88)
+	canopy_mat.albedo_color = Color(0.94, 0.91, 0.68, 0.88)
 	canopy_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	canopy_mat.vertex_color_use_as_albedo = true
-	canopy_mat.vertex_color_is_srgb = true
 	canopy_mat.roughness = 0.34
-	canopy_mat.emission_enabled = true
-	canopy_mat.emission = Color("#EBE3A8")
-	canopy_mat.emission_energy_multiplier = 0.16
 	canopy_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	canopy_mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 
 	var ew_canopy := MeshInstance3D.new()
 	ew_canopy.name = "CanopyEastWest"
@@ -3029,6 +3031,8 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 		cab_mat.albedo_color = Color("#1E293B")
 		cab_mat.metallic = 0.2
 		cab_mat.roughness = 0.12
+		if mats._is_compat():
+			cab_mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		cab_mmi.material_override = cab_mat
 		cab_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		props_root.add_child(cab_mmi)
@@ -3303,6 +3307,7 @@ func _build_pois(root: Node3D, pois: Array) -> void:
 		rmat.emission_enabled = true
 		rmat.emission = Color("#2F9E41")
 		rmat.emission_energy_multiplier = 0.8
+		rmat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		ring.material_override = rmat
 		ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		ring.name = "Ring"
@@ -3319,6 +3324,7 @@ func _build_pois(root: Node3D, pois: Array) -> void:
 		mmat.emission_enabled = true
 		mmat.emission = Color("#F5C43D")
 		mmat.emission_energy_multiplier = 1.2
+		mmat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		marker.material_override = mmat
 		marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		marker.name = "Beacon"
@@ -3330,6 +3336,7 @@ func _build_pois(root: Node3D, pois: Array) -> void:
 		lbl.font_size = 32
 		lbl.pixel_size = 0.0042
 		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lbl.double_sided = false
 		lbl.visibility_range_end = 30.0
 		lbl.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 		lbl.modulate = Color("#FFFBE6")

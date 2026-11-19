@@ -323,10 +323,7 @@ func _ensure_shared_primitives(mats: CampusMaterials) -> void:
 		_unit_sphere_mesh.radial_segments = 10
 		_unit_sphere_mesh.rings = 5
 	if _ceiling_light_mat == null:
-		_ceiling_light_mat = StandardMaterial3D.new()
-		_ceiling_light_mat.albedo_color = Color("#FFFDF6")
-		_ceiling_light_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		_ceiling_light_mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		_ceiling_light_mat = mats.get_material("ceiling_lamp")
 	if _glass_mat == null:
 		_glass_mat = mats.get_material("glass")
 

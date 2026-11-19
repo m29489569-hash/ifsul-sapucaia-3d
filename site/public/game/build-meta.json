@@ -1,18 +1,18 @@
 {
-  "hash": "ddf5433a",
-  "version": "ddf5433a",
-  "builtAt": "2026-11-19T18:02:16.600Z",
-  "executable": "/game/ifsul.ddf5433a",
-  "mainPack": "/game/ifsul.ddf5433a.pck",
+  "hash": "496ef95b",
+  "version": "496ef95b",
+  "builtAt": "2026-11-19T19:24:04.918Z",
+  "executable": "/game/ifsul.496ef95b",
+  "mainPack": "/game/ifsul.496ef95b.pck",
   "files": {
-    "js": "ifsul.ddf5433a.js",
-    "wasm": "ifsul.ddf5433a.wasm",
-    "pck": "ifsul.ddf5433a.pck"
+    "js": "ifsul.496ef95b.js",
+    "wasm": "ifsul.496ef95b.wasm",
+    "pck": "ifsul.496ef95b.pck"
   },
   "sizes": {
     "js": 279815,
     "wasm": 39509339,
-    "pck": 916840,
-    "total": 40705994
+    "pck": 917944,
+    "total": 40707098
   }
 }

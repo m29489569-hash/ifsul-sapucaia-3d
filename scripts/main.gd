@@ -71,25 +71,42 @@ func _notify_boot_stage(pct: int, status_text: String) -> void:
 	var safe_txt := JSON.stringify(status_text)
 	JavaScriptBridge.eval("window.__ifsulShell && window.__ifsulShell.onBootProgress && window.__ifsulShell.onBootProgress(" + str(pct) + ", " + safe_txt + ");", false)
 
+func _warmup_viewport_frame(vp_rid: RID) -> void:
+	RenderingServer.viewport_set_active(vp_rid, true)
+	await RenderingServer.frame_post_draw
+	RenderingServer.viewport_set_active(vp_rid, false)
+	await get_tree().process_frame
+
 func _boot_web_staged() -> void:
 	var vp_rid := get_viewport().get_viewport_rid()
 	RenderingServer.viewport_set_active(vp_rid, false)
+	hud.visible = false
 
 	_notify_boot_stage(82, "Configurando iluminação e ambiente 3D...")
+	await get_tree().process_frame
 	campus_data = _load_json_dict("res://data/campus.json")
 	interiors_data = _load_json_dict("res://data/interiors.json")
 	_cache_pois_summary()
 	_setup_environment()
+	var sp: Dictionary = campus_data.get("spawn", {})
+	var pos_a: Array = sp.get("position", [-55.0, 1.1, 12.0])
+	var look_a: Array = sp.get("look_at", [-20.0, 1.8, 8.0])
+	player.global_position = Vector3(float(pos_a[0]), float(pos_a[1]), float(pos_a[2]))
+	player.look_at_point(Vector3(float(look_a[0]), float(look_a[1]), float(look_a[2])))
+	var init_tier := ("medium" if is_compat else "high") if perf.quality_mode == "auto" else perf.quality_mode
+	_apply_resolved_quality(init_tier)
 	builder.begin_build(world_node)
-	await get_tree().process_frame
+	await _warmup_viewport_frame(vp_rid)
 
 	_notify_boot_stage(85, "Construindo terreno e vias...")
+	await get_tree().process_frame
 	builder.build_stage_terrain_base(world_node, campus_data)
 	await get_tree().process_frame
 
 	_notify_boot_stage(88, "Finalizando pátios e quadras...")
-	builder.build_stage_terrain_details(world_node, campus_data)
 	await get_tree().process_frame
+	builder.build_stage_terrain_details(world_node, campus_data)
+	await _warmup_viewport_frame(vp_rid)
 
 	var buildings: Array = campus_data.get("buildings", [])
 	var b_total := buildings.size()
@@ -98,27 +115,35 @@ func _boot_web_staged() -> void:
 		var b_end := mini(b_start + b_chunk, b_total)
 		var pct := 89 + int(round(4.0 * float(b_end) / maxf(1.0, float(b_total))))
 		_notify_boot_stage(pct, "Erguendo blocos (%d/%d)..." % [b_end, b_total])
-		builder.build_stage_buildings_range(world_node, campus_data, b_start, b_end)
 		await get_tree().process_frame
+		builder.build_stage_buildings_range(world_node, campus_data, b_start, b_end)
+		if b_start == 0:
+			await _warmup_viewport_frame(vp_rid)
+		else:
+			await get_tree().process_frame
 
 	_notify_boot_stage(94, "Construindo pórticos e marcos...")
-	builder.build_stage_landmarks(world_node, campus_data)
 	await get_tree().process_frame
+	builder.build_stage_landmarks(world_node, campus_data)
+	await _warmup_viewport_frame(vp_rid)
 
 	_notify_boot_stage(96, "Construindo interiores e sinalização das salas...")
-	builder.build_stage_interiors(world_node, campus_data, interiors_data)
 	await get_tree().process_frame
+	builder.build_stage_interiors(world_node, campus_data, interiors_data)
+	await _warmup_viewport_frame(vp_rid)
 
 	_notify_boot_stage(97, "Plantando vegetação e mobiliário...")
-	builder.build_stage_vegetation(world_node, campus_data)
 	await get_tree().process_frame
+	builder.build_stage_vegetation(world_node, campus_data)
+	await _warmup_viewport_frame(vp_rid)
 
 	_notify_boot_stage(98, "Preparando áudio e interface...")
+	await get_tree().process_frame
 	builder.build_stage_finalize_props(world_node, campus_data)
+	hud.visible = true
 	_setup_audio()
 	_setup_player_and_hud()
-	var init_tier := ("medium" if is_compat else "high") if perf.quality_mode == "auto" else perf.quality_mode
-	_apply_resolved_quality(init_tier)
+	perf.apply_quality(init_tier, get_viewport(), world_env.environment if world_env else null, sun_light, builder, is_compat, true)
 	var master := AudioServer.get_bus_index("Master")
 	if master >= 0:
 		AudioServer.set_bus_mute(master, is_muted)
@@ -126,7 +151,8 @@ func _boot_web_staged() -> void:
 	hud.call_deferred("_on_viewport_resized")
 	await get_tree().process_frame
 
-	_notify_boot_stage(99, "Compilando shaders e aquecendo placa gráfica...")
+	_notify_boot_stage(99, "Finalizando cena 3D...")
+	await get_tree().process_frame
 	RenderingServer.viewport_set_active(vp_rid, true)
 	await RenderingServer.frame_post_draw
 

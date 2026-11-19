@@ -17,6 +17,8 @@ func get_material(key: String, tint: Color = Color.WHITE, uv_scale: Vector3 = Ve
 
 	var compat := _is_compat()
 	var mat := StandardMaterial3D.new()
+	if compat:
+		mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 	var default_uv := Vector3(0.14, 0.14, 0.14) if key in ["grass", "asphalt", "concrete", "sidewalk", "wall", "metal"] else Vector3.ONE
 	mat.uv1_scale = uv_scale if uv_scale != Vector3.ONE else default_uv
 	# Planar/extruded surfaces already supply metric UVs; keep triplanar disabled to cut texture fetches by 3x.
@@ -148,6 +150,8 @@ func get_batch_material(bucket: String) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
 	mat.vertex_color_is_srgb = true
+	if _is_compat():
+		mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 	match bucket:
 		"vcol_wall":
 			mat.roughness = 0.78
