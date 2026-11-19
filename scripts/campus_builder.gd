@@ -1,8 +1,14 @@
 extends RefCounted
 
 const MaterialsLib = preload("res://scripts/materials.gd")
+const InteriorBuilderLib = preload("res://scripts/interior_builder.gd")
 
 var mats := MaterialsLib.new()
+var interior_builder = null
+var roof_nodes: Array[Node3D] = []
+var roofs_visible: bool = true
+var _room_beacon: Node3D = null
+var _courtyard_inners: Array[PackedVector2Array] = []
 var poi_nodes: Array[Area3D] = []
 var poi_beacons: Array[Node3D] = []
 var night_lights: Array[OmniLight3D] = []
@@ -28,19 +34,27 @@ var _road_st: SurfaceTool = null
 var _walk_st: SurfaceTool = null
 var _foot_st: SurfaceTool = null
 
-func build(root: Node3D, data: Dictionary) -> void:
+func build(root: Node3D, data: Dictionary, interiors_data: Dictionary = {}) -> void:
 	begin_build(root)
 	build_stage_terrain(root, data)
 	build_stage_structures(root, data)
+	build_stage_interiors(root, data, interiors_data)
 	build_stage_props(root, data)
 
 func begin_build(root: Node3D) -> void:
+	clear_room_beacon()
+	if interior_builder != null:
+		interior_builder.cleanup()
+		interior_builder = null
 	_build_root = root
 	_colored_batches.clear()
 	_plain_batches.clear()
 	_sphere_batches.clear()
 	_cyl_batches.clear()
 	_torus_batches.clear()
+	roof_nodes.clear()
+	roofs_visible = true
+	_courtyard_inners.clear()
 	poi_nodes.clear()
 	poi_beacons.clear()
 	night_lights.clear()
@@ -82,6 +96,16 @@ func build_stage_landmarks(root: Node3D, data: Dictionary) -> void:
 	_build_landmarks(root, data)
 	_build_entrance_signage(root, data)
 
+func build_stage_interiors(root: Node3D, data: Dictionary, interiors_data: Dictionary) -> void:
+	if interiors_data.is_empty():
+		return
+	interior_builder = InteriorBuilderLib.new()
+	interior_builder.build_interiors(root, data, interiors_data, mats)
+	for l in interior_builder.night_lights:
+		night_lights.append(l)
+	for dn in interior_builder.detail_nodes:
+		detail_nodes.append(dn)
+
 func build_stage_props(root: Node3D, data: Dictionary) -> void:
 	build_stage_vegetation(root, data)
 	build_stage_finalize_props(root, data)
@@ -92,6 +116,122 @@ func build_stage_vegetation(root: Node3D, data: Dictionary) -> void:
 func build_stage_finalize_props(root: Node3D, data: Dictionary) -> void:
 	_build_pois(root, data.get("pois", []))
 	_flush_static_batches(root)
+
+func set_roofs_visible(vis: bool) -> void:
+	roofs_visible = vis
+	for rn in roof_nodes:
+		if is_instance_valid(rn):
+			rn.visible = vis
+
+func update_interior_visibility(cam_pos: Vector3, is_aerial: bool = false) -> void:
+	if interior_builder != null:
+		interior_builder.update_visibility(cam_pos, is_aerial)
+
+func find_room_at(world_pos: Vector3) -> Dictionary:
+	if interior_builder != null:
+		return interior_builder.find_room_at(world_pos)
+	return {}
+
+func search_rooms(query: String) -> Array[Dictionary]:
+	if interior_builder != null:
+		return interior_builder.search_rooms(query)
+	return []
+
+func get_all_rooms() -> Array[Dictionary]:
+	if interior_builder != null:
+		return interior_builder.get_all_rooms()
+	return []
+
+func get_room_world_pos(room: Dictionary) -> Vector3:
+	if interior_builder != null:
+		return interior_builder.get_room_world_pos(room)
+	var c: Array = room.get("center", [0.0, 0.0])
+	return Vector3(float(c[0]), 0.0, float(c[1]))
+
+func set_room_beacon(world_pos: Vector3, label_text: String) -> void:
+	clear_room_beacon()
+	if _build_root == null or not is_instance_valid(_build_root):
+		return
+	var beacon := Node3D.new()
+	beacon.name = "RoomNavigationBeacon"
+	beacon.position = Vector3(world_pos.x, 0.0, world_pos.z)
+
+	var ring := MeshInstance3D.new()
+	ring.mesh = _make_cylinder_mesh(0.85, 0.95, 0.06, 20)
+	ring.position.y = 0.09
+	var rmat := StandardMaterial3D.new()
+	rmat.albedo_color = Color("#1EC7C3")
+	rmat.emission_enabled = true
+	rmat.emission = Color("#1EC7C3")
+	rmat.emission_energy_multiplier = 1.4
+	rmat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+	ring.material_override = rmat
+	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	beacon.add_child(ring)
+
+	var beam := MeshInstance3D.new()
+	beam.mesh = _make_cylinder_mesh(0.16, 0.24, 16.0, 12)
+	beam.position.y = 8.1
+	var bmat := StandardMaterial3D.new()
+	bmat.albedo_color = Color(0.12, 0.78, 0.76, 0.34)
+	bmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	bmat.emission_enabled = true
+	bmat.emission = Color("#1EC7C3")
+	bmat.emission_energy_multiplier = 1.2
+	bmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	bmat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	beam.material_override = bmat
+	beam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	beacon.add_child(beam)
+
+	var diamond := MeshInstance3D.new()
+	var dm := BoxMesh.new()
+	dm.size = Vector3(0.45, 0.45, 0.45)
+	diamond.mesh = dm
+	diamond.position.y = 1.95
+	diamond.rotation = Vector3(deg_to_rad(45.0), deg_to_rad(45.0), 0.0)
+	var dmat := StandardMaterial3D.new()
+	dmat.albedo_color = Color("#F5C43D")
+	dmat.emission_enabled = true
+	dmat.emission = Color("#F5C43D")
+	dmat.emission_energy_multiplier = 1.4
+	diamond.material_override = dmat
+	diamond.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	beacon.add_child(diamond)
+
+	var lbl_in := Label3D.new()
+	lbl_in.text = label_text
+	lbl_in.position.y = 2.65
+	lbl_in.font_size = 32
+	lbl_in.pixel_size = 0.0055
+	lbl_in.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl_in.no_depth_test = true
+	lbl_in.visibility_range_end = 42.0
+	lbl_in.modulate = Color("#FFFBE6")
+	lbl_in.outline_modulate = Color("#0F3B3A")
+	lbl_in.outline_size = 6
+	beacon.add_child(lbl_in)
+
+	var lbl_top := Label3D.new()
+	lbl_top.text = label_text
+	lbl_top.position.y = 11.5
+	lbl_top.font_size = 32
+	lbl_top.pixel_size = 0.0125
+	lbl_top.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl_top.no_depth_test = true
+	lbl_top.visibility_range_end = 260.0
+	lbl_top.modulate = Color("#A7F3D0")
+	lbl_top.outline_modulate = Color("#0A2928")
+	lbl_top.outline_size = 6
+	beacon.add_child(lbl_top)
+
+	_build_root.add_child(beacon)
+	_room_beacon = beacon
+
+func clear_room_beacon() -> void:
+	if is_instance_valid(_room_beacon):
+		_room_beacon.queue_free()
+	_room_beacon = null
 
 # --- Optimized Primitive Builders ---
 
@@ -159,8 +299,8 @@ func _add_static_box(parent: Node3D, pos: Vector3, sz: Vector3, rot: Vector3, ma
 		}
 	(_plain_batches[key]["items"] as Array).append(xf)
 
-func _add_colored_sphere(parent: Node3D, pos: Vector3, sz: Vector3, bucket: String, col: Color, cast_shadow: bool = false, detail_tier: int = 0) -> void:
-	_push_colored_batch_item(_sphere_batches, parent, pos, sz, Vector3.ZERO, bucket, col, cast_shadow, detail_tier)
+func _add_colored_sphere(parent: Node3D, pos: Vector3, sz: Vector3, bucket: String, col: Color, cast_shadow: bool = false, detail_tier: int = 0, rot: Vector3 = Vector3.ZERO) -> void:
+	_push_colored_batch_item(_sphere_batches, parent, pos, sz, rot, bucket, col, cast_shadow, detail_tier)
 
 func _add_colored_cylinder(parent: Node3D, pos: Vector3, sz: Vector3, rot: Vector3, bucket: String, col: Color, cast_shadow: bool = false, detail_tier: int = 0) -> void:
 	_push_colored_batch_item(_cyl_batches, parent, pos, sz, rot, bucket, col, cast_shadow, detail_tier)
@@ -654,17 +794,47 @@ func _build_buildings_slice(root: Node3D, buildings: Array, start_idx: int, end_
 
 		var sign_text := String(b.get("sign_text", ""))
 		if not sign_text.is_empty():
-			_add_building_sign(b_node, poly, h, sign_text, col_trim)
+			_add_building_sign(b_node, poly, h, sign_text, col_trim, b)
+
+func _compute_inset_polygon(cw: PackedVector2Array, inset: float) -> PackedVector2Array:
+	var n := cw.size()
+	var out := PackedVector2Array()
+	out.resize(n)
+	for i in range(n):
+		var prev := cw[(i - 1 + n) % n]
+		var curr := cw[i]
+		var nxt := cw[(i + 1) % n]
+		var e0 := (curr - prev).normalized()
+		var e1 := (nxt - curr).normalized()
+		var n0 := Vector2(-e0.y, e0.x)
+		var n1 := Vector2(-e1.y, e1.x)
+		var bis := n0 + n1
+		var off: Vector2
+		if bis.length_squared() < 0.0004:
+			off = n1 * inset
+		else:
+			var bis_dir := bis.normalized()
+			var denom := maxf(0.45, bis_dir.dot(n1))
+			off = bis_dir * minf(inset / denom, inset * 2.2)
+		out[i] = curr + off
+	return out
 
 func _build_courtyard_building(parent: Node3D, poly: PackedVector2Array, h: float, inset: float, col_wall: Color, col_trim: Color, b: Dictionary) -> void:
-	var c := _poly_centroid(poly)
-	var inner := PackedVector2Array()
-	for p in poly:
-		var dir := (c - p).normalized()
-		inner.append(p + dir * inset)
-	for i in range(poly.size()):
-		var j := (i + 1) % poly.size()
-		var wing := PackedVector2Array([poly[i], poly[j], inner[j], inner[i]])
+	var outer_cw := _ensure_cw_screen(poly)
+	var inner_cw := _compute_inset_polygon(outer_cw, inset)
+	_courtyard_inners.append(inner_cw)
+
+	if bool(b.get("walkable", false)):
+		var inner_ccw := inner_cw.duplicate()
+		inner_ccw.reverse()
+		var loops: Array[PackedVector2Array] = [outer_cw, inner_ccw]
+		_build_walkable_shell_loops(parent, loops, h, col_wall, col_trim, int(b.get("floors", 1)), bool(b.get("has_windows", true)), b)
+		_build_building_roof(parent, outer_cw, inner_cw, h, b, true)
+		return
+
+	for i in range(outer_cw.size()):
+		var j := (i + 1) % outer_cw.size()
+		var wing := PackedVector2Array([outer_cw[i], outer_cw[j], inner_cw[j], inner_cw[i]])
 		_add_building_volume(parent, wing, h, col_wall, col_trim, int(b.get("floors", 2)), true, b)
 
 func _make_building_occluder(poly: PackedVector2Array, h: float) -> ArrayOccluder3D:
@@ -733,20 +903,31 @@ func _make_building_occluder(poly: PackedVector2Array, h: float) -> ArrayOcclude
 
 func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, col_wall: Color, col_trim: Color, floors: int, has_windows: bool, b: Dictionary) -> void:
 	var wall_mat := mats.get_batch_material("vcol_wall")
-	var roof_col := Color("#6B6E73")
 	var btype := String(b.get("type", ""))
-	if btype in ["auditorium", "library", "student_center", "workshop"]:
-		roof_col = Color("#E6E8EC") if btype != "workshop" else Color("#9EA4AB")
+	var is_walkable := bool(b.get("walkable", false))
 
 	if btype == "corridor":
 		# Open covered walkway on concrete pillars (passable on foot!)
+		var roof_col := Color("#6B6E73")
+		var cw_cor := _ensure_cw_screen(poly)
 		var canopy := StaticBody3D.new()
-		var cmesh := _extrude_polygon_mesh(poly, 0.35, true, true, roof_col)
+		var cmesh := _extrude_roof_cap_mesh(cw_cor, 0.0, 0.35, roof_col, false)
+		var roof_vis := Node3D.new()
+		roof_vis.name = "CorridorRoofGroup"
+		roof_vis.position.y = h - 0.35
+		canopy.add_child(roof_vis)
 		var cmi := MeshInstance3D.new()
 		cmi.mesh = cmesh
-		cmi.position.y = h - 0.35
 		cmi.material_override = mats.get_batch_material("vcol_roof")
-		canopy.add_child(cmi)
+		roof_vis.add_child(cmi)
+		var ceil_mi := MeshInstance3D.new()
+		ceil_mi.name = "CorridorCeiling"
+		ceil_mi.mesh = _make_polygon_ceiling_mesh(cw_cor, 0.0)
+		ceil_mi.material_override = mats.get_material("interior_wall", Color("#F4F2EC"))
+		ceil_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		roof_vis.add_child(ceil_mi)
+		if is_walkable:
+			roof_nodes.append(roof_vis)
 		var ccol := CollisionShape3D.new()
 		ccol.shape = cmesh.create_trimesh_shape()
 		ccol.position.y = h - 0.35
@@ -755,6 +936,13 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 		var pil_col := Color("#DEDAD2")
 		for v in poly:
 			_add_colored_cylinder(parent, Vector3(v.x, (h - 0.35) * 0.5, v.y), Vector3(0.30, h - 0.35, 0.30), Vector3.ZERO, "batch_concrete", pil_col, true)
+		return
+
+	var outer_cw := _ensure_cw_screen(poly)
+	if is_walkable:
+		var loops: Array[PackedVector2Array] = [outer_cw]
+		_build_walkable_shell_loops(parent, loops, h, col_wall, col_trim, floors, has_windows, b)
+		_build_building_roof(parent, outer_cw, PackedVector2Array(), h, b, true)
 		return
 
 	var body := StaticBody3D.new()
@@ -768,7 +956,7 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 	col_shape.shape = mesh.create_trimesh_shape()
 	body.add_child(col_shape)
 
-	# Software Occlusion Culling proxy for solid buildings (desktop builds with Embree occlusion enabled)
+	# Software Occlusion Culling proxy for solid non-walkable buildings (desktop builds with Embree occlusion enabled)
 	if not OS.has_feature("web"):
 		var occ := _make_building_occluder(poly, h)
 		if occ != null:
@@ -777,38 +965,322 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 			body.add_child(occ_inst)
 
 	parent.add_child(body)
+	_build_building_roof(parent, outer_cw, PackedVector2Array(), h, b, false)
 
-	# Roof parapet cap + industrial shed skylights & library/student-center octagonal dome
-	var cap := MeshInstance3D.new()
-	cap.mesh = _extrude_polygon_mesh(poly, 0.25, false, true, roof_col)
-	cap.position.y = h
-	var smooth_roof := btype in ["auditorium", "library", "student_center"]
-	cap.material_override = mats.get_batch_material("vcol_wall" if smooth_roof else "vcol_roof")
-	cap.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	parent.add_child(cap)
-	if btype in ["academic", "workshop"] and poly.size() >= 4:
-		var c2 := _poly_centroid(poly)
-		var rib_bucket := "batch_wall" if btype == "workshop" else "batch_metal"
-		var rib_col := Color("#EBEEF2") if btype == "workshop" else Color("#5B6770")
-		var span := 10.5 if btype == "workshop" else 5.5
-		for k in range(-3, 4):
-			var rc := Vector2(c2.x, c2.y + k * 4.2)
-			if not (Geometry2D.is_point_in_polygon(rc + Vector2(-span, 0), poly) and Geometry2D.is_point_in_polygon(rc + Vector2(span, 0), poly)):
+	for i in range(outer_cw.size()):
+		var p1 := outer_cw[i]
+		var p2 := outer_cw[(i + 1) % outer_cw.size()]
+		var edge := p2 - p1
+		var edge_len := edge.length()
+		if edge_len < 3.5:
+			continue
+		var solid_spans: Array[Vector2] = [Vector2(0.0, edge_len)]
+		_add_edge_facade_details(parent, p1, p2, h, col_trim, floors, has_windows, btype, solid_spans, [], false, false, i == 0)
+
+func _merge_edge_cuts(raw_cuts: Array) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if raw_cuts.is_empty():
+		return out
+	var sorted := raw_cuts.duplicate()
+	sorted.sort_custom(func(x, y): return float(x["a"]) < float(y["a"]))
+	for item in sorted:
+		var a := float(item["a"])
+		var b := float(item["b"])
+		var ch := float(item["h"])
+		if b - a < 0.2:
+			continue
+		if out.is_empty() or a > float(out[out.size() - 1]["b"]) + 0.15:
+			out.append({"a": a, "b": b, "h": ch})
+		else:
+			var prev: Dictionary = out[out.size() - 1]
+			prev["b"] = maxf(float(prev["b"]), b)
+			prev["h"] = maxf(float(prev["h"]), ch)
+			out[out.size() - 1] = prev
+	return out
+
+func _project_entrances_to_loops(loops: Array[PackedVector2Array], entrances: Array, max_dist: float, h: float) -> Array:
+	var all_cuts: Array = []
+	for loop in loops:
+		var loop_cuts: Array = []
+		for _i in range(loop.size()):
+			loop_cuts.append([])
+		all_cuts.append(loop_cuts)
+
+	var mapped_counts: Array[int] = []
+	mapped_counts.resize(loops.size())
+	for li in range(loops.size()):
+		mapped_counts[li] = 0
+
+	for ent in entrances:
+		if not (ent is Dictionary):
+			continue
+		var pos_a: Array = ent.get("pos", [])
+		if pos_a.size() < 2:
+			continue
+		var ep := Vector2(float(pos_a[0]), float(pos_a[1]))
+		var door_w := clampf(float(ent.get("width", 2.4)), 1.2, 12.0)
+		var door_h := clampf(float(ent.get("height", 2.6)), 2.3, maxf(2.35, h - 0.25))
+
+		var best_li := -1
+		var best_ei := -1
+		var best_t := 0.5
+		var best_d := max_dist + 0.001
+
+		for li in range(loops.size()):
+			var loop := loops[li]
+			var n := loop.size()
+			for ei in range(n):
+				var p1 := loop[ei]
+				var p2 := loop[(ei + 1) % n]
+				var edge := p2 - p1
+				var len_sq := edge.length_squared()
+				if len_sq < 0.04:
+					continue
+				var t := clampf((ep - p1).dot(edge) / len_sq, 0.0, 1.0)
+				var proj := p1 + edge * t
+				var d := ep.distance_to(proj)
+				if d < best_d:
+					best_d = d
+					best_li = li
+					best_ei = ei
+					best_t = t
+
+		if best_li >= 0 and best_ei >= 0:
+			var loop := loops[best_li]
+			var n := loop.size()
+			var p1 := loop[best_ei]
+			var p2 := loop[(best_ei + 1) % n]
+			var edge := p2 - p1
+			var edge_len := edge.length()
+			var edge_dir := edge / edge_len
+			var s_center := best_t * edge_len
+			var s0 := s_center - door_w * 0.5
+			var s1 := s_center + door_w * 0.5
+
+			# Handle doorway straddling a collinear vertex between adjacent edges
+			if s0 < 0.0:
+				var prev_ei := (best_ei - 1 + n) % n
+				var prev_edge := loop[best_ei] - loop[prev_ei]
+				var prev_len := prev_edge.length()
+				if prev_len > 0.2 and (prev_edge / prev_len).dot(edge_dir) > 0.92:
+					var pa := maxf(0.0, prev_len + s0)
+					(all_cuts[best_li][prev_ei] as Array).append({"a": pa, "b": prev_len, "h": door_h})
+			if s1 > edge_len:
+				var next_ei := (best_ei + 1) % n
+				var next_edge := loop[(next_ei + 1) % n] - loop[next_ei]
+				var next_len := next_edge.length()
+				if next_len > 0.2 and edge_dir.dot(next_edge / next_len) > 0.92:
+					var nb := minf(next_len, s1 - edge_len)
+					(all_cuts[best_li][next_ei] as Array).append({"a": 0.0, "b": nb, "h": door_h})
+
+			var ca := clampf(s0, 0.0, edge_len)
+			var cb := clampf(s1, 0.0, edge_len)
+			if cb - ca >= 0.2:
+				(all_cuts[best_li][best_ei] as Array).append({"a": ca, "b": cb, "h": door_h})
+				mapped_counts[best_li] += 1
+
+	# Ensure inner courtyard loop always has open doorway access to the garden
+	if loops.size() >= 2 and mapped_counts[1] == 0:
+		var cloop := loops[1]
+		var cn := cloop.size()
+		var edge_list: Array[Dictionary] = []
+		for ei in range(cn):
+			var elen := cloop[ei].distance_to(cloop[(ei + 1) % cn])
+			if elen >= 4.0:
+				edge_list.append({"ei": ei, "len": elen})
+		edge_list.sort_custom(func(x, y): return float(x["len"]) > float(y["len"]))
+		var open_cnt := mini(2, edge_list.size())
+		var cd_h := clampf(2.55, 2.3, maxf(2.35, h - 0.3))
+		for k in range(open_cnt):
+			var ei := int(edge_list[k]["ei"])
+			var elen := float(edge_list[k]["len"])
+			var mid_s := elen * 0.5
+			(all_cuts[1][ei] as Array).append({"a": maxf(0.4, mid_s - 1.3), "b": minf(elen - 0.4, mid_s + 1.3), "h": cd_h})
+
+	# Safe fallback: if a walkable building has zero mapped outer entrances, open one on its longest edge
+	if loops.size() >= 1 and mapped_counts[0] == 0:
+		var oloop := loops[0]
+		var best_e := 0
+		var best_l := -1.0
+		for ei in range(oloop.size()):
+			var elen := oloop[ei].distance_to(oloop[(ei + 1) % oloop.size()])
+			if elen > best_l:
+				best_l = elen
+				best_e = ei
+		if best_l >= 3.0:
+			var mid_s := best_l * 0.5
+			(all_cuts[0][best_e] as Array).append({"a": maxf(0.3, mid_s - 1.3), "b": minf(best_l - 0.3, mid_s + 1.3), "h": clampf(2.55, 2.3, maxf(2.35, h - 0.3))})
+
+	# Merge cuts on every edge
+	for li in range(loops.size()):
+		for ei in range(loops[li].size()):
+			all_cuts[li][ei] = _merge_edge_cuts(all_cuts[li][ei])
+
+	return all_cuts
+
+func _push_oriented_quad(st: SurfaceTool, v0: Vector3, v1: Vector3, v2: Vector3, v3: Vector3, desired_n: Vector3, w: float, h: float, col: Color) -> void:
+	var n := desired_n.normalized()
+	st.set_normal(n)
+	st.set_color(col)
+	var tri_n := (v1 - v0).cross(v2 - v0)
+	if tri_n.dot(n) <= 0.0:
+		_push_quad(st, v0, v1, v2, v3, w, h)
+	else:
+		_push_quad(st, v1, v0, v3, v2, w, h)
+
+func _emit_wall_segment(
+	st: SurfaceTool, body: StaticBody3D,
+	p1: Vector2, edge_dir: Vector2, out_dir: Vector2, in_dir: Vector2,
+	edge_len: float, iv0: Vector2, iv1: Vector2,
+	seg_a: float, seg_b: float, y0: float, y1: float,
+	wall_t: float, rot_y: float,
+	col_out: Color, col_in: Color, col_jamb: Color, col_top: Color
+) -> void:
+	var seg_len := seg_b - seg_a
+	var seg_h := y1 - y0
+	if seg_len < 0.04 or seg_h < 0.04:
+		return
+
+	# Solid physics box collider strictly on this solid wall segment
+	var col := CollisionShape3D.new()
+	var cbox := BoxShape3D.new()
+	cbox.size = Vector3(wall_t, seg_h, seg_len)
+	col.shape = cbox
+	var mid2 := p1 + edge_dir * ((seg_a + seg_b) * 0.5) + in_dir * (wall_t * 0.5)
+	col.position = Vector3(mid2.x, (y0 + y1) * 0.5, mid2.y)
+	col.rotation.y = rot_y
+	body.add_child(col)
+
+	var oa := p1 + edge_dir * seg_a
+	var ob := p1 + edge_dir * seg_b
+	var at_start := seg_a <= 0.015
+	var at_end := seg_b >= edge_len - 0.015
+	var ia := iv0 if at_start else (oa + in_dir * wall_t)
+	var ib := iv1 if at_end else (ob + in_dir * wall_t)
+	if (ib - ia).dot(edge_dir) <= 0.02:
+		ia = oa + in_dir * wall_t
+		ib = ob + in_dir * wall_t
+
+	var oa0 := Vector3(oa.x, y0, oa.y)
+	var ob0 := Vector3(ob.x, y0, ob.y)
+	var ob1 := Vector3(ob.x, y1, ob.y)
+	var oa1 := Vector3(oa.x, y1, oa.y)
+	var ia0 := Vector3(ia.x, y0, ia.y)
+	var ib0 := Vector3(ib.x, y0, ib.y)
+	var ib1 := Vector3(ib.x, y1, ib.y)
+	var ia1 := Vector3(ia.x, y1, ia.y)
+
+	var out_n := Vector3(out_dir.x, 0.0, out_dir.y)
+	var in_n := Vector3(in_dir.x, 0.0, in_dir.y)
+	var edge_n := Vector3(edge_dir.x, 0.0, edge_dir.y)
+
+	# Outer face (exterior architectural color)
+	_push_oriented_quad(st, oa0, ob0, ob1, oa1, out_n, seg_len, seg_h, col_out)
+	# Inner face (bright warm interior plaster)
+	_push_oriented_quad(st, ib0, ia0, ia1, ib1, in_n, ia.distance_to(ib), seg_h, col_in)
+	# Doorway jamb reveals (only at actual doorway cuts, never creating coplanar overlaps at corners)
+	if not at_start:
+		_push_oriented_quad(st, ia0, oa0, oa1, ia1, -edge_n, wall_t, seg_h, col_jamb)
+	if not at_end:
+		_push_oriented_quad(st, ob0, ib0, ib1, ob1, edge_n, wall_t, seg_h, col_jamb)
+	# Header soffit underside (when y0 > 0 above doorway)
+	if y0 > 0.02:
+		_push_oriented_quad(st, oa0, ob0, ib0, ia0, Vector3.DOWN, seg_len, wall_t, col_jamb)
+	# Top cap (clean architectural wall thickness visible in Drone X-ray mode when roofs are hidden)
+	_push_oriented_quad(st, oa1, ob1, ib1, ia1, Vector3.UP, seg_len, wall_t, col_top)
+
+func _build_walkable_shell_loops(parent: Node3D, loops: Array[PackedVector2Array], h: float, col_wall: Color, col_trim: Color, floors: int, has_windows: bool, b: Dictionary) -> void:
+	const WALL_T := 0.24
+	var btype := String(b.get("type", ""))
+	var entrances: Array = b.get("entrances", [])
+	var all_cuts := _project_entrances_to_loops(loops, entrances, 2.5, h)
+
+	var body := StaticBody3D.new()
+	body.name = "WalkableShellBody"
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+	var col_inner := Color("#EFECE6")
+	var col_jamb := Color("#D8D3CA")
+	var col_top := col_wall.darkened(0.08)
+	var frame_col := Color("#26302B")
+
+	for li in range(loops.size()):
+		var loop := loops[li]
+		var n := loop.size()
+		var inner_v := _compute_inset_polygon(loop, WALL_T)
+		var is_inner_courtyard := (li == 1)
+
+		for ei in range(n):
+			var ej := (ei + 1) % n
+			var p1 := loop[ei]
+			var p2 := loop[ej]
+			var edge := p2 - p1
+			var edge_len := edge.length()
+			if edge_len < 0.1:
 				continue
-			_add_colored_box(parent, Vector3(rc.x, h + 0.34, rc.y), Vector3(span * 2.0, 0.35 if btype == "workshop" else 0.16, 1.55), Vector3(0.0, deg_to_rad(8.7), 0.0), rib_bucket, rib_col)
-	elif btype in ["library", "student_center"]:
-		var c2 := _poly_centroid(poly)
-		var dome := MeshInstance3D.new()
-		var dm := CylinderMesh.new()
-		dm.top_radius = 2.6; dm.bottom_radius = 4.2; dm.height = 1.4; dm.radial_segments = 8; dm.rings = 0
-		dome.mesh = dm
-		dome.position = Vector3(c2.x, h + 0.8, c2.y)
-		dome.material_override = mats.get_material("wall", Color("#D9E4F0"))
-		dome.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		parent.add_child(dome)
+			var edge_dir := edge / edge_len
+			var out_dir := Vector2(edge.y, -edge.x).normalized()
+			var in_dir := -out_dir
+			var rot_y := atan2(edge.x, edge.y)
+			var rot_v := Vector3(0.0, rot_y, 0.0)
+			var cuts: Array = all_cuts[li][ei]
 
-	# Architectural fascia trim + ribbon windows along long outer edges
-	var cw := _ensure_cw_screen(poly)
+			var solid_spans: Array[Vector2] = []
+			var cursor := 0.0
+			for cut in cuts:
+				var ca := float(cut["a"])
+				var cb := float(cut["b"])
+				var ch := float(cut["h"])
+				if ca - cursor > 0.06:
+					solid_spans.append(Vector2(cursor, ca))
+					_emit_wall_segment(st, body, p1, edge_dir, out_dir, in_dir, edge_len, inner_v[ei], inner_v[ej], cursor, ca, 0.0, h, WALL_T, rot_y, col_wall, col_inner, col_jamb, col_top)
+				# Doorway header above open passage
+				if h - ch > 0.05:
+					_emit_wall_segment(st, body, p1, edge_dir, out_dir, in_dir, edge_len, inner_v[ei], inner_v[ej], ca, cb, ch, h, WALL_T, rot_y, col_wall, col_inner, col_jamb, col_top)
+				# Open doorway dark-metal frame trim (jambs + lintel bar, ZERO center blocking)
+				var mid_door := p1 + edge_dir * ((ca + cb) * 0.5) + in_dir * (WALL_T * 0.5)
+				var ja := p1 + edge_dir * (ca + 0.03) + in_dir * (WALL_T * 0.5)
+				var jb := p1 + edge_dir * (cb - 0.03) + in_dir * (WALL_T * 0.5)
+				_add_colored_box(parent, Vector3(ja.x, ch * 0.5, ja.y), Vector3(WALL_T + 0.05, ch, 0.06), rot_v, "batch_metal", frame_col, false, 1)
+				_add_colored_box(parent, Vector3(jb.x, ch * 0.5, jb.y), Vector3(WALL_T + 0.05, ch, 0.06), rot_v, "batch_metal", frame_col, false, 1)
+				_add_colored_box(parent, Vector3(mid_door.x, ch - 0.03, mid_door.y), Vector3(WALL_T + 0.06, 0.07, maxf(0.1, cb - ca)), rot_v, "batch_metal", frame_col, false, 1)
+				cursor = cb
+
+			if edge_len - cursor > 0.06:
+				solid_spans.append(Vector2(cursor, edge_len))
+				_emit_wall_segment(st, body, p1, edge_dir, out_dir, in_dir, edge_len, inner_v[ei], inner_v[ej], cursor, edge_len, 0.0, h, WALL_T, rot_y, col_wall, col_inner, col_jamb, col_top)
+
+			if edge_len >= 3.2:
+				_add_edge_facade_details(parent, p1, p2, h, col_trim, floors, has_windows, btype, solid_spans, cuts, true, is_inner_courtyard, false)
+
+	st.index()
+	st.generate_tangents()
+	var shell_mesh := st.commit()
+	if shell_mesh != null and shell_mesh.get_surface_count() > 0:
+		var mi := MeshInstance3D.new()
+		mi.name = "ShellMesh"
+		mi.mesh = shell_mesh
+		mi.material_override = mats.get_batch_material("vcol_wall")
+		body.add_child(mi)
+	parent.add_child(body)
+
+func _add_edge_facade_details(
+	parent: Node3D, p1: Vector2, p2: Vector2, h: float, col_trim: Color,
+	floors: int, has_windows: bool, btype: String,
+	solid_spans: Array[Vector2], cuts: Array,
+	is_walkable: bool, is_inner_courtyard: bool, add_fake_door: bool
+) -> void:
+	var edge := p2 - p1
+	var edge_len := edge.length()
+	if edge_len < 3.2:
+		return
+	var edge_dir := edge / edge_len
+	var mid := (p1 + p2) * 0.5
+	var angle := atan2(edge.x, edge.y)
+	var out_dir := Vector2(edge.y, -edge.x).normalized()
+	var rot_v := Vector3(0.0, angle, 0.0)
+
 	var pil_col := Color("#F2F1ED")
 	var mull_col := Color("#272B30")
 	var ac_col := Color("#F0F2F5")
@@ -816,56 +1288,375 @@ func _add_building_volume(parent: Node3D, poly: PackedVector2Array, h: float, co
 	var aud_terra := Color("#BA715C")
 	var aud_mull := Color("#23272A")
 
-	for i in range(cw.size()):
-		var p1 := cw[i]
-		var p2 := cw[(i + 1) % cw.size()]
-		var edge := p2 - p1
-		var len := edge.length()
-		if len < 3.5:
-			continue
-		var mid := (p1 + p2) * 0.5
-		var angle := atan2(edge.x, edge.y)
-		var out_dir := Vector2(edge.y, -edge.x).normalized()
-		var rot_v := Vector3(0.0, angle, 0.0)
+	# Top architectural fascia trim (near roof edge, always clear of doorways)
+	var trim_c := Color("#6E4E33") if btype == "social_house" else col_trim
+	_add_colored_box(parent, Vector3(mid.x + out_dir.x * 0.08, h - 0.30, mid.y + out_dir.y * 0.08), Vector3(0.14, 0.46, edge_len), rot_v, "batch_wall", trim_c)
 
-		_add_colored_box(parent, Vector3(mid.x + out_dir.x * 0.08, h - 0.32, mid.y + out_dir.y * 0.08), Vector3(0.14, 0.52, len), rot_v, "batch_wall", col_trim)
+	# Architectural pilasters (skip positions overlapping any doorway cutout)
+	if not is_inner_courtyard and btype in ["admin", "academic", "academic_cross", "library", "lab", "sports"] and edge_len >= 6.5:
+		var pil_count := int(edge_len / 7.0) + 1
+		for pi in range(pil_count):
+			var pt := lerpf(0.04, 0.96, float(pi) / maxf(1.0, float(pil_count - 1)))
+			var ps := pt * edge_len
+			var blocked := false
+			for cut in cuts:
+				if ps >= float(cut["a"]) - 0.35 and ps <= float(cut["b"]) + 0.35:
+					blocked = true
+					break
+			if blocked:
+				continue
+			var pos2 := p1 + edge_dir * ps + out_dir * 0.09
+			_add_colored_box(parent, Vector3(pos2.x, h * 0.5, pos2.y), Vector3(0.18, h, 0.34), rot_v, "batch_wall", pil_col)
 
-		if btype in ["admin", "academic", "lab", "sports"] and len >= 6.5:
-			var pil_count := int(len / 7.0) + 1
-			for pi in range(pil_count):
-				var pt := lerpf(-0.46, 0.46, float(pi) / maxf(1.0, float(pil_count - 1)))
-				var along_p := edge.normalized() * (pt * len)
-				_add_colored_box(parent, Vector3(mid.x + along_p.x + out_dir.x * 0.09, h * 0.5, mid.y + along_p.y + out_dir.y * 0.09), Vector3(0.18, h, 0.34), rot_v, "batch_wall", pil_col)
+	# Auditorium terracotta base cladding (clipped to solid wall segments) + upper clerestory band
+	if btype == "auditorium" and edge_len > 8.0:
+		for sp in solid_spans:
+			var sa := maxf(sp.x, edge_len * 0.06)
+			var sb := minf(sp.y, edge_len * 0.94)
+			var sl := sb - sa
+			if sl >= 1.2:
+				var smid := p1 + edge_dir * ((sa + sb) * 0.5) + out_dir * 0.07
+				_add_colored_box(parent, Vector3(smid.x, h * 0.31, smid.y), Vector3(0.12, h * 0.60, sl), rot_v, "batch_wall", aud_terra)
+		_add_static_box(parent, Vector3(mid.x + out_dir.x * 0.07, h * 0.72, mid.y + out_dir.y * 0.07), Vector3(0.10, 1.05, edge_len * 0.88), rot_v, win_mat)
+		for m_i in range(9):
+			var t := lerpf(-0.42, 0.42, float(m_i) / 8.0)
+			var along := edge_dir * (t * edge_len)
+			_add_colored_box(parent, Vector3(mid.x + along.x + out_dir.x * 0.08, h * 0.72, mid.y + along.y + out_dir.y * 0.08), Vector3(0.14, 1.12, 0.10), rot_v, "batch_metal", aud_mull, false, 1)
 
-		if btype == "auditorium" and len > 8.0:
-			_add_colored_box(parent, Vector3(mid.x + out_dir.x * 0.07, h * 0.31, mid.y + out_dir.y * 0.07), Vector3(0.12, h * 0.60, len * 0.88), rot_v, "batch_wall", aud_terra)
-			_add_static_box(parent, Vector3(mid.x + out_dir.x * 0.07, h * 0.72, mid.y + out_dir.y * 0.07), Vector3(0.10, 1.05, len * 0.88), rot_v, win_mat)
-			for m_i in range(9):
-				var t := lerpf(-0.42, 0.42, float(m_i) / 8.0)
-				var along := edge.normalized() * (t * len)
-				_add_colored_box(parent, Vector3(mid.x + along.x + out_dir.x * 0.08, h * 0.72, mid.y + along.y + out_dir.y * 0.08), Vector3(0.14, 1.12, 0.10), rot_v, "batch_metal", aud_mull, false, 1)
-
-		if has_windows:
-			for fl in range(floors):
-				var wy := 1.9 + fl * (h / maxf(1.0, float(floors)))
-				if wy + 0.8 > h - 0.5:
+	# Ribbon windows + mullions + AC units (ground floor strictly inside solid spans clear of doors!)
+	var show_win := has_windows or is_inner_courtyard
+	if show_win:
+		var full_span: Array[Vector2] = [Vector2(0.0, edge_len)]
+		var eff_floors := maxi(1, floors)
+		for fl in range(eff_floors):
+			var wy := 1.9 + fl * (h / float(eff_floors))
+			if wy + 0.75 > h - 0.45:
+				continue
+			var spans_to_use: Array[Vector2] = solid_spans if (is_walkable and fl == 0) else full_span
+			for sp in spans_to_use:
+				var margin := 0.48 if is_walkable else edge_len * 0.11
+				var wa := sp.x + margin
+				var wb := sp.y - margin
+				var wlen := wb - wa
+				if wlen < 1.3:
 					continue
-				_add_static_box(parent, Vector3(mid.x + out_dir.x * 0.06, wy, mid.y + out_dir.y * 0.06), Vector3(0.08, 1.35, len * 0.78), rot_v, win_mat)
-				if len >= 6.0:
-					var m_cnt := mini(8, int(len / 3.4))
+				var wmid := p1 + edge_dir * ((wa + wb) * 0.5)
+				_add_static_box(parent, Vector3(wmid.x + out_dir.x * 0.06, wy, wmid.y + out_dir.y * 0.06), Vector3(0.08, 1.35, wlen), rot_v, win_mat)
+				if wlen >= 4.2:
+					var m_cnt := mini(8, maxi(2, int(wlen / 3.2)))
 					for mi_w in range(m_cnt):
-						var mt := lerpf(-0.36, 0.36, float(mi_w) / maxf(1.0, float(m_cnt - 1)))
-						var along_m := edge.normalized() * (mt * len)
-						_add_colored_box(parent, Vector3(mid.x + along_m.x + out_dir.x * 0.07, wy, mid.y + along_m.y + out_dir.y * 0.07), Vector3(0.11, 1.38, 0.08), rot_v, "batch_metal", mull_col, false, 1)
-				if fl == 1 and len >= 10.0:
+						var mt := lerpf(-0.42, 0.42, float(mi_w) / maxf(1.0, float(m_cnt - 1)))
+						var along_m := edge_dir * (mt * wlen)
+						_add_colored_box(parent, Vector3(wmid.x + along_m.x + out_dir.x * 0.07, wy, wmid.y + along_m.y + out_dir.y * 0.07), Vector3(0.11, 1.38, 0.08), rot_v, "batch_metal", mull_col, false, 1)
+				if not is_inner_courtyard and fl == 1 and wlen >= 8.0:
 					for ac_t: float in [-0.24, 0.24]:
-						var along_ac: Vector2 = edge.normalized() * (ac_t * len)
-						_add_colored_box(parent, Vector3(mid.x + along_ac.x + out_dir.x * 0.14, wy - 0.92, mid.y + along_ac.y + out_dir.y * 0.14), Vector3(0.26, 0.45, 0.68), rot_v, "batch_wall", ac_col, false, 1)
+						var along_ac: Vector2 = edge_dir * (ac_t * wlen)
+						_add_colored_box(parent, Vector3(wmid.x + along_ac.x + out_dir.x * 0.14, wy - 0.92, wmid.y + along_ac.y + out_dir.y * 0.14), Vector3(0.26, 0.45, 0.68), rot_v, "batch_wall", ac_col, false, 1)
 
-		if i == 0 and len >= 5.0 and btype != "corridor":
-			_add_colored_box(parent, Vector3(mid.x + out_dir.x * 0.09, 1.05, mid.y + out_dir.y * 0.09), Vector3(0.14, 2.1, 2.4), rot_v, "batch_metal", door_col)
+	if add_fake_door and not is_walkable and edge_len >= 5.0 and btype != "corridor":
+		_add_colored_box(parent, Vector3(mid.x + out_dir.x * 0.09, 1.05, mid.y + out_dir.y * 0.09), Vector3(0.14, 2.1, 2.4), rot_v, "batch_metal", door_col)
 
-func _add_building_sign(parent: Node3D, poly: PackedVector2Array, h: float, text: String, trim_col: Color) -> void:
+func _build_building_roof(parent: Node3D, outer_cw: PackedVector2Array, inner_cw: PackedVector2Array, h: float, b: Dictionary, is_walkable: bool) -> void:
+	var btype := String(b.get("type", ""))
+	var roof_group := Node3D.new()
+	roof_group.name = "RoofGroup"
+	parent.add_child(roof_group)
+	if is_walkable:
+		roof_nodes.append(roof_group)
+
+	var ceil_mat := mats.get_material("interior_wall", Color("#F4F2EC"))
+
+	if btype == "social_house":
+		var pmesh := _make_pitched_roof_mesh(outer_cw, h, 1.65, 0.45, Color("#9C4F38"), false)
+		var pmi := MeshInstance3D.new()
+		pmi.name = "PitchedRoof"
+		pmi.mesh = pmesh
+		pmi.material_override = mats.get_batch_material("vcol_roof")
+		pmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		roof_group.add_child(pmi)
+		if is_walkable:
+			var scmi := MeshInstance3D.new()
+			scmi.name = "CeilingUnderside"
+			scmi.mesh = _make_polygon_ceiling_mesh(outer_cw, h)
+			scmi.material_override = ceil_mat
+			scmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			roof_group.add_child(scmi)
+		return
+
+	var roof_col := Color("#6B6E73")
+	if btype in ["auditorium", "library", "student_center", "academic_cross", "workshop"]:
+		roof_col = Color("#E6E8EC") if btype != "workshop" else Color("#9EA4AB")
+	var smooth_roof := btype in ["auditorium", "library", "student_center", "academic_cross"]
+
+	var cap := MeshInstance3D.new()
+	cap.name = "RoofCap"
+	if inner_cw.size() >= 3:
+		cap.mesh = _make_annular_roof_mesh(outer_cw, inner_cw, h, 0.25, roof_col, false)
+	else:
+		cap.mesh = _extrude_roof_cap_mesh(outer_cw, h, 0.25, roof_col, false)
+	cap.material_override = mats.get_batch_material("vcol_wall" if smooth_roof else "vcol_roof")
+	cap.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	roof_group.add_child(cap)
+
+	if is_walkable:
+		var ceil_mi := MeshInstance3D.new()
+		ceil_mi.name = "CeilingUnderside"
+		if inner_cw.size() >= 3:
+			ceil_mi.mesh = _make_annular_ceiling_mesh(outer_cw, inner_cw, h)
+		else:
+			ceil_mi.mesh = _make_polygon_ceiling_mesh(outer_cw, h)
+		ceil_mi.material_override = ceil_mat
+		ceil_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		roof_group.add_child(ceil_mi)
+
+	if btype in ["academic", "workshop"] and outer_cw.size() >= 4 and inner_cw.is_empty():
+		var rib_mesh := _build_roof_ribs_mesh(outer_cw, h, btype)
+		if rib_mesh != null:
+			var rmi := MeshInstance3D.new()
+			rmi.name = "RoofSkylights"
+			rmi.mesh = rib_mesh
+			rmi.material_override = mats.get_batch_material("batch_wall" if btype == "workshop" else "batch_metal")
+			rmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			roof_group.add_child(rmi)
+	elif btype in ["library", "student_center", "academic_cross"]:
+		var c2 := _poly_centroid(outer_cw)
+		var dome := MeshInstance3D.new()
+		dome.name = "OctagonalDome"
+		var dm := CylinderMesh.new()
+		dm.top_radius = 2.6; dm.bottom_radius = 4.2; dm.height = 1.4; dm.radial_segments = 8; dm.rings = 0
+		dome.mesh = dm
+		dome.position = Vector3(c2.x, h + 0.8, c2.y)
+		dome.material_override = mats.get_material("wall", Color("#D9E4F0"))
+		dome.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		roof_group.add_child(dome)
+
+func _extrude_roof_cap_mesh(cw: PackedVector2Array, base_y: float, thickness: float, roof_col: Color, include_ceiling: bool) -> ArrayMesh:
+	var tris := Geometry2D.triangulate_polygon(cw)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var top_y := base_y + thickness
+	var ceil_col := Color("#F2F0EC")
+	var side_col := roof_col.darkened(0.06)
+
+	for i in range(0, tris.size(), 3):
+		var a := Vector3(cw[tris[i]].x, top_y, cw[tris[i]].y)
+		var b := Vector3(cw[tris[i + 1]].x, top_y, cw[tris[i + 1]].y)
+		var c := Vector3(cw[tris[i + 2]].x, top_y, cw[tris[i + 2]].y)
+		if (b - a).cross(c - a).y > 0.0:
+			var tmp := b; b = c; c = tmp
+		st.set_normal(Vector3.UP)
+		st.set_color(roof_col)
+		st.set_uv(Vector2(a.x, a.z) * 0.14); st.add_vertex(a)
+		st.set_uv(Vector2(b.x, b.z) * 0.14); st.add_vertex(b)
+		st.set_uv(Vector2(c.x, c.z) * 0.14); st.add_vertex(c)
+
+		if include_ceiling:
+			var ca := Vector3(a.x, base_y, a.z)
+			var cb := Vector3(c.x, base_y, c.z)
+			var cc := Vector3(b.x, base_y, b.z)
+			st.set_normal(Vector3.DOWN)
+			st.set_color(ceil_col)
+			st.set_uv(Vector2(ca.x, ca.z) * 0.14); st.add_vertex(ca)
+			st.set_uv(Vector2(cb.x, cb.z) * 0.14); st.add_vertex(cb)
+			st.set_uv(Vector2(cc.x, cc.z) * 0.14); st.add_vertex(cc)
+
+	for i in range(cw.size()):
+		var p0 := cw[i]
+		var p1 := cw[(i + 1) % cw.size()]
+		var edge := p1 - p0
+		var elen := edge.length()
+		if elen < 0.02:
+			continue
+		var out_n := Vector3(edge.y, 0.0, -edge.x).normalized()
+		_push_oriented_quad(
+			st,
+			Vector3(p0.x, base_y, p0.y), Vector3(p1.x, base_y, p1.y),
+			Vector3(p1.x, top_y, p1.y), Vector3(p0.x, top_y, p0.y),
+			out_n, elen, thickness, side_col
+		)
+
+	st.index()
+	st.generate_tangents()
+	return st.commit()
+
+func _make_annular_roof_mesh(outer_cw: PackedVector2Array, inner_cw: PackedVector2Array, base_y: float, thickness: float, roof_col: Color, include_ceiling: bool) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var top_y := base_y + thickness
+	var ceil_col := Color("#F2F0EC")
+	var side_col := roof_col.darkened(0.06)
+	var n := mini(outer_cw.size(), inner_cw.size())
+
+	for i in range(n):
+		var j := (i + 1) % n
+		var o0 := outer_cw[i]
+		var o1 := outer_cw[j]
+		var n0 := inner_cw[i]
+		var n1 := inner_cw[j]
+		# Top annular quad
+		_push_oriented_quad(
+			st,
+			Vector3(o0.x, top_y, o0.y), Vector3(o1.x, top_y, o1.y),
+			Vector3(n1.x, top_y, n1.y), Vector3(n0.x, top_y, n0.y),
+			Vector3.UP, o0.distance_to(o1), o0.distance_to(n0), roof_col
+		)
+		# Ceiling underside quad
+		if include_ceiling:
+			_push_oriented_quad(
+				st,
+				Vector3(o0.x, base_y, o0.y), Vector3(o1.x, base_y, o1.y),
+				Vector3(n1.x, base_y, n1.y), Vector3(n0.x, base_y, n0.y),
+				Vector3.DOWN, o0.distance_to(o1), o0.distance_to(n0), ceil_col
+			)
+		# Outer parapet fascia
+		var oedge := o1 - o0
+		if oedge.length() >= 0.02:
+			_push_oriented_quad(
+				st,
+				Vector3(o0.x, base_y, o0.y), Vector3(o1.x, base_y, o1.y),
+				Vector3(o1.x, top_y, o1.y), Vector3(o0.x, top_y, o0.y),
+				Vector3(oedge.y, 0.0, -oedge.x).normalized(), oedge.length(), thickness, side_col
+			)
+		# Inner courtyard parapet fascia (facing into courtyard)
+		var iedge := n1 - n0
+		if iedge.length() >= 0.02:
+			_push_oriented_quad(
+				st,
+				Vector3(n0.x, base_y, n0.y), Vector3(n1.x, base_y, n1.y),
+				Vector3(n1.x, top_y, n1.y), Vector3(n0.x, top_y, n0.y),
+				Vector3(-iedge.y, 0.0, iedge.x).normalized(), iedge.length(), thickness, side_col
+			)
+
+	st.index()
+	st.generate_tangents()
+	return st.commit()
+
+func _make_pitched_roof_mesh(cw: PackedVector2Array, base_y: float, ridge_h: float, overhang: float, roof_col: Color, include_ceiling: bool) -> ArrayMesh:
+	var c2 := _poly_centroid(cw)
+	var eaves := PackedVector2Array()
+	eaves.resize(cw.size())
+	for i in range(cw.size()):
+		var dir := (cw[i] - c2).normalized()
+		eaves[i] = cw[i] + dir * overhang
+
+	var apex := Vector3(c2.x, base_y + ridge_h, c2.y)
+	var eave_y := base_y - 0.04
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+	for i in range(eaves.size()):
+		var p0 := eaves[i]
+		var p1 := eaves[(i + 1) % eaves.size()]
+		var v0 := Vector3(p0.x, eave_y, p0.y)
+		var v1 := Vector3(p1.x, eave_y, p1.y)
+		var slope_n := (v1 - v0).cross(apex - v0)
+		if slope_n.y < 0.0:
+			slope_n = -slope_n
+		slope_n = slope_n.normalized()
+		var tri_n := (v1 - v0).cross(apex - v0)
+		var a := v0; var b := v1; var c := apex
+		if tri_n.dot(slope_n) > 0.0:
+			b = apex; c = v1
+		st.set_normal(slope_n)
+		st.set_color(roof_col)
+		st.set_uv(Vector2(a.x, a.z) * 0.2); st.add_vertex(a)
+		st.set_uv(Vector2(b.x, b.z) * 0.2); st.add_vertex(b)
+		st.set_uv(Vector2(c.x, c.z) * 0.2); st.add_vertex(c)
+
+	# Flat soffit / ceiling underside at base_y
+	if include_ceiling:
+		var tris := Geometry2D.triangulate_polygon(eaves)
+		var ceil_col := Color("#F2EFEA")
+		for i in range(0, tris.size(), 3):
+			var a := Vector3(eaves[tris[i]].x, base_y, eaves[tris[i]].y)
+			var b := Vector3(eaves[tris[i + 1]].x, base_y, eaves[tris[i + 1]].y)
+			var c := Vector3(eaves[tris[i + 2]].x, base_y, eaves[tris[i + 2]].y)
+			if (b - a).cross(c - a).y < 0.0:
+				var tmp := b; b = c; c = tmp
+			st.set_normal(Vector3.DOWN)
+			st.set_color(ceil_col)
+			st.set_uv(Vector2(a.x, a.z) * 0.14); st.add_vertex(a)
+			st.set_uv(Vector2(b.x, b.z) * 0.14); st.add_vertex(b)
+			st.set_uv(Vector2(c.x, c.z) * 0.14); st.add_vertex(c)
+
+	st.index()
+	st.generate_tangents()
+	return st.commit()
+
+func _make_polygon_ceiling_mesh(cw: PackedVector2Array, y_level: float) -> ArrayMesh:
+	var tris := Geometry2D.triangulate_polygon(cw)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in range(0, tris.size(), 3):
+		var a := Vector3(cw[tris[i]].x, y_level, cw[tris[i]].y)
+		var b := Vector3(cw[tris[i + 1]].x, y_level, cw[tris[i + 1]].y)
+		var c := Vector3(cw[tris[i + 2]].x, y_level, cw[tris[i + 2]].y)
+		if (b - a).cross(c - a).y < 0.0:
+			var tmp := b; b = c; c = tmp
+		st.set_normal(Vector3.DOWN)
+		st.set_uv(Vector2(a.x, a.z) * 0.14); st.add_vertex(a)
+		st.set_uv(Vector2(b.x, b.z) * 0.14); st.add_vertex(b)
+		st.set_uv(Vector2(c.x, c.z) * 0.14); st.add_vertex(c)
+	st.index()
+	return st.commit()
+
+func _make_annular_ceiling_mesh(outer_cw: PackedVector2Array, inner_cw: PackedVector2Array, y_level: float) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var n := mini(outer_cw.size(), inner_cw.size())
+	for i in range(n):
+		var j := (i + 1) % n
+		var o0 := outer_cw[i]
+		var o1 := outer_cw[j]
+		var n0 := inner_cw[i]
+		var n1 := inner_cw[j]
+		_push_oriented_quad(
+			st,
+			Vector3(o0.x, y_level, o0.y), Vector3(o1.x, y_level, o1.y),
+			Vector3(n1.x, y_level, n1.y), Vector3(n0.x, y_level, n0.y),
+			Vector3.DOWN, o0.distance_to(o1), o0.distance_to(n0), Color.WHITE
+		)
+	st.index()
+	return st.commit()
+
+func _build_roof_ribs_mesh(poly: PackedVector2Array, h: float, btype: String) -> ArrayMesh:
+	var c2 := _poly_centroid(poly)
+	var rib_col := Color("#EBEEF2") if btype == "workshop" else Color("#5B6770")
+	var span := 10.5 if btype == "workshop" else 5.5
+	var rh := 0.35 if btype == "workshop" else 0.16
+	var rot_b := Basis(Vector3.UP, deg_to_rad(8.7))
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var count := 0
+	for k in range(-3, 4):
+		var rc := Vector2(c2.x, c2.y + k * 4.2)
+		if not (Geometry2D.is_point_in_polygon(rc + Vector2(-span, 0), poly) and Geometry2D.is_point_in_polygon(rc + Vector2(span, 0), poly)):
+			continue
+		var center := Vector3(rc.x, h + 0.25 + rh * 0.5, rc.y)
+		var hx := span
+		var hy := rh * 0.5
+		var hz := 0.775
+		var c0 := center + rot_b * Vector3(-hx, -hy, -hz)
+		var c1 := center + rot_b * Vector3(hx, -hy, -hz)
+		var c2p := center + rot_b * Vector3(hx, -hy, hz)
+		var c3 := center + rot_b * Vector3(-hx, -hy, hz)
+		var c4 := center + rot_b * Vector3(-hx, hy, -hz)
+		var c5 := center + rot_b * Vector3(hx, hy, -hz)
+		var c6 := center + rot_b * Vector3(hx, hy, hz)
+		var c7 := center + rot_b * Vector3(-hx, hy, hz)
+		_push_oriented_quad(st, c4, c5, c6, c7, Vector3.UP, hx * 2.0, hz * 2.0, rib_col)
+		_push_oriented_quad(st, c0, c1, c5, c4, rot_b * Vector3.FORWARD, hx * 2.0, rh, rib_col.darkened(0.05))
+		_push_oriented_quad(st, c2p, c3, c7, c6, rot_b * Vector3.BACK, hx * 2.0, rh, rib_col.darkened(0.05))
+		_push_oriented_quad(st, c3, c0, c4, c7, rot_b * Vector3.LEFT, hz * 2.0, rh, rib_col.darkened(0.08))
+		_push_oriented_quad(st, c1, c2p, c6, c5, rot_b * Vector3.RIGHT, hz * 2.0, rh, rib_col.darkened(0.08))
+		count += 1
+	if count == 0:
+		return null
+	st.index()
+	st.generate_tangents()
+	return st.commit()
+
+func _add_building_sign(parent: Node3D, poly: PackedVector2Array, h: float, text: String, trim_col: Color, b: Dictionary = {}) -> void:
 	var c := _poly_centroid(poly)
 	var lbl := Label3D.new()
 	lbl.text = text
@@ -881,25 +1672,109 @@ func _add_building_sign(parent: Node3D, poly: PackedVector2Array, h: float, text
 	lbl.position = Vector3(c.x, h + 1.15, c.y)
 	parent.add_child(lbl)
 
-	if text == "BIBLIOTECA":
-		var plaque := MeshInstance3D.new()
-		var pm := BoxMesh.new()
-		pm.size = Vector3(4.2, 0.85, 0.14)
-		plaque.mesh = pm
-		plaque.material_override = mats.get_material("ifsul_green")
-		plaque.position = Vector3(20.6, 3.05, -78.8)
-		plaque.rotation.y = deg_to_rad(-52.0)
-		plaque.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		parent.add_child(plaque)
-		var flbl := Label3D.new()
-		flbl.text = "BIBLIOTECA • IFSul"
-		flbl.font_size = 32
-		flbl.pixel_size = 0.0105
-		flbl.outline_size = 0
-		flbl.double_sided = false
-		flbl.modulate = Color.WHITE
-		flbl.position = Vector3(0.0, 0.0, 0.09)
-		plaque.add_child(flbl)
+	var bid := String(b.get("id", ""))
+	match bid:
+		"biblioteca":
+			_mount_facade_plaque(parent, poly, h, b, "BIBLIOTECA • IFSul", Color("#2F9E41"), Vector2(0.0, -1.0), 4.2)
+		"bloco_800":
+			_mount_facade_plaque(parent, poly, h, b, "BLOCO 800 • SALAS 801–812", Color("#2F9E41"), Vector2(-1.0, 0.0), 4.6)
+		"auditorio":
+			_mount_facade_plaque(parent, poly, h, b, "AUDITÓRIO 504 • PEDRO KAIZER", Color("#1F5A32"), Vector2(-0.85, -0.52).normalized(), 5.0)
+		"sede_social":
+			_mount_facade_plaque(parent, poly, h, b, "SEDE SOCIAL • IFSul", Color("#2F9E41"), Vector2(-0.7, -0.7).normalized(), 3.8)
+		"vestiarios_esporte":
+			_mount_facade_plaque(parent, poly, h, b, "EDUCAÇÃO FÍSICA", Color("#2F9E41"), Vector2(0.0, 1.0), 3.6)
+
+func _mount_facade_plaque(parent: Node3D, poly: PackedVector2Array, h: float, b: Dictionary, plaque_text: String, bg_col: Color, prefer_dir: Vector2, plaque_w: float) -> void:
+	var cw := _ensure_cw_screen(poly)
+	var n := cw.size()
+	if n < 3:
+		return
+	var pref := prefer_dir.normalized()
+	var best_pos := Vector2.ZERO
+	var best_out := pref
+	var best_score := -1e9
+	var found := false
+
+	# Prefer mounting cleanly above an actual entrance facing prefer_dir
+	var entrances: Array = b.get("entrances", [])
+	for ent in entrances:
+		if not (ent is Dictionary):
+			continue
+		var pa: Array = ent.get("pos", [])
+		if pa.size() < 2:
+			continue
+		var ep := Vector2(float(pa[0]), float(pa[1]))
+		var near_d := 2.6
+		var near_out := Vector2.ZERO
+		var near_proj := ep
+		for i in range(n):
+			var p1 := cw[i]
+			var p2 := cw[(i + 1) % n]
+			var edge := p2 - p1
+			var lsq := edge.length_squared()
+			if lsq < 1.0:
+				continue
+			var t := clampf((ep - p1).dot(edge) / lsq, 0.0, 1.0)
+			var proj := p1 + edge * t
+			var d := ep.distance_to(proj)
+			if d < near_d:
+				near_d = d
+				near_proj = proj
+				near_out = Vector2(edge.y, -edge.x).normalized()
+		if near_d <= 2.5:
+			var sc := near_out.dot(pref)
+			if sc > best_score:
+				best_score = sc
+				best_pos = near_proj
+				best_out = near_out
+				found = true
+
+	if not found:
+		for i in range(n):
+			var p1 := cw[i]
+			var p2 := cw[(i + 1) % n]
+			var edge := p2 - p1
+			var elen := edge.length()
+			if elen < 3.6:
+				continue
+			var out_d := Vector2(edge.y, -edge.x).normalized()
+			var sc := out_d.dot(pref) + minf(elen, 12.0) * 0.02
+			if sc > best_score:
+				best_score = sc
+				best_pos = (p1 + p2) * 0.5
+				best_out = out_d
+				found = true
+
+	if not found:
+		return
+
+	var plaque_y := clampf(h - 0.95, 3.05, 3.65)
+	# Keep Auditório plaque clear of the West relief logo if mounted near (-23.5, 24.0)
+	if String(b.get("id", "")) == "auditorio" and best_pos.distance_to(Vector2(-23.5, 24.0)) < 4.5:
+		plaque_y = minf(h - 0.55, 5.75)
+
+	var plaque := MeshInstance3D.new()
+	var pm := BoxMesh.new()
+	pm.size = Vector3(plaque_w, 0.78, 0.14)
+	plaque.mesh = pm
+	plaque.material_override = mats.get_material("wall", bg_col)
+	plaque.position = Vector3(best_pos.x + best_out.x * 0.17, plaque_y, best_pos.y + best_out.y * 0.17)
+	plaque.rotation.y = atan2(best_out.x, best_out.y)
+	plaque.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(plaque)
+
+	var flbl := Label3D.new()
+	flbl.text = plaque_text
+	flbl.font_size = 32
+	flbl.pixel_size = 0.0096
+	flbl.outline_size = 0
+	flbl.double_sided = false
+	flbl.modulate = Color.WHITE
+	flbl.visibility_range_end = 95.0
+	flbl.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+	flbl.position = Vector3(0.0, 0.0, 0.09)
+	plaque.add_child(flbl)
 
 func _build_courts(root: Node3D, courts: Array) -> void:
 	var c_root := Node3D.new()
@@ -926,9 +1801,14 @@ func _build_courts(root: Node3D, courts: Array) -> void:
 		node.rotation.y = rot
 		c_root.add_child(node)
 
+		var sport := String(c.get("sport", ""))
+		var is_covered := bool(c.get("covered", false))
+		var def_border := "#B8B4AC" if (sport == "outdoor_multi" or (sport == "multi" and not is_covered)) else "#B85D43"
+		var def_surf := "#4F6D8A" if sport == "outdoor_multi" else "#255B8A"
+
 		# Outer border + inner playing court (batched, no shadow casting for flat ground slabs)
-		_add_colored_box(node, Vector3(0.0, 0.02, 0.0), Vector3(w, 0.04, d), Vector3.ZERO, "batch_wall", Color(c.get("border_color", "#B85D43")))
-		_add_colored_box(node, Vector3(0.0, 0.028, 0.0), Vector3(w * 0.84, 0.05, d * 0.86), Vector3.ZERO, "batch_wall", Color(c.get("surface_color", "#255B8A")))
+		_add_colored_box(node, Vector3(0.0, 0.02, 0.0), Vector3(w, 0.04, d), Vector3.ZERO, "batch_wall", Color(c.get("border_color", def_border)))
+		_add_colored_box(node, Vector3(0.0, 0.028, 0.0), Vector3(w * 0.84, 0.05, d * 0.86), Vector3.ZERO, "batch_wall", Color(c.get("surface_color", def_surf)))
 
 		# Court painted markings
 		var pw := w * 0.80
@@ -937,23 +1817,48 @@ func _build_courts(root: Node3D, courts: Array) -> void:
 		_add_colored_box(node, Vector3(0, 0.058, -pd * 0.5), Vector3(pw, 0.01, 0.14), Vector3.ZERO, "batch_line", line_col)
 		_add_colored_box(node, Vector3(pw * 0.5, 0.058, 0), Vector3(0.14, 0.01, pd), Vector3.ZERO, "batch_line", line_col)
 		_add_colored_box(node, Vector3(-pw * 0.5, 0.058, 0), Vector3(0.14, 0.01, pd), Vector3.ZERO, "batch_line", line_col)
-		if String(c.get("sport", "")) == "multi":
-			_add_colored_box(node, Vector3(0, 0.058, 0), Vector3(pw, 0.01, 0.14), Vector3.ZERO, "batch_line", line_col)
+		if sport in ["multi", "outdoor_multi", "basketball", "futsal"]:
+			var mark_parent: Node3D = node
+			var mpw := pw
+			var mpd := pd
+			if w > d:
+				var rot_m := Node3D.new()
+				rot_m.rotation.y = PI * 0.5
+				node.add_child(rot_m)
+				mark_parent = rot_m
+				mpw = pd
+				mpd = pw
+			_add_colored_box(mark_parent, Vector3(0, 0.058, 0), Vector3(mpw, 0.01, 0.14), Vector3.ZERO, "batch_line", line_col)
+			var cr := clampf(minf(mpw, mpd) * 0.16, 1.3, 3.0)
 			var ring := MeshInstance3D.new()
-			ring.mesh = _make_torus_mesh(2.85, 3.0, 28, 4)
+			ring.mesh = _make_torus_mesh(cr - 0.15, cr, 28, 4)
 			ring.position = Vector3(0, 0.055, 0)
 			ring.scale = Vector3(1.0, 0.15, 1.0)
 			ring.material_override = mats.get_material("line_white")
 			ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			node.add_child(ring)
+			mark_parent.add_child(ring)
+			var box_w := mpw * 0.46
+			var box_d := clampf(mpd * 0.16, 2.0, 5.2)
+			var goal_hw := clampf(mpw * 0.13, 1.0, 1.5)
 			for end_s: float in [-1.0, 1.0]:
-				var gz: float = end_s * (pd * 0.48)
-				_add_colored_box(node, Vector3(-1.5, 1.05, gz), Vector3(0.10, 2.1, 0.10), Vector3.ZERO, "batch_metal", goal_col)
-				_add_colored_box(node, Vector3(1.5, 1.05, gz), Vector3(0.10, 2.1, 0.10), Vector3.ZERO, "batch_metal", goal_col)
-				_add_colored_box(node, Vector3(0.0, 2.1, gz), Vector3(3.1, 0.10, 0.10), Vector3.ZERO, "batch_metal", goal_col)
-				_add_colored_box(node, Vector3(0.0, 3.05, gz - end_s * 0.6), Vector3(1.8, 1.1, 0.08), Vector3.ZERO, "batch_line", line_col)
-				_add_colored_box(node, Vector3(0.0, 2.75, gz - end_s * 0.85), Vector3(0.45, 0.06, 0.45), Vector3.ZERO, "batch_line", hoop_col)
-		elif String(c.get("sport", "")) == "volleyball":
+				var gz: float = end_s * (mpd * 0.48)
+				var bz: float = end_s * (mpd * 0.5 - box_d)
+				_add_colored_box(mark_parent, Vector3(0.0, 0.058, bz), Vector3(box_w, 0.01, 0.12), Vector3.ZERO, "batch_line", line_col)
+				_add_colored_box(mark_parent, Vector3(-box_w * 0.5, 0.058, end_s * (mpd * 0.5 - box_d * 0.5)), Vector3(0.12, 0.01, box_d), Vector3.ZERO, "batch_line", line_col)
+				_add_colored_box(mark_parent, Vector3(box_w * 0.5, 0.058, end_s * (mpd * 0.5 - box_d * 0.5)), Vector3(0.12, 0.01, box_d), Vector3.ZERO, "batch_line", line_col)
+				_add_colored_box(mark_parent, Vector3(-goal_hw, 1.05, gz), Vector3(0.10, 2.1, 0.10), Vector3.ZERO, "batch_metal", goal_col)
+				_add_colored_box(mark_parent, Vector3(goal_hw, 1.05, gz), Vector3(0.10, 2.1, 0.10), Vector3.ZERO, "batch_metal", goal_col)
+				_add_colored_box(mark_parent, Vector3(0.0, 2.1, gz), Vector3(goal_hw * 2.0 + 0.1, 0.10, 0.10), Vector3.ZERO, "batch_metal", goal_col)
+				_add_colored_box(mark_parent, Vector3(0.0, 3.05, gz - end_s * 0.6), Vector3(1.8, 1.1, 0.08), Vector3.ZERO, "batch_line", line_col)
+				_add_colored_box(mark_parent, Vector3(0.0, 2.75, gz - end_s * 0.85), Vector3(0.45, 0.06, 0.45), Vector3.ZERO, "batch_line", hoop_col)
+			if not is_covered:
+				# Low clean curb border around outdoor multi-sport court with open entry gaps
+				_add_colored_box(node, Vector3(0.0, 0.11, -d * 0.49), Vector3(w * 0.96, 0.18, 0.22), Vector3.ZERO, "batch_wall", curb_col)
+				_add_colored_box(node, Vector3(0.0, 0.11, d * 0.49), Vector3(w * 0.96, 0.18, 0.22), Vector3.ZERO, "batch_wall", curb_col)
+				_add_colored_box(node, Vector3(-w * 0.49, 0.11, 0.0), Vector3(0.22, 0.18, d * 0.96), Vector3.ZERO, "batch_wall", curb_col)
+				_add_colored_box(node, Vector3(w * 0.49, 0.11, -d * 0.30), Vector3(0.22, 0.18, d * 0.36), Vector3.ZERO, "batch_wall", curb_col)
+				_add_colored_box(node, Vector3(w * 0.49, 0.11, d * 0.30), Vector3(0.22, 0.18, d * 0.36), Vector3.ZERO, "batch_wall", curb_col)
+		elif sport == "volleyball":
 			_add_colored_box(node, Vector3(0, 1.25, -pd * 0.52), Vector3(0.12, 2.5, 0.12), Vector3.ZERO, "batch_metal", post_col)
 			_add_colored_box(node, Vector3(0, 1.25, pd * 0.52), Vector3(0.12, 2.5, 0.12), Vector3.ZERO, "batch_metal", post_col)
 			_add_static_box(node, Vector3(0, 2.0, 0), Vector3(0.04, 0.95, pd * 1.02), Vector3.ZERO, fence_mat)
@@ -1155,6 +2060,120 @@ func _build_landmarks(root: Node3D, data: Dictionary) -> void:
 			_add_colored_cylinder(f_root, Vector3(-2.4 + i * 1.6, 3.8, 0.0), Vector3(0.12, 7.5, 0.12), Vector3.ZERO, "batch_metal", pole_col)
 			_add_colored_box(f_root, Vector3(-2.4 + i * 1.6 + 0.6, 7.0, 0.0), Vector3(1.15, 0.72, 0.04), Vector3.ZERO, "batch_line", flag_colors[i])
 
+	# Horta Comunitária (NE corner next to Bloco 800)
+	var horta: Dictionary = lm.get("horta", {})
+	if not horta.is_empty():
+		_build_horta(root, horta)
+
+func _get_horta_frame(horta: Dictionary) -> Dictionary:
+	var rot_deg := float(horta.get("rot_deg", 8.7))
+	var rot_rad := deg_to_rad(rot_deg)
+	var center2 := Vector2.ZERO
+	var w := 14.0
+	var d := 10.0
+	if horta.has("center") and horta.has("size"):
+		var ca: Array = horta["center"]
+		var sa: Array = horta["size"]
+		center2 = Vector2(float(ca[0]), float(ca[1]))
+		w = float(sa[0])
+		d = float(sa[1])
+	elif horta.has("position") and horta.has("size"):
+		var pa: Array = horta["position"]
+		var sa: Array = horta["size"]
+		center2 = Vector2(float(pa[0]), float(pa[2]) if pa.size() >= 3 else float(pa[1]))
+		w = float(sa[0])
+		d = float(sa[1])
+	elif horta.has("polygon"):
+		var hpoly := _to_vec2_array(horta["polygon"])
+		if hpoly.size() >= 3:
+			center2 = _poly_centroid(hpoly)
+			var cs := cos(-rot_rad)
+			var sn := sin(-rot_rad)
+			var min_x := 1e9; var max_x := -1e9
+			var min_z := 1e9; var max_z := -1e9
+			for v in hpoly:
+				var rel := v - center2
+				var lx := rel.x * cs - rel.y * sn
+				var lz := rel.x * sn + rel.y * cs
+				min_x = minf(min_x, lx); max_x = maxf(max_x, lx)
+				min_z = minf(min_z, lz); max_z = maxf(max_z, lz)
+			w = max_x - min_x
+			d = max_z - min_z
+	return {"center": center2, "w": maxf(w, 6.0), "d": maxf(d, 5.0), "rot": rot_rad}
+
+func _build_horta(root: Node3D, horta: Dictionary) -> void:
+	var hf := _get_horta_frame(horta)
+	var center2: Vector2 = hf["center"]
+	var w: float = float(hf["w"])
+	var d: float = float(hf["d"])
+	var rot_rad: float = float(hf["rot"])
+
+	var h_node := Node3D.new()
+	h_node.name = "HortaComunitaria"
+	h_node.position = Vector3(center2.x, 0.0, center2.y)
+	h_node.rotation.y = rot_rad
+	root.add_child(h_node)
+
+	var wood_col := Color("#6E4E33")
+	var plank_col := Color("#805B3A")
+	var mulch_col := Color("#8B7A62")
+	var soil_col := Color("#4B3423")
+	var leaf_cols := [Color("#3E8B36"), Color("#56A641"), Color("#6EBA4C"), Color("#2F7630")]
+
+	# Earth/mulch base pad
+	_add_colored_box(h_node, Vector3(0.0, 0.025, 0.0), Vector3(w, 0.05, d), Vector3.ZERO, "batch_wall", mulch_col)
+
+	# Low wooden perimeter border (with open 2.8m entrance on the south side facing Bloco 800 footway)
+	_add_colored_box(h_node, Vector3(0.0, 0.22, -d * 0.5), Vector3(w, 0.40, 0.16), Vector3.ZERO, "batch_wood", wood_col)
+	_add_colored_box(h_node, Vector3(-w * 0.5, 0.22, 0.0), Vector3(0.16, 0.40, d), Vector3.ZERO, "batch_wood", wood_col)
+	_add_colored_box(h_node, Vector3(w * 0.5, 0.22, 0.0), Vector3(0.16, 0.40, d), Vector3.ZERO, "batch_wood", wood_col)
+	var gap_half := minf(1.5, w * 0.20)
+	var front_seg := maxf(0.5, w * 0.5 - gap_half)
+	_add_colored_box(h_node, Vector3(-(gap_half + front_seg * 0.5), 0.22, d * 0.5), Vector3(front_seg, 0.40, 0.16), Vector3.ZERO, "batch_wood", wood_col)
+	_add_colored_box(h_node, Vector3(gap_half + front_seg * 0.5, 0.22, d * 0.5), Vector3(front_seg, 0.40, 0.16), Vector3.ZERO, "batch_wood", wood_col)
+
+	# Raised soil beds + batched plant rows
+	var inner_w := w - 2.4
+	var inner_d := d - 2.4
+	var cols := 2 if inner_w >= 11.0 else 1
+	var req_rows := int(horta.get("rows", 0))
+	var rows := clampi(req_rows if req_rows > 0 else int(inner_d / 2.6), 2, 8)
+	var bed_w := (inner_w - float(cols - 1) * 1.4) / float(cols)
+	var bed_d := minf(1.45, (inner_d - float(rows - 1) * 0.95) / float(rows))
+	var step_z := inner_d / float(rows)
+	var step_x := inner_w / float(cols)
+
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 8001
+	for r in range(rows):
+		var bz := -inner_d * 0.5 + (float(r) + 0.5) * step_z
+		for c_i in range(cols):
+			var bx := -inner_w * 0.5 + (float(c_i) + 0.5) * step_x
+			_add_colored_box(h_node, Vector3(bx, 0.16, bz), Vector3(bed_w, 0.30, bed_d), Vector3.ZERO, "batch_wood", plank_col)
+			_add_colored_box(h_node, Vector3(bx, 0.19, bz), Vector3(bed_w - 0.18, 0.28, bed_d - 0.18), Vector3.ZERO, "batch_wall", soil_col)
+			var plant_n := maxi(3, int((bed_w - 0.4) / 0.82))
+			for pi in range(plant_n):
+				var px := bx - (bed_w - 0.55) * 0.5 + float(pi) * ((bed_w - 0.55) / maxf(1.0, float(plant_n - 1)))
+				for pz_off in [-bed_d * 0.22, bed_d * 0.22]:
+					var pcol: Color = leaf_cols[(r + pi + c_i) % leaf_cols.size()]
+					var ps := rng.randf_range(0.34, 0.52)
+					_add_colored_sphere(h_node, Vector3(px + rng.randf_range(-0.06, 0.06), 0.38 + ps * 0.25, bz + pz_off), Vector3(ps, ps * 0.78, ps), "batch_foliage", pcol, false, 1)
+
+	# Small wooden garden sign at south entrance
+	_add_colored_box(h_node, Vector3(-gap_half - 0.45, 0.65, d * 0.5 + 0.1), Vector3(0.10, 1.3, 0.10), Vector3.ZERO, "batch_wood", wood_col, false, 1)
+	var hlbl := Label3D.new()
+	hlbl.text = "HORTA • IFSul"
+	hlbl.font_size = 28
+	hlbl.pixel_size = 0.0085
+	hlbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	hlbl.visibility_range_end = 55.0
+	hlbl.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+	hlbl.modulate = Color("#F5F9F0")
+	hlbl.outline_modulate = Color("#1F4A24")
+	hlbl.outline_size = 5
+	hlbl.position = Vector3(-gap_half - 0.45, 1.55, d * 0.5 + 0.1)
+	h_node.add_child(hlbl)
+
 func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 	var sign_node := Node3D.new()
 	sign_node.name = "EntranceSignage"
@@ -1264,6 +2283,24 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 		var bx := -1.8 + bh_i * 1.4
 		_add_colored_box(pond_node, Vector3(1.5 + bx, 0.52, 0.0), Vector3(0.08, 0.55, 0.08), Vector3.ZERO, "batch_wall", trunk_col, false, 1)
 		_add_colored_box(pond_node, Vector3(1.5 + bx, 0.85, 0.0), Vector3(0.45, 0.42, 0.45), Vector3.ZERO, "batch_wall", bh_col, false, 1)
+	# 4 stylized white ducks floating on SouthernPond
+	var duck_specs := [
+		[Vector3(-7.0, 0.13, -1.8), 0.55],
+		[Vector3(-5.5, 0.13, 2.2), -0.85],
+		[Vector3(7.9, 0.13, -2.0), 2.35],
+		[Vector3(2.4, 0.13, 4.1), -2.45],
+	]
+	var duck_white := Color("#FAF9F5")
+	var duck_beak := Color("#F59E0B")
+	for ds in duck_specs:
+		var dp: Vector3 = ds[0]
+		var dyaw: float = float(ds[1])
+		var dbasis := Basis(Vector3.UP, dyaw)
+		var drot := Vector3(0.0, dyaw, 0.0)
+		_add_colored_sphere(pond_node, dp, Vector3(0.38, 0.24, 0.54), "batch_wall", duck_white, false, 1, drot)
+		_add_colored_sphere(pond_node, dp + dbasis * Vector3(0.0, 0.19, 0.22), Vector3(0.22, 0.22, 0.22), "batch_wall", duck_white, false, 1, drot)
+		_add_colored_box(pond_node, dp + dbasis * Vector3(0.0, 0.17, 0.35), Vector3(0.09, 0.05, 0.14), drot, "batch_line", duck_beak, false, 1)
+		_add_colored_box(pond_node, dp + dbasis * Vector3(0.0, 0.11, -0.26), Vector3(0.11, 0.08, 0.15), drot, "batch_wall", duck_white, false, 1)
 	for bol_i in range(16):
 		var bp := Vector3(-24.0 + bol_i * 2.8, 0.32, -11.5)
 		_add_colored_box(pond_node, bp, Vector3(0.16, 0.64, 0.16), Vector3.ZERO, "batch_wall", bh_col, false, 1)
@@ -1288,13 +2325,13 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 		agave_bed.add_child(ag)
 
 	var north_g := Node3D.new()
-	north_g.position = Vector3(-48.0, 0.0, -49.5)
+	north_g.position = Vector3(-31.0, 0.0, -50.5)
 	north_g.rotation.y = deg_to_rad(8.7)
 	root.add_child(north_g)
-	_add_colored_box(north_g, Vector3(0.0, 0.18, 0.0), Vector3(14.0, 0.30, 0.45), Vector3.ZERO, "batch_foliage", hedge_col)
-	_add_colored_box(north_g, Vector3(0.0, 0.18, 4.0), Vector3(14.0, 0.30, 0.45), Vector3.ZERO, "batch_foliage", hedge_col)
-	_add_colored_box(north_g, Vector3(-7.0, 0.18, 2.0), Vector3(0.45, 0.30, 4.0), Vector3.ZERO, "batch_foliage", hedge_col)
-	_add_colored_box(north_g, Vector3(7.0, 0.18, 2.0), Vector3(0.45, 0.30, 4.0), Vector3.ZERO, "batch_foliage", hedge_col)
+	_add_colored_box(north_g, Vector3(0.0, 0.18, 0.0), Vector3(10.0, 0.30, 0.45), Vector3.ZERO, "batch_foliage", hedge_col)
+	_add_colored_box(north_g, Vector3(0.0, 0.18, 3.2), Vector3(10.0, 0.30, 0.45), Vector3.ZERO, "batch_foliage", hedge_col)
+	_add_colored_box(north_g, Vector3(-5.0, 0.18, 1.6), Vector3(0.45, 0.30, 3.2), Vector3.ZERO, "batch_foliage", hedge_col)
+	_add_colored_box(north_g, Vector3(5.0, 0.18, 1.6), Vector3(0.45, 0.30, 3.2), Vector3.ZERO, "batch_foliage", hedge_col)
 
 	# Totem monument at main gate
 	var totem_body := StaticBody3D.new()
@@ -1689,6 +2726,25 @@ func _build_vegetation_and_props(root: Node3D, data: Dictionary) -> void:
 		hr_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		props_root.add_child(hr_mmi)
 
+func _make_rect_poly(center: Vector2, w: float, d: float, rot_rad: float, pad: float = 0.0) -> PackedVector2Array:
+	var hw := w * 0.5 + pad
+	var hd := d * 0.5 + pad
+	var cs := cos(rot_rad)
+	var sn := sin(rot_rad)
+	var corners := [Vector2(-hw, -hd), Vector2(hw, -hd), Vector2(hw, hd), Vector2(-hw, hd)]
+	var out := PackedVector2Array()
+	for lc in corners:
+		out.append(center + Vector2(lc.x * cs + lc.y * sn, -lc.x * sn + lc.y * cs))
+	return out
+
+func _point_seg_dist_sq(p: Vector2, a: Vector2, b: Vector2) -> float:
+	var ab := b - a
+	var lsq := ab.length_squared()
+	if lsq < 0.0001:
+		return p.distance_squared_to(a)
+	var t := clampf((p - a).dot(ab) / lsq, 0.0, 1.0)
+	return p.distance_squared_to(a + ab * t)
+
 func _collect_tree_positions(data: Dictionary) -> Array[Vector2]:
 	# Pre-cache exclusion zones once instead of parsing JSON polygons on every tree candidate
 	var bldg_aabbs: Array[Rect2] = []
@@ -1702,22 +2758,65 @@ func _collect_tree_positions(data: Dictionary) -> Array[Vector2]:
 
 	var court_polys: Array[PackedVector2Array] = []
 	for c in data.get("courts", []):
-		court_polys.append(_to_vec2_array(c.get("polygon", [])))
+		var cp := _to_vec2_array(c.get("polygon", []))
+		if cp.size() >= 3:
+			court_polys.append(cp)
+		elif c.has("center") and c.has("size"):
+			var ca: Array = c["center"]
+			var sa: Array = c["size"]
+			court_polys.append(_make_rect_poly(Vector2(float(ca[0]), float(ca[1])), float(sa[0]), float(sa[1]), deg_to_rad(float(c.get("rot_deg", 0.0))), 1.5))
 
 	var parking_polys: Array[PackedVector2Array] = []
 	for pk in data.get("parking_lots", []):
 		parking_polys.append(_to_vec2_array(pk.get("polygon", [])))
+
+	# Exclude Horta zone (with 3.0m margin)
+	var horta_polys: Array[PackedVector2Array] = []
+	var lm: Dictionary = data.get("landmarks", {})
+	var horta: Dictionary = lm.get("horta", {})
+	if not horta.is_empty():
+		var hf := _get_horta_frame(horta)
+		horta_polys.append(_make_rect_poly(hf["center"], float(hf["w"]), float(hf["d"]), float(hf["rot"]), 3.0))
+
+	# Exclude footway segments so trees never spawn inside walkways
+	var foot_segs: Array = []
+	for fw in data.get("footways", []):
+		var fpts: Array = fw.get("points", [])
+		for i in range(fpts.size() - 1):
+			foot_segs.append([Vector2(float(fpts[i][0]), float(fpts[i][1])), Vector2(float(fpts[i + 1][0]), float(fpts[i + 1][1]))])
 
 	var poi_xz := PackedVector2Array()
 	for poi in data.get("pois", []):
 		var arr: Array = poi.get("position", [0, 0, 0])
 		poi_xz.append(Vector2(float(arr[0]), float(arr[2])))
 
+	# Exclude >= 7.0m around every building entrance so trees never obscure doorways or facade signs
+	var entrance_xz := PackedVector2Array()
+	for bldg in data.get("buildings", []):
+		for ent in bldg.get("entrances", []):
+			if ent is Dictionary:
+				var epos: Array = ent.get("pos", [])
+				if epos.size() >= 2:
+					entrance_xz.append(Vector2(float(epos[0]), float(epos[1])))
+
 	var out: Array[Vector2] = []
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 2008
+	# Intentional patio & Setor 100 courtyard trees (only kept if outside solid building wings)
 	for cp in [Vector2(14.5, 6.0), Vector2(18.5, 13.0), Vector2(10.5, 13.5), Vector2(-48.5, -24.5)]:
-		out.append(cp)
+		var in_courtyard := false
+		for ci in _courtyard_inners:
+			if Geometry2D.is_point_in_polygon(cp, ci):
+				in_courtyard = true
+				break
+		var in_bldg := false
+		if not in_courtyard:
+			for bpoly in building_polys:
+				if Geometry2D.is_point_in_polygon(cp, bpoly):
+					in_bldg = true
+					break
+		if not in_bldg:
+			out.append(cp)
 	for _i in range(145):
 		var px := rng.randf_range(92.0, 190.0)
 		var pz := rng.randf_range(-160.0, 120.0)
@@ -1726,39 +2825,57 @@ func _collect_tree_positions(data: Dictionary) -> Array[Vector2]:
 		var px := rng.randf_range(-52.0, 72.0)
 		var pz := rng.randf_range(68.0, 152.0)
 		var cand := Vector2(px, pz)
-		if _is_tree_clear_cached(cand, bldg_aabbs, court_polys, parking_polys, poi_xz):
+		if _is_tree_clear_cached(cand, bldg_aabbs, court_polys, parking_polys, horta_polys, foot_segs, poi_xz, entrance_xz):
 			out.append(cand)
 	for _i in range(28):
 		var px := rng.randf_range(-40.0, 38.0)
 		var pz := rng.randf_range(-155.0, -115.0)
 		var cand := Vector2(px, pz)
-		if _is_tree_clear_cached(cand, bldg_aabbs, court_polys, parking_polys, poi_xz):
+		if _is_tree_clear_cached(cand, bldg_aabbs, court_polys, parking_polys, horta_polys, foot_segs, poi_xz, entrance_xz):
 			out.append(cand)
 	for mz: float in [-138.0, -128.0, -110.0, -96.0, -82.0, -68.0, -54.0, -40.0, -26.0, -12.0, 2.0, 30.0, 46.0, 62.0, 78.0, 94.0, 110.0, 126.0, 144.0, 162.0]:
 		var mx := -80.25 + (mz - 13.0) * 0.160
 		var cand := Vector2(mx, mz)
-		if _is_tree_clear_cached(cand, bldg_aabbs, court_polys, parking_polys, poi_xz):
+		if _is_tree_clear_cached(cand, bldg_aabbs, court_polys, parking_polys, horta_polys, foot_segs, poi_xz, entrance_xz):
 			out.append(cand)
 	return out
 
-func _is_tree_clear_cached(p: Vector2, bldg_aabbs: Array[Rect2], court_polys: Array[PackedVector2Array], parking_polys: Array[PackedVector2Array], poi_xz: PackedVector2Array) -> bool:
+func _is_tree_clear_cached(p: Vector2, bldg_aabbs: Array[Rect2], court_polys: Array[PackedVector2Array], parking_polys: Array[PackedVector2Array], horta_polys: Array[PackedVector2Array], foot_segs: Array, poi_xz: PackedVector2Array, entrance_xz: PackedVector2Array) -> bool:
+	# Keep SouthernPond water & island clear
+	var dp := p - Vector2(-24.0, 81.0)
+	if (dp.x * dp.x) / (14.5 * 14.5) + (dp.y * dp.y) / (8.5 * 8.5) < 1.0:
+		return false
 	for bi in range(building_polys.size()):
 		if not bldg_aabbs[bi].has_point(p):
 			continue
 		var bpoly: PackedVector2Array = building_polys[bi]
 		if Geometry2D.is_point_in_polygon(p, bpoly):
 			return false
-		for v in bpoly:
-			if p.distance_squared_to(v) < 25.0:
+		for ei in range(bpoly.size()):
+			var v0 := bpoly[ei]
+			var v1 := bpoly[(ei + 1) % bpoly.size()]
+			if _point_seg_dist_sq(p, v0, v1) < 12.25:
 				return false
 	for cpoly in court_polys:
 		if Geometry2D.is_point_in_polygon(p, cpoly):
 			return false
+		for ei in range(cpoly.size()):
+			if _point_seg_dist_sq(p, cpoly[ei], cpoly[(ei + 1) % cpoly.size()]) < 4.0:
+				return false
 	for pkpoly in parking_polys:
 		if Geometry2D.is_point_in_polygon(p, pkpoly):
 			return false
+	for hpoly in horta_polys:
+		if Geometry2D.is_point_in_polygon(p, hpoly):
+			return false
+	for seg in foot_segs:
+		if _point_seg_dist_sq(p, seg[0], seg[1]) < 4.84:
+			return false
 	for pp in poi_xz:
 		if p.distance_squared_to(pp) < 25.0:
+			return false
+	for ep in entrance_xz:
+		if p.distance_squared_to(ep) < 49.0:
 			return false
 	return true
 
@@ -1928,6 +3045,13 @@ func _extrude_polygon_mesh(poly: PackedVector2Array, height: float, include_wall
 	return st.commit()
 
 func cleanup() -> void:
+	clear_room_beacon()
+	if interior_builder != null:
+		interior_builder.cleanup()
+		interior_builder = null
+	roof_nodes.clear()
+	roofs_visible = true
+	_courtyard_inners.clear()
 	_build_root = null
 	_colored_batches.clear()
 	_plain_batches.clear()

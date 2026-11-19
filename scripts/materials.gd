@@ -100,6 +100,37 @@ func get_material(key: String, tint: Color = Color.WHITE, uv_scale: Vector3 = Ve
 			mat.emission = Color("#FFE3A8")
 			mat.emission_energy_multiplier = 0.0
 			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		"interior_wall":
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#EFECE6")
+			mat.roughness = 0.82
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		"interior_floor":
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#DCD8D0")
+			_apply_pbr(mat, "tile_diff.jpg", "", "", 0.58, 0.04, 6.0, 0.02)
+		"wood":
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#8B6240")
+			mat.roughness = 0.72
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		"whiteboard":
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#F6F8FA")
+			mat.roughness = 0.22
+			mat.metallic = 0.05
+		"chalkboard":
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#1E4D33")
+			mat.roughness = 0.85
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		"interior_glass":
+			mat.albedo_color = tint if tint != Color.WHITE else Color(0.55, 0.72, 0.82, 0.34)
+			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			mat.roughness = 0.12
+			mat.metallic = 0.20
+			mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		"ceiling_lamp":
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#FFFFFF")
+			mat.emission_enabled = true
+			mat.emission = Color("#FFF9EB")
+			mat.emission_energy_multiplier = 1.35
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		_:
 			mat.albedo_color = tint
 			mat.roughness = 0.8
@@ -149,6 +180,11 @@ func get_batch_material(bucket: String) -> StandardMaterial3D:
 		"batch_car":
 			mat.roughness = 0.22
 			mat.metallic = 0.35
+		"batch_wood":
+			mat.roughness = 0.72
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		"batch_emissive":
+			mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		_:
 			mat.roughness = 0.80
 			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED

@@ -1,0 +1,3031 @@
+{
+  "sectors": {
+    "100": {
+      "name": "Setor 100 — Administrativo, Ensino e Saúde",
+      "color": "#7FA8C9"
+    },
+    "200": {
+      "name": "Setor 200 — Ensino, CORAC e Labs 1–6",
+      "color": "#58B37B"
+    },
+    "230": {
+      "name": "Setor 230 — Cantina, Eventos, Depep e Inovação",
+      "color": "#58B37B"
+    },
+    "300": {
+      "name": "Setor 300 — Plásticos, Química e Bio",
+      "color": "#F0A84B"
+    },
+    "400": {
+      "name": "Setor 400 — Mecânica, CNC e DIMP",
+      "color": "#E8983C"
+    },
+    "500": {
+      "name": "Setor 500 — Auditório 504 (Pedro Kaizer)",
+      "color": "#F2DF2F"
+    },
+    "800": {
+      "name": "Bloco 800 — Salas 801–812 e DA / Grêmio",
+      "color": "#7AC790"
+    },
+    "biblioteca": {
+      "name": "Biblioteca do Câmpus",
+      "color": "#1EC7C3"
+    },
+    "social": {
+      "name": "Sede Social",
+      "color": "#72C850"
+    },
+    "esportes": {
+      "name": "Educação Física",
+      "color": "#6EE09B"
+    }
+  },
+  "rooms": [
+    {
+      "id": "sala_112",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "112",
+      "name": "Setor de Saúde",
+      "aliases": [
+        "Saúde",
+        "Enfermagem",
+        "Médico"
+      ],
+      "preset": "admin",
+      "center": [
+        -62.48,
+        -35.89
+      ],
+      "size": [
+        5.6,
+        4.4
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_113",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "113",
+      "name": "Coord. de Gestão de Pessoas",
+      "aliases": [
+        "CGP",
+        "RH",
+        "Gestão de Pessoas"
+      ],
+      "preset": "admin",
+      "center": [
+        -56.37,
+        -36.96
+      ],
+      "size": [
+        5.8,
+        4.4
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_114",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "114",
+      "name": "Dirape / Direpe",
+      "aliases": [
+        "Dirape",
+        "Direpe",
+        "Diretoria"
+      ],
+      "preset": "admin",
+      "center": [
+        -47.11,
+        -38.58
+      ],
+      "size": [
+        4.0,
+        4.4
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_reunioes_100",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "114A",
+      "name": "Sala de Reuniões",
+      "aliases": [
+        "Reuniões",
+        "Reuniões Setor 100"
+      ],
+      "preset": "admin",
+      "center": [
+        -42.98,
+        -39.3
+      ],
+      "size": [
+        4.0,
+        4.4
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_115",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "115",
+      "name": "Direção Geral",
+      "aliases": [
+        "Direção",
+        "Gabinete",
+        "Direção-Geral"
+      ],
+      "preset": "admin",
+      "center": [
+        -39.04,
+        -39.99
+      ],
+      "size": [
+        3.6,
+        4.4
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_111",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "111",
+      "name": "DELOG (Estrutura e Logística)",
+      "aliases": [
+        "DELOG",
+        "Logística",
+        "Departamento de Estrutura e Logística"
+      ],
+      "preset": "admin",
+      "center": [
+        -62.33,
+        -30.95
+      ],
+      "size": [
+        4.4,
+        4.2
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_106",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "106",
+      "name": "Sala de Psicologia",
+      "aliases": [
+        "Psicologia",
+        "Psicóloga"
+      ],
+      "preset": "admin",
+      "center": [
+        -61.54,
+        -26.42
+      ],
+      "size": [
+        4.4,
+        4.2
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "escada_100",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "100E",
+      "name": "Escada (Setor 100)",
+      "aliases": [
+        "Escada",
+        "Desnível Setor 100"
+      ],
+      "preset": "admin",
+      "center": [
+        -60.85,
+        -22.48
+      ],
+      "size": [
+        4.4,
+        3.2
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [],
+      "open_sides": [
+        "east"
+      ]
+    },
+    {
+      "id": "banheiro_servidores",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "WC-M",
+      "name": "Banheiro Servidores",
+      "aliases": [
+        "Banheiro Masculino 100",
+        "WC Servidores"
+      ],
+      "preset": "restroom",
+      "center": [
+        -60.23,
+        -18.93
+      ],
+      "size": [
+        4.4,
+        3.4
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.25
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "banheiro_servidoras",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "WC-F",
+      "name": "Banheiro Servidoras",
+      "aliases": [
+        "Banheiro Feminino 100",
+        "WC Servidoras"
+      ],
+      "preset": "restroom",
+      "center": [
+        -59.58,
+        -15.19
+      ],
+      "size": [
+        4.4,
+        3.6
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.25
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_105",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "105",
+      "name": "Departamento de Ensino",
+      "aliases": [
+        "DEPEN",
+        "Ensino"
+      ],
+      "preset": "admin",
+      "center": [
+        -57.98,
+        -10.09
+      ],
+      "size": [
+        5.6,
+        4.4
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_104",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "104",
+      "name": "Coordenação Pedagógica",
+      "aliases": [
+        "Pedagógico",
+        "COPED"
+      ],
+      "preset": "admin",
+      "center": [
+        -51.87,
+        -11.15
+      ],
+      "size": [
+        5.8,
+        4.4
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_103",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "103",
+      "name": "Assistência Estudantil",
+      "aliases": [
+        "CAE",
+        "Assistência",
+        "Auxílio"
+      ],
+      "preset": "admin",
+      "center": [
+        -41.63,
+        -12.94
+      ],
+      "size": [
+        5.6,
+        4.4
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_101",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "101",
+      "name": "Coordenações de Curso",
+      "aliases": [
+        "Coordenações",
+        "Cursos"
+      ],
+      "preset": "admin",
+      "center": [
+        -35.71,
+        -13.97
+      ],
+      "size": [
+        5.8,
+        4.4
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_116",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "116",
+      "name": "Departamento de Administração",
+      "aliases": [
+        "DEPAD",
+        "Administração"
+      ],
+      "preset": "admin",
+      "center": [
+        -38.15,
+        -33.14
+      ],
+      "size": [
+        4.4,
+        7.6
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_117",
+      "building_id": "bloco_adm",
+      "sector": "100",
+      "code": "117",
+      "name": "Coord. de Comunicação Social",
+      "aliases": [
+        "Comunicação",
+        "CCS"
+      ],
+      "preset": "admin",
+      "center": [
+        -36.81,
+        -25.45
+      ],
+      "size": [
+        4.4,
+        7.2
+      ],
+      "rot_deg": 9.9,
+      "ceiling_h": 3.4,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_118",
+      "building_id": "corredor_convivencia",
+      "sector": "100",
+      "code": "118",
+      "name": "Ilha de Impressões",
+      "aliases": [
+        "Impressões",
+        "Xerox",
+        "Cópias"
+      ],
+      "preset": "admin",
+      "center": [
+        -31.3,
+        -20.43
+      ],
+      "size": [
+        2.5,
+        3.2
+      ],
+      "rot_deg": 8.5,
+      "ceiling_h": 3.2,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.25
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_119",
+      "building_id": "corredor_convivencia",
+      "sector": "100",
+      "code": "119",
+      "name": "Sala de Convivência",
+      "aliases": [
+        "Convivência",
+        "Sala 119"
+      ],
+      "preset": "student_org",
+      "center": [
+        -28.33,
+        -20.87
+      ],
+      "size": [
+        3.0,
+        3.2
+      ],
+      "rot_deg": 8.5,
+      "ceiling_h": 3.2,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_120",
+      "building_id": "corredor_convivencia",
+      "sector": "100",
+      "code": "120",
+      "name": "Telefonia",
+      "aliases": [
+        "Central Telefônica",
+        "Sala 120"
+      ],
+      "preset": "admin",
+      "center": [
+        -27.79,
+        -17.21
+      ],
+      "size": [
+        2.8,
+        2.4
+      ],
+      "rot_deg": 8.5,
+      "ceiling_h": 3.2,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.2
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_204",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "204",
+      "name": "Sala de Servidores",
+      "aliases": [
+        "Servidores",
+        "Sala 204"
+      ],
+      "preset": "admin",
+      "center": [
+        -23.97,
+        -23.98
+      ],
+      "size": [
+        3.4,
+        6.4
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_206",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "206",
+      "name": "Arquivo",
+      "aliases": [
+        "Arquivo Geral",
+        "Sala 206"
+      ],
+      "preset": "admin",
+      "center": [
+        -20.22,
+        -24.6
+      ],
+      "size": [
+        3.6,
+        6.4
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_208",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "208",
+      "name": "Depósito PNAE",
+      "aliases": [
+        "PNAE",
+        "Depósito",
+        "Sala 208"
+      ],
+      "preset": "admin",
+      "center": [
+        -16.28,
+        -25.25
+      ],
+      "size": [
+        3.8,
+        6.4
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_209",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "209",
+      "name": "Lab de Artes (Antiga Sala 4)",
+      "aliases": [
+        "Antiga Sala 4",
+        "Lab de Artes",
+        "Artes",
+        "Sala 4"
+      ],
+      "preset": "classroom",
+      "center": [
+        -12.13,
+        -25.94
+      ],
+      "size": [
+        4.0,
+        6.4
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_211",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "211",
+      "name": "Antiga Sala 6",
+      "aliases": [
+        "Sala 6",
+        "Sala 211"
+      ],
+      "preset": "classroom",
+      "center": [
+        -7.99,
+        -26.63
+      ],
+      "size": [
+        3.8,
+        6.4
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_212",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "212",
+      "name": "Lab Produção Cultural",
+      "aliases": [
+        "Produção Cultural",
+        "Cultura",
+        "Sala 212"
+      ],
+      "preset": "classroom",
+      "center": [
+        -0.59,
+        -27.85
+      ],
+      "size": [
+        4.4,
+        6.4
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_215",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "215",
+      "name": "Lab de Gestão",
+      "aliases": [
+        "Gestão",
+        "Administração",
+        "Sala 215"
+      ],
+      "preset": "classroom",
+      "center": [
+        4.15,
+        -28.63
+      ],
+      "size": [
+        4.6,
+        6.4
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_216",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "216",
+      "name": "Galeria",
+      "aliases": [
+        "Galeria de Artes",
+        "Exposições",
+        "Sala 216"
+      ],
+      "preset": "classroom",
+      "center": [
+        8.88,
+        -29.42
+      ],
+      "size": [
+        4.4,
+        6.4
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "banheiro_200_norte",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "WC-200N",
+      "name": "Banheiro (Setor 200 Norte)",
+      "aliases": [
+        "Banheiro 200",
+        "Banheiro Galeria"
+      ],
+      "preset": "restroom",
+      "center": [
+        12.93,
+        -30.09
+      ],
+      "size": [
+        3.2,
+        6.4
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.25
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_201",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "201",
+      "name": "Miniauditório",
+      "aliases": [
+        "Mini auditório",
+        "Miniauditório 201",
+        "Auditório 201"
+      ],
+      "preset": "auditorium",
+      "center": [
+        -18.61,
+        -13.62
+      ],
+      "size": [
+        5.8,
+        5.2
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.6
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "apoio_academico",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "202",
+      "name": "Apoio Acadêmico",
+      "aliases": [
+        "Apoio",
+        "Secretaria Acadêmica"
+      ],
+      "preset": "admin",
+      "center": [
+        -13.48,
+        -14.47
+      ],
+      "size": [
+        4.0,
+        5.2
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "corac",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "203",
+      "name": "CORAC",
+      "aliases": [
+        "Registros Acadêmicos",
+        "Matrícula",
+        "Secretaria"
+      ],
+      "preset": "admin",
+      "center": [
+        -8.81,
+        -14.43
+      ],
+      "size": [
+        4.6,
+        6.6
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.5
+        },
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.5
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "recepcao",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "REC",
+      "name": "Recepção",
+      "aliases": [
+        "Recepção Central",
+        "Informações",
+        "Hall"
+      ],
+      "preset": "reception",
+      "center": [
+        -13.4,
+        -3.5
+      ],
+      "size": [
+        4.4,
+        3.0
+      ],
+      "rot_deg": -37.0,
+      "ceiling_h": 3.6,
+      "doors": [],
+      "open_sides": [
+        "north",
+        "south",
+        "east",
+        "west"
+      ]
+    },
+    {
+      "id": "sala_205",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "205",
+      "name": "Antiga Sala 1",
+      "aliases": [
+        "Sala 1",
+        "Sala 205"
+      ],
+      "preset": "classroom",
+      "center": [
+        -3.38,
+        -14.72
+      ],
+      "size": [
+        4.8,
+        6.6
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_207",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "207",
+      "name": "Antiga Sala 2",
+      "aliases": [
+        "Sala 2",
+        "Sala 207"
+      ],
+      "preset": "classroom",
+      "center": [
+        1.75,
+        -15.57
+      ],
+      "size": [
+        5.0,
+        6.6
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_210",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "210",
+      "name": "Antiga Sala 3",
+      "aliases": [
+        "Sala 3",
+        "Sala 210"
+      ],
+      "preset": "classroom",
+      "center": [
+        9.64,
+        -16.87
+      ],
+      "size": [
+        4.6,
+        6.6
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_213",
+      "building_id": "bloco_ensino_central",
+      "sector": "200",
+      "code": "213",
+      "name": "Antiga Sala 5",
+      "aliases": [
+        "Sala 5",
+        "Sala 213"
+      ],
+      "preset": "classroom",
+      "center": [
+        14.57,
+        -17.69
+      ],
+      "size": [
+        4.6,
+        6.6
+      ],
+      "rot_deg": 9.4,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_217",
+      "building_id": "bloco_didatico_leste",
+      "sector": "200",
+      "code": "217",
+      "name": "MEV",
+      "aliases": [
+        "Microscopia",
+        "Lab MEV",
+        "Sala 217"
+      ],
+      "preset": "industrial_lab",
+      "center": [
+        25.25,
+        -9.61
+      ],
+      "size": [
+        7.6,
+        3.8
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_220",
+      "building_id": "bloco_didatico_leste",
+      "sector": "200",
+      "code": "220",
+      "name": "Sala de Recursos",
+      "aliases": [
+        "Recursos",
+        "NAPNE",
+        "Sala 220"
+      ],
+      "preset": "admin",
+      "center": [
+        25.89,
+        -5.46
+      ],
+      "size": [
+        7.6,
+        3.8
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_222",
+      "building_id": "bloco_didatico_leste",
+      "sector": "200",
+      "code": "222",
+      "name": "Sala dos Núcleos",
+      "aliases": [
+        "Núcleos",
+        "NEABI",
+        "Sala 222"
+      ],
+      "preset": "admin",
+      "center": [
+        26.52,
+        -1.31
+      ],
+      "size": [
+        7.6,
+        3.8
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_224",
+      "building_id": "bloco_didatico_leste",
+      "sector": "200",
+      "code": "224",
+      "name": "Lab 5",
+      "aliases": [
+        "Laboratório 5",
+        "Informática 5",
+        "Sala 224"
+      ],
+      "preset": "computer_lab",
+      "center": [
+        27.7,
+        6.4
+      ],
+      "size": [
+        7.6,
+        4.4
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_228",
+      "building_id": "bloco_didatico_leste",
+      "sector": "200",
+      "code": "228",
+      "name": "Lab 6",
+      "aliases": [
+        "Laboratório 6",
+        "Informática 6",
+        "Sala 228"
+      ],
+      "preset": "computer_lab",
+      "center": [
+        28.43,
+        11.15
+      ],
+      "size": [
+        7.6,
+        4.4
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_232",
+      "building_id": "bloco_didatico_leste",
+      "sector": "230",
+      "code": "232",
+      "name": "Sala de Atendimento Nova",
+      "aliases": [
+        "Atendimento",
+        "Sala 232"
+      ],
+      "preset": "admin",
+      "center": [
+        29.09,
+        15.5
+      ],
+      "size": [
+        7.6,
+        3.6
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_231",
+      "building_id": "bloco_didatico_leste",
+      "sector": "230",
+      "code": "231",
+      "name": "Lab de Práticas em Eventos",
+      "aliases": [
+        "Eventos",
+        "Lab de Eventos",
+        "Sala 231"
+      ],
+      "preset": "classroom",
+      "center": [
+        29.73,
+        19.65
+      ],
+      "size": [
+        7.6,
+        4.2
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.4
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "banheiro_fem_cantina",
+      "building_id": "bloco_didatico_leste",
+      "sector": "230",
+      "code": "WC-F230",
+      "name": "Banheiro Feminino (Cantina)",
+      "aliases": [
+        "Banheiro Feminino",
+        "WC Feminino Cantina"
+      ],
+      "preset": "restroom",
+      "center": [
+        28.68,
+        24.06
+      ],
+      "size": [
+        3.8,
+        3.0
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.25
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "cantina",
+      "building_id": "bloco_didatico_leste",
+      "sector": "230",
+      "code": "CANT",
+      "name": "Cantina",
+      "aliases": [
+        "Lancheria",
+        "Refeitório",
+        "Alimentação"
+      ],
+      "preset": "canteen",
+      "center": [
+        34.37,
+        24.2
+      ],
+      "size": [
+        5.8,
+        4.4
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.8
+        },
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.8
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "banheiro_masc_cantina",
+      "building_id": "bloco_didatico_leste",
+      "sector": "230",
+      "code": "WC-M230",
+      "name": "Banheiro Masculino (Cantina)",
+      "aliases": [
+        "Banheiro Masculino",
+        "WC Masculino Cantina"
+      ],
+      "preset": "restroom",
+      "center": [
+        35.37,
+        28.09
+      ],
+      "size": [
+        4.6,
+        2.8
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.25
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_218",
+      "building_id": "bloco_didatico_leste",
+      "sector": "200",
+      "code": "218",
+      "name": "Antiga Sala 9",
+      "aliases": [
+        "Sala 9",
+        "Sala 218"
+      ],
+      "preset": "classroom",
+      "center": [
+        38.28,
+        -12.41
+      ],
+      "size": [
+        7.8,
+        3.4
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_219",
+      "building_id": "bloco_didatico_leste",
+      "sector": "200",
+      "code": "219",
+      "name": "Lab 1",
+      "aliases": [
+        "Laboratório 1",
+        "Informática 1",
+        "Sala 219"
+      ],
+      "preset": "computer_lab",
+      "center": [
+        38.85,
+        -8.66
+      ],
+      "size": [
+        7.8,
+        3.6
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_221",
+      "building_id": "bloco_didatico_leste",
+      "sector": "200",
+      "code": "221",
+      "name": "Lab 2",
+      "aliases": [
+        "Laboratório 2",
+        "Informática 2",
+        "Sala 221"
+      ],
+      "preset": "computer_lab",
+      "center": [
+        39.46,
+        -4.7
+      ],
+      "size": [
+        7.8,
+        3.6
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_223",
+      "building_id": "bloco_didatico_leste",
+      "sector": "200",
+      "code": "223",
+      "name": "Lab 3",
+      "aliases": [
+        "Laboratório 3",
+        "Informática 3",
+        "Sala 223"
+      ],
+      "preset": "computer_lab",
+      "center": [
+        40.06,
+        -0.75
+      ],
+      "size": [
+        7.8,
+        3.6
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_223b",
+      "building_id": "bloco_didatico_leste",
+      "sector": "200",
+      "code": "223B",
+      "name": "Sala Nova",
+      "aliases": [
+        "Sala nova",
+        "Sala 223B"
+      ],
+      "preset": "classroom",
+      "center": [
+        40.64,
+        3.01
+      ],
+      "size": [
+        7.8,
+        3.4
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_223a",
+      "building_id": "bloco_didatico_leste",
+      "sector": "200",
+      "code": "223A",
+      "name": "Lab 4",
+      "aliases": [
+        "Laboratório 4",
+        "Informática 4",
+        "Sala 223A"
+      ],
+      "preset": "computer_lab",
+      "center": [
+        41.21,
+        6.76
+      ],
+      "size": [
+        7.8,
+        3.6
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "banheiros_200",
+      "building_id": "bloco_didatico_leste",
+      "sector": "200",
+      "code": "WC-200",
+      "name": "Banheiros (Setor 200)",
+      "aliases": [
+        "Banheiros 200",
+        "Sanitários 200"
+      ],
+      "preset": "restroom",
+      "center": [
+        41.79,
+        10.52
+      ],
+      "size": [
+        7.8,
+        3.2
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_229",
+      "building_id": "bloco_didatico_leste",
+      "sector": "200",
+      "code": "229",
+      "name": "Sala de Docentes",
+      "aliases": [
+        "Docentes",
+        "Professores",
+        "Sala dos Professores",
+        "Sala 229"
+      ],
+      "preset": "admin",
+      "center": [
+        42.39,
+        14.47
+      ],
+      "size": [
+        7.8,
+        4.0
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "garagem",
+      "building_id": "bloco_didatico_leste",
+      "sector": "200",
+      "code": "GAR",
+      "name": "Garagem",
+      "aliases": [
+        "Garagem Institucional",
+        "Veículos"
+      ],
+      "preset": "garage",
+      "center": [
+        43.03,
+        18.63
+      ],
+      "size": [
+        7.8,
+        3.8
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 2.0
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_233",
+      "building_id": "bloco_didatico_leste",
+      "sector": "230",
+      "code": "233",
+      "name": "Depep",
+      "aliases": [
+        "DEPEP",
+        "Pesquisa e Extensão",
+        "Sala 233"
+      ],
+      "preset": "admin",
+      "center": [
+        43.6,
+        22.38
+      ],
+      "size": [
+        7.8,
+        3.2
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_234",
+      "building_id": "bloco_didatico_leste",
+      "sector": "230",
+      "code": "234",
+      "name": "Lab de Inovação",
+      "aliases": [
+        "Inovação",
+        "STEAM",
+        "Maker",
+        "Sala 234"
+      ],
+      "preset": "computer_lab",
+      "center": [
+        44.18,
+        26.14
+      ],
+      "size": [
+        7.8,
+        3.8
+      ],
+      "rot_deg": 8.7,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.5
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_304",
+      "building_id": "central_utilidades",
+      "sector": "300",
+      "code": "304",
+      "name": "Lab de Química",
+      "aliases": [
+        "Química",
+        "Laboratório de Química",
+        "Sala 304"
+      ],
+      "preset": "industrial_lab",
+      "center": [
+        3.55,
+        -53.84
+      ],
+      "size": [
+        6.0,
+        4.8
+      ],
+      "rot_deg": 9.8,
+      "ceiling_h": 3.5,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.4
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_303",
+      "building_id": "central_utilidades",
+      "sector": "300",
+      "code": "303",
+      "name": "LCQ",
+      "aliases": [
+        "Controle de Qualidade",
+        "Lab de Controle de Qualidade",
+        "Sala 303"
+      ],
+      "preset": "industrial_lab",
+      "center": [
+        4.54,
+        -48.12
+      ],
+      "size": [
+        6.0,
+        4.8
+      ],
+      "rot_deg": 9.8,
+      "ceiling_h": 3.5,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.4
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "lab_plasticos",
+      "building_id": "bloco_labs_industriais",
+      "sector": "300",
+      "code": "301",
+      "name": "Lab de Plásticos",
+      "aliases": [
+        "Plásticos",
+        "Transformação de Plásticos",
+        "Extrusão",
+        "Injeção"
+      ],
+      "preset": "industrial_lab",
+      "center": [
+        30.5,
+        -29.88
+      ],
+      "size": [
+        8.2,
+        13.5
+      ],
+      "rot_deg": 9.0,
+      "ceiling_h": 4.6,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 2.2
+        },
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 2.2
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_305",
+      "building_id": "bloco_labs_industriais",
+      "sector": "300",
+      "code": "305",
+      "name": "Lab de Reciclagem",
+      "aliases": [
+        "Reciclagem",
+        "Sala 305"
+      ],
+      "preset": "industrial_lab",
+      "center": [
+        28.09,
+        -45.09
+      ],
+      "size": [
+        8.2,
+        10.6
+      ],
+      "rot_deg": 9.0,
+      "ceiling_h": 4.6,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.8
+        },
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.8
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_306",
+      "building_id": "bloco_labs_industriais",
+      "sector": "300",
+      "code": "306",
+      "name": "Sala de Laboratoristas",
+      "aliases": [
+        "Laboratoristas",
+        "Sala 306"
+      ],
+      "preset": "admin",
+      "center": [
+        41.32,
+        -47.19
+      ],
+      "size": [
+        8.6,
+        10.6
+      ],
+      "rot_deg": 9.0,
+      "ceiling_h": 4.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.4
+        },
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.4
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_307",
+      "building_id": "bloco_labs_industriais",
+      "sector": "300",
+      "code": "307",
+      "name": "Lab de Bio",
+      "aliases": [
+        "Biologia",
+        "Laboratório de Bio",
+        "Sala 307"
+      ],
+      "preset": "industrial_lab",
+      "center": [
+        49.42,
+        -48.47
+      ],
+      "size": [
+        6.4,
+        10.6
+      ],
+      "rot_deg": 9.0,
+      "ceiling_h": 4.6,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.5
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_308",
+      "building_id": "bloco_labs_industriais",
+      "sector": "300",
+      "code": "308",
+      "name": "Antiga Sala 8",
+      "aliases": [
+        "Sala 8",
+        "Sala 308"
+      ],
+      "preset": "classroom",
+      "center": [
+        43.95,
+        -30.59
+      ],
+      "size": [
+        8.6,
+        12.2
+      ],
+      "rot_deg": 9.0,
+      "ceiling_h": 4.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.5
+        },
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.5
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_309",
+      "building_id": "bloco_labs_industriais",
+      "sector": "300",
+      "code": "309",
+      "name": "Novíssima Modular",
+      "aliases": [
+        "Modular",
+        "Sala Modular",
+        "Sala 309"
+      ],
+      "preset": "classroom",
+      "center": [
+        52.05,
+        -31.88
+      ],
+      "size": [
+        6.4,
+        12.2
+      ],
+      "rot_deg": 9.0,
+      "ceiling_h": 4.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.5
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_401",
+      "building_id": "bloco_engenharia_sul",
+      "sector": "400",
+      "code": "401",
+      "name": "Lab CNC",
+      "aliases": [
+        "CNC",
+        "Usinagem CNC",
+        "Sala 401"
+      ],
+      "preset": "industrial_lab",
+      "center": [
+        48.14,
+        43.34
+      ],
+      "size": [
+        5.8,
+        11.6
+      ],
+      "rot_deg": 8.9,
+      "ceiling_h": 4.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.6
+        },
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.6
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_402",
+      "building_id": "bloco_engenharia_sul",
+      "sector": "400",
+      "code": "402",
+      "name": "Lab 7",
+      "aliases": [
+        "Laboratório 7",
+        "CAD/CAM",
+        "Sala 402"
+      ],
+      "preset": "computer_lab",
+      "center": [
+        43.92,
+        61.61
+      ],
+      "size": [
+        6.2,
+        11.6
+      ],
+      "rot_deg": 8.9,
+      "ceiling_h": 4.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.5
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_403",
+      "building_id": "bloco_engenharia_sul",
+      "sector": "400",
+      "code": "403",
+      "name": "Antiga 14 (Desenho)",
+      "aliases": [
+        "Antiga 14",
+        "Sala 14",
+        "Desenho",
+        "Desenho Técnico",
+        "Sala 403"
+      ],
+      "preset": "classroom",
+      "center": [
+        50.44,
+        60.59
+      ],
+      "size": [
+        5.8,
+        11.6
+      ],
+      "rot_deg": 8.9,
+      "ceiling_h": 4.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.5
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "lab_mecanica",
+      "building_id": "bloco_engenharia_sul",
+      "sector": "400",
+      "code": "400",
+      "name": "Lab de Mecânica",
+      "aliases": [
+        "Mecânica",
+        "Usinagem",
+        "Oficina Mecânica",
+        "Soldagem"
+      ],
+      "preset": "industrial_lab",
+      "center": [
+        61.29,
+        43.91
+      ],
+      "size": [
+        11.6,
+        16.4
+      ],
+      "rot_deg": 8.9,
+      "ceiling_h": 4.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 2.4
+        },
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 2.4
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_405",
+      "building_id": "bloco_engenharia_sul",
+      "sector": "400",
+      "code": "405",
+      "name": "DIMP",
+      "aliases": [
+        "Infraestrutura",
+        "Manutenção Predial",
+        "Sala 405"
+      ],
+      "preset": "admin",
+      "center": [
+        60.02,
+        59.7
+      ],
+      "size": [
+        5.6,
+        10.4
+      ],
+      "rot_deg": 8.9,
+      "ceiling_h": 4.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.4
+        },
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.4
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "manutencao",
+      "building_id": "bloco_engenharia_sul",
+      "sector": "400",
+      "code": "404",
+      "name": "Manutenção",
+      "aliases": [
+        "Oficina de Manutenção",
+        "Almoxarifado"
+      ],
+      "preset": "industrial_lab",
+      "center": [
+        66.34,
+        58.71
+      ],
+      "size": [
+        6.0,
+        10.4
+      ],
+      "rot_deg": 8.9,
+      "ceiling_h": 4.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.8
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "auditorio_504",
+      "building_id": "auditorio",
+      "sector": "500",
+      "code": "504",
+      "name": "Auditório Pedro Kaizer",
+      "aliases": [
+        "Auditório",
+        "Auditório 504",
+        "Pedro Kaizer"
+      ],
+      "preset": "auditorium",
+      "center": [
+        -7.5,
+        26.8
+      ],
+      "size": [
+        16.0,
+        14.5
+      ],
+      "rot_deg": 10.0,
+      "ceiling_h": 5.4,
+      "doors": [],
+      "open_sides": [
+        "north",
+        "east",
+        "west",
+        "south"
+      ]
+    },
+    {
+      "id": "sala_807",
+      "building_id": "bloco_800",
+      "sector": "800",
+      "code": "807",
+      "name": "Diretório Acadêmico / Grêmio Estudantil",
+      "aliases": [
+        "P10",
+        "DA",
+        "Grêmio",
+        "Grêmio Estudantil",
+        "Diretório Acadêmico",
+        "Sala 807"
+      ],
+      "preset": "student_org",
+      "center": [
+        33.8,
+        -82.4
+      ],
+      "size": [
+        5.2,
+        5.2
+      ],
+      "rot_deg": -35.5,
+      "ceiling_h": 3.6,
+      "doors": [],
+      "open_sides": [
+        "north",
+        "south",
+        "east",
+        "west"
+      ]
+    },
+    {
+      "id": "sala_806",
+      "building_id": "bloco_800",
+      "sector": "800",
+      "code": "806",
+      "name": "Sala 806 (P05)",
+      "aliases": [
+        "P05",
+        "Sala 806"
+      ],
+      "preset": "classroom",
+      "center": [
+        41.05,
+        -83.61
+      ],
+      "size": [
+        3.4,
+        3.4
+      ],
+      "rot_deg": -35.5,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.25
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_811",
+      "building_id": "bloco_800",
+      "sector": "800",
+      "code": "811",
+      "name": "Sala 811 (P08)",
+      "aliases": [
+        "P08",
+        "Sala 811"
+      ],
+      "preset": "classroom",
+      "center": [
+        26.26,
+        -91.46
+      ],
+      "size": [
+        6.4,
+        3.4
+      ],
+      "rot_deg": -35.5,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_812",
+      "building_id": "bloco_800",
+      "sector": "800",
+      "code": "812",
+      "name": "Sala 812 (P09)",
+      "aliases": [
+        "P09",
+        "Sala 812"
+      ],
+      "preset": "classroom",
+      "center": [
+        22.78,
+        -86.58
+      ],
+      "size": [
+        6.4,
+        3.4
+      ],
+      "rot_deg": -35.5,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_808",
+      "building_id": "bloco_800",
+      "sector": "800",
+      "code": "808",
+      "name": "Sala 808 (P06)",
+      "aliases": [
+        "P06",
+        "Sala 808"
+      ],
+      "preset": "classroom",
+      "center": [
+        37.9,
+        -93.48
+      ],
+      "size": [
+        3.4,
+        6.2
+      ],
+      "rot_deg": -35.5,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_809",
+      "building_id": "bloco_800",
+      "sector": "800",
+      "code": "809",
+      "name": "Sala 809 (P07)",
+      "aliases": [
+        "P07",
+        "Sala 809"
+      ],
+      "preset": "classroom",
+      "center": [
+        41.97,
+        -88.86
+      ],
+      "size": [
+        3.4,
+        3.8
+      ],
+      "rot_deg": -35.5,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_810",
+      "building_id": "bloco_800",
+      "sector": "800",
+      "code": "810",
+      "name": "Banheiro (Bloco 800 Norte)",
+      "aliases": [
+        "Banheiro 810",
+        "Sala 810",
+        "WC 810"
+      ],
+      "preset": "restroom",
+      "center": [
+        43.94,
+        -91.63
+      ],
+      "size": [
+        3.4,
+        2.4
+      ],
+      "rot_deg": -35.5,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.2
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_805",
+      "building_id": "bloco_800",
+      "sector": "800",
+      "code": "805",
+      "name": "Sala 805 (P04)",
+      "aliases": [
+        "P04",
+        "Sala 805"
+      ],
+      "preset": "classroom",
+      "center": [
+        44.99,
+        -78.11
+      ],
+      "size": [
+        6.8,
+        3.4
+      ],
+      "rot_deg": -35.5,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_804",
+      "building_id": "bloco_800",
+      "sector": "800",
+      "code": "804",
+      "name": "Lab. Física (P03)",
+      "aliases": [
+        "P03",
+        "Lab Física",
+        "Laboratório de Física",
+        "Física",
+        "Sala 804"
+      ],
+      "preset": "industrial_lab",
+      "center": [
+        40.25,
+        -73.87
+      ],
+      "size": [
+        4.2,
+        3.4
+      ],
+      "rot_deg": -35.5,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_803",
+      "building_id": "bloco_800",
+      "sector": "800",
+      "code": "803",
+      "name": "Banheiro (Bloco 800 Sul)",
+      "aliases": [
+        "Banheiro 800",
+        "Sala 803",
+        "WC 803"
+      ],
+      "preset": "restroom",
+      "center": [
+        43.34,
+        -71.66
+      ],
+      "size": [
+        2.6,
+        3.4
+      ],
+      "rot_deg": -35.5,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "north",
+          "offset": 0.0,
+          "width": 1.2
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_801",
+      "building_id": "bloco_800",
+      "sector": "800",
+      "code": "801",
+      "name": "Sala 801 (P01)",
+      "aliases": [
+        "P01",
+        "Sala 801"
+      ],
+      "preset": "classroom",
+      "center": [
+        24.53,
+        -75.26
+      ],
+      "size": [
+        3.4,
+        6.2
+      ],
+      "rot_deg": -35.5,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "east",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "sala_802",
+      "building_id": "bloco_800",
+      "sector": "800",
+      "code": "802",
+      "name": "Sala 802 (P02)",
+      "aliases": [
+        "P02",
+        "Sala 802"
+      ],
+      "preset": "classroom",
+      "center": [
+        29.25,
+        -71.89
+      ],
+      "size": [
+        3.4,
+        6.2
+      ],
+      "rot_deg": -35.5,
+      "ceiling_h": 3.6,
+      "doors": [
+        {
+          "side": "west",
+          "offset": 0.0,
+          "width": 1.3
+        }
+      ],
+      "open_sides": []
+    },
+    {
+      "id": "biblioteca_central",
+      "building_id": "biblioteca",
+      "sector": "biblioteca",
+      "code": "BIB",
+      "name": "Biblioteca — Balcão Central",
+      "aliases": [
+        "Biblioteca",
+        "Balcão",
+        "Empréstimo",
+        "Acervo"
+      ],
+      "preset": "library",
+      "center": [
+        -19.1,
+        122.0
+      ],
+      "size": [
+        10.0,
+        10.0
+      ],
+      "rot_deg": -4.5,
+      "ceiling_h": 4.2,
+      "doors": [],
+      "open_sides": [
+        "north",
+        "south",
+        "east",
+        "west"
+      ]
+    },
+    {
+      "id": "biblioteca_norte",
+      "building_id": "biblioteca",
+      "sector": "biblioteca",
+      "code": "BIB-N",
+      "name": "Biblioteca — Recepção e Periódicos",
+      "aliases": [
+        "Biblioteca Norte",
+        "Periódicos"
+      ],
+      "preset": "library",
+      "center": [
+        -17.56,
+        112.59
+      ],
+      "size": [
+        8.6,
+        8.2
+      ],
+      "rot_deg": -4.5,
+      "ceiling_h": 4.2,
+      "doors": [],
+      "open_sides": [
+        "south",
+        "east",
+        "north"
+      ]
+    },
+    {
+      "id": "biblioteca_sul",
+      "building_id": "biblioteca",
+      "sector": "biblioteca",
+      "code": "BIB-S",
+      "name": "Biblioteca — Acervo Geral",
+      "aliases": [
+        "Biblioteca Sul",
+        "Estantes",
+        "Livros"
+      ],
+      "preset": "library",
+      "center": [
+        -20.45,
+        131.52
+      ],
+      "size": [
+        8.8,
+        8.2
+      ],
+      "rot_deg": -4.5,
+      "ceiling_h": 4.2,
+      "doors": [],
+      "open_sides": [
+        "north"
+      ]
+    },
+    {
+      "id": "biblioteca_leste",
+      "building_id": "biblioteca",
+      "sector": "biblioteca",
+      "code": "BIB-L",
+      "name": "Biblioteca — Salão de Leitura",
+      "aliases": [
+        "Salão de Leitura",
+        "Estudos"
+      ],
+      "preset": "library",
+      "center": [
+        -9.62,
+        123.95
+      ],
+      "size": [
+        8.2,
+        7.6
+      ],
+      "rot_deg": -4.5,
+      "ceiling_h": 4.2,
+      "doors": [],
+      "open_sides": [
+        "west"
+      ]
+    },
+    {
+      "id": "biblioteca_oeste",
+      "building_id": "biblioteca",
+      "sector": "biblioteca",
+      "code": "BIB-O",
+      "name": "Biblioteca — Cabines e Infanteca",
+      "aliases": [
+        "Cabines de Estudo",
+        "Infanteca"
+      ],
+      "preset": "library",
+      "center": [
+        -28.59,
+        120.25
+      ],
+      "size": [
+        8.4,
+        8.2
+      ],
+      "rot_deg": -4.5,
+      "ceiling_h": 4.2,
+      "doors": [],
+      "open_sides": [
+        "east"
+      ]
+    },
+    {
+      "id": "sede_social_salao",
+      "building_id": "sede_social",
+      "sector": "social",
+      "code": "SS",
+      "name": "Sede Social",
+      "aliases": [
+        "Salão Social",
+        "Associação",
+        "Convivência Servidores"
+      ],
+      "preset": "social",
+      "center": [
+        29.6,
+        91.65
+      ],
+      "size": [
+        10.2,
+        9.0
+      ],
+      "rot_deg": 20.7,
+      "ceiling_h": 3.4,
+      "doors": [],
+      "open_sides": [
+        "north",
+        "west"
+      ]
+    },
+    {
+      "id": "educacao_fisica_academia",
+      "building_id": "vestiarios_esporte",
+      "sector": "esportes",
+      "code": "EF-1",
+      "name": "Educação Física — Academia e Apoio",
+      "aliases": [
+        "Educação Física",
+        "Academia",
+        "Musculação"
+      ],
+      "preset": "gym",
+      "center": [
+        -60.26,
+        -117.55
+      ],
+      "size": [
+        9.6,
+        8.2
+      ],
+      "rot_deg": 9.2,
+      "ceiling_h": 3.5,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.6
+        }
+      ],
+      "open_sides": [
+        "east"
+      ]
+    },
+    {
+      "id": "educacao_fisica_vestiarios",
+      "building_id": "vestiarios_esporte",
+      "sector": "esportes",
+      "code": "EF-2",
+      "name": "Vestiários (Educação Física)",
+      "aliases": [
+        "Vestiários",
+        "Vestiário Esportes"
+      ],
+      "preset": "restroom",
+      "center": [
+        -68.16,
+        -116.27
+      ],
+      "size": [
+        5.4,
+        8.2
+      ],
+      "rot_deg": 9.2,
+      "ceiling_h": 3.5,
+      "doors": [
+        {
+          "side": "south",
+          "offset": 0.0,
+          "width": 1.4
+        }
+      ],
+      "open_sides": []
+    }
+  ],
+  "courtyards": [
+    {
+      "id": "jardim_setor_100",
+      "building_id": "bloco_adm",
+      "name": "Jardim Interno — Setor 100",
+      "center": [
+        -49.0,
+        -24.95
+      ],
+      "size": [
+        14.2,
+        16.4
+      ],
+      "rot_deg": 9.9
+    },
+    {
+      "id": "jardim_central_200",
+      "building_id": "bloco_ensino_central",
+      "name": "Jardim Central — Setor 200",
+      "center": [
+        11.0,
+        3.4
+      ],
+      "size": [
+        13.6,
+        8.8
+      ],
+      "rot_deg": 9.0
+    },
+    {
+      "id": "jardim_pequeno_200",
+      "building_id": "bloco_ensino_central",
+      "name": "Jardim Norte — Setor 200",
+      "center": [
+        14.8,
+        -6.4
+      ],
+      "size": [
+        5.4,
+        3.6
+      ],
+      "rot_deg": 9.0
+    }
+  ],
+  "wayfinding_signs": [
+    {
+      "pos": [
+        -46.2,
+        -13.5
+      ],
+      "rot_deg": 9.9,
+      "text": "SETOR 100  •  Saúde (112) ←  |  → Ensino (101–105)"
+    },
+    {
+      "pos": [
+        -39.5,
+        -24.0
+      ],
+      "rot_deg": 99.9,
+      "text": "↑ Direção (115)  |  Convivência (118–120) →"
+    },
+    {
+      "pos": [
+        -28.5,
+        -14.5
+      ],
+      "rot_deg": 8.5,
+      "text": "← Setor 100  |  Setor 200 / CORAC →"
+    },
+    {
+      "pos": [
+        -11.5,
+        -5.0
+      ],
+      "rot_deg": -37.0,
+      "text": "RECEPÇÃO  •  CORAC  |  Miniauditório 201  |  Auditório 504 ↓"
+    },
+    {
+      "pos": [
+        -4.0,
+        -20.9
+      ],
+      "rot_deg": 9.4,
+      "text": "← CORAC / 201  |  Salas 204–216  |  Setor 300 →"
+    },
+    {
+      "pos": [
+        15.0,
+        -23.8
+      ],
+      "rot_deg": 9.4,
+      "text": "SETOR 300 — Plásticos / Química →"
+    },
+    {
+      "pos": [
+        34.4,
+        -2.5
+      ],
+      "rot_deg": 98.7,
+      "text": "← Labs 1–6 (219–228)  |  Cantina / Eventos (231) →"
+    },
+    {
+      "pos": [
+        36.5,
+        16.5
+      ],
+      "rot_deg": 98.7,
+      "text": "← Cantina / Auditório 504  |  Setor 400 Mecânica →"
+    },
+    {
+      "pos": [
+        36.8,
+        -36.5
+      ],
+      "rot_deg": 99.0,
+      "text": "SETOR 300  •  Lab de Plásticos  |  Bio (307)  |  Modular (309)"
+    },
+    {
+      "pos": [
+        50.5,
+        51.0
+      ],
+      "rot_deg": 8.9,
+      "text": "SETOR 400  •  Lab CNC (401)  |  Lab de Mecânica  |  DIMP (405)"
+    },
+    {
+      "pos": [
+        33.8,
+        -82.4
+      ],
+      "rot_deg": 35.5,
+      "text": "BLOCO 800  •  Salas 801–812  |  Lab. Física (804)  |  DA / Grêmio (807)"
+    },
+    {
+      "pos": [
+        -19.1,
+        122.0
+      ],
+      "rot_deg": -4.5,
+      "text": "BIBLIOTECA  •  Acervo  |  Salão de Leitura  |  Cabines"
+    }
+  ]
+}

@@ -8,6 +8,7 @@ const PerfManagerLib = preload("res://scripts/perf_manager.gd")
 @onready var hud: CanvasLayer = $HUD
 
 var campus_data: Dictionary = {}
+var interiors_data: Dictionary = {}
 var builder := CampusBuilderLib.new()
 var perf := PerfManagerLib.new()
 var sun_light: DirectionalLight3D
@@ -16,15 +17,19 @@ var sky_mat: ProceduralSkyMaterial
 var ambient_audio: AudioStreamPlayer
 
 var visited_pois: Dictionary = {}
+var current_room: Dictionary = {}
 var tour_completed_shown := false
 var is_night := false
 var is_muted := false
 var started := false
 var paused := false
 var is_compat := false
+var roofs_visible := true
 
 var _pois_summary: Array = []
 var _telemetry_timer := 0.0
+var _room_check_timer := 0.0
+var _last_room_check_pos := Vector3(1e9, 0.0, 1e9)
 var _js_callbacks: Array = []
 var _active_day_night_tween: Tween
 
@@ -41,10 +46,11 @@ func _ready() -> void:
 		_read_web_init_prefs()
 		call_deferred("_boot_web_staged")
 		return
-	campus_data = _load_campus_json("res://data/campus.json")
+	campus_data = _load_json_dict("res://data/campus.json")
+	interiors_data = _load_json_dict("res://data/interiors.json")
 	_cache_pois_summary()
 	_setup_environment()
-	builder.build(world_node, campus_data)
+	builder.build(world_node, campus_data, interiors_data)
 	_setup_audio()
 	_setup_player_and_hud()
 	_apply_resolved_quality("medium" if is_compat else "high")
@@ -70,7 +76,8 @@ func _boot_web_staged() -> void:
 	RenderingServer.viewport_set_active(vp_rid, false)
 
 	_notify_boot_stage(82, "Configurando iluminação e ambiente 3D...")
-	campus_data = _load_campus_json("res://data/campus.json")
+	campus_data = _load_json_dict("res://data/campus.json")
+	interiors_data = _load_json_dict("res://data/interiors.json")
 	_cache_pois_summary()
 	_setup_environment()
 	builder.begin_build(world_node)
@@ -89,13 +96,17 @@ func _boot_web_staged() -> void:
 	var b_chunk := 5
 	for b_start in range(0, b_total, b_chunk):
 		var b_end := mini(b_start + b_chunk, b_total)
-		var pct := 89 + int(round(5.0 * float(b_end) / maxf(1.0, float(b_total))))
+		var pct := 89 + int(round(4.0 * float(b_end) / maxf(1.0, float(b_total))))
 		_notify_boot_stage(pct, "Erguendo blocos (%d/%d)..." % [b_end, b_total])
 		builder.build_stage_buildings_range(world_node, campus_data, b_start, b_end)
 		await get_tree().process_frame
 
-	_notify_boot_stage(95, "Construindo pórticos e marcos...")
+	_notify_boot_stage(94, "Construindo pórticos e marcos...")
 	builder.build_stage_landmarks(world_node, campus_data)
+	await get_tree().process_frame
+
+	_notify_boot_stage(96, "Construindo interiores e sinalização das salas...")
+	builder.build_stage_interiors(world_node, campus_data, interiors_data)
 	await get_tree().process_frame
 
 	_notify_boot_stage(97, "Plantando vegetação e mobiliário...")
@@ -133,8 +144,12 @@ func _cache_pois_summary() -> void:
 			"position": p.get("position", [0, 0, 0])
 		})
 
-func _load_campus_json(path: String) -> Dictionary:
+func _load_json_dict(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
 	var txt := FileAccess.get_file_as_string(path)
+	if txt.is_empty():
+		return {}
 	var parsed = JSON.parse_string(txt)
 	return parsed if parsed is Dictionary else {}
 
@@ -239,9 +254,11 @@ func _setup_player_and_hud() -> void:
 	player.setup_pois(campus_data.get("pois", []), step_stream)
 	player.set_gameplay_active(false)
 
-	hud.setup_minimap(campus_data)
+	hud.setup_minimap(campus_data, interiors_data)
+	hud.set_room_search_provider(Callable(self, "search_rooms"))
 	hud.set_muted(is_muted)
 	hud.set_day_night(is_night)
+	hud.set_drone_mode(player.is_drone, roofs_visible)
 
 	player.nearby_poi_changed.connect(func(p): hud.set_nearby_poi(p))
 	player.interact_requested.connect(_on_poi_interacted)
@@ -252,6 +269,13 @@ func _setup_player_and_hud() -> void:
 	hud.mute_clicked.connect(toggle_mute)
 	hud.day_night_clicked.connect(toggle_day_night)
 	hud.poi_closed.connect(_on_poi_modal_closed)
+	hud.room_search_selected.connect(_on_room_search_selected)
+	hud.room_search_drone_requested.connect(_on_room_search_drone_requested)
+	hud.room_search_cleared.connect(_on_room_search_cleared)
+	hud.search_opened.connect(_on_search_opened)
+	hud.search_closed.connect(_on_search_closed)
+	hud.map_toggle_requested.connect(_toggle_expanded_map)
+	_refresh_current_room(true)
 
 func _process(delta: float) -> void:
 	var ticks := Time.get_ticks_msec() * 0.003
@@ -261,7 +285,13 @@ func _process(delta: float) -> void:
 		if is_instance_valid(beacon):
 			beacon.rotate_y(delta * 1.4)
 			beacon.position.y = 2.2 + sin(ticks + i) * 0.18
-	hud.update_minimap(player.get_view_position(), player.get_view_yaw(), visited_pois, player.is_drone)
+
+	_room_check_timer += delta
+	if _room_check_timer >= 0.15:
+		_room_check_timer = 0.0
+		_refresh_current_room(false)
+
+	hud.update_minimap(player.get_view_position(), player.get_view_yaw(), visited_pois, player.is_drone, current_room)
 	var vp := get_viewport()
 	var env := world_env.environment if world_env else null
 	var modal_open: bool = hud.is_any_modal_open() if hud else false
@@ -273,14 +303,51 @@ func _process(delta: float) -> void:
 			_telemetry_timer = 0.0
 			_notify_web_shell()
 
+func _input(event: InputEvent) -> void:
+	if not started:
+		return
+	if event.is_action_pressed("pause") and hud.is_room_search_open():
+		hud.close_room_search()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("pause") and hud.is_expanded_map_open():
+		_toggle_expanded_map()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("toggle_map") and not paused and not hud.is_room_search_open():
+		if not hud.poi_panel.visible and not hud.complete_panel.visible and not hud.start_panel.visible:
+			_toggle_expanded_map()
+			get_viewport().set_input_as_handled()
+			return
+
 func _unhandled_input(event: InputEvent) -> void:
+	if hud.is_room_search_open():
+		if event.is_action_pressed("pause"):
+			hud.close_room_search()
+		return
+	if hud.is_expanded_map_open():
+		if event.is_action_pressed("pause") or event.is_action_pressed("toggle_map"):
+			_toggle_expanded_map()
+		return
+
 	if event.is_action_pressed("toggle_mute"):
 		toggle_mute()
 	elif event.is_action_pressed("toggle_day_night") and started:
 		toggle_day_night()
+	elif event.is_action_pressed("search_rooms") and started and not paused and not hud.is_any_modal_open():
+		hud.open_room_search()
 	elif event.is_action_pressed("toggle_drone") and started and not hud.is_any_modal_open():
 		var d: bool = player.toggle_drone_mode()
-		hud.set_drone_mode(d)
+		if not d:
+			set_roofs_visible(true)
+		else:
+			hud.set_drone_mode(true, roofs_visible)
+		_refresh_current_room(true)
+		_notify_web_shell()
+	elif event.is_action_pressed("toggle_roofs") and started and player.is_drone and not hud.is_any_modal_open():
+		var cur_roofs: bool = bool(builder.get("roofs_visible")) if builder.get("roofs_visible") != null else roofs_visible
+		set_roofs_visible(not cur_roofs)
+		_notify_web_shell()
 	elif event.is_action_pressed("pause") and started:
 		if hud.poi_panel.visible:
 			hud.poi_panel.visible = false
@@ -293,6 +360,114 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("interact") and hud.poi_panel.visible:
 		hud.poi_panel.visible = false
 		_on_poi_modal_closed()
+
+func _refresh_current_room(force: bool = false) -> void:
+	if player == null:
+		return
+	if player.is_drone:
+		if not current_room.is_empty():
+			current_room = {}
+			hud.set_current_room({})
+		return
+	var pos := player.global_position
+	if not force and pos.distance_squared_to(_last_room_check_pos) < 0.04:
+		return
+	_last_room_check_pos = pos
+	var found: Dictionary = builder.find_room_at(pos) if builder.has_method("find_room_at") else {}
+	if String(found.get("id", "")) != String(current_room.get("id", "")):
+		current_room = found
+		hud.set_current_room(current_room)
+
+func search_rooms(query: String) -> Array[Dictionary]:
+	if builder.has_method("search_rooms"):
+		return builder.search_rooms(query)
+	var out: Array[Dictionary] = []
+	var q := query.strip_edges().to_lower()
+	for r in interiors_data.get("rooms", []):
+		if r is Dictionary:
+			if q.is_empty():
+				out.append(r)
+			else:
+				var hay := ("%s %s %s" % [String(r.get("code", "")), String(r.get("name", "")), String(r.get("sector", ""))]).to_lower()
+				if hay.contains(q):
+					out.append(r)
+	return out
+
+func set_roofs_visible(vis: bool) -> void:
+	roofs_visible = vis
+	if builder.has_method("set_roofs_visible"):
+		builder.set_roofs_visible(vis)
+	if hud:
+		hud.set_drone_mode(player.is_drone if player else false, roofs_visible)
+
+func _get_room_world_pos(room: Dictionary) -> Vector3:
+	if builder.has_method("get_room_world_pos"):
+		return builder.call("get_room_world_pos", room)
+	var ib: Variant = builder.get("interior_builder")
+	if ib != null and ib.has_method("get_room_world_pos"):
+		return ib.call("get_room_world_pos", room)
+	var c: Array = room.get("center", [0.0, 0.0])
+	if c.size() >= 2:
+		return Vector3(float(c[0]), 0.0, float(c[1]))
+	return Vector3.ZERO
+
+func _format_room_label(room: Dictionary) -> String:
+	var code := String(room.get("code", ""))
+	var rname := String(room.get("name", ""))
+	if not code.is_empty() and not rname.is_empty():
+		return "%s • %s" % [code, rname]
+	return rname if not rname.is_empty() else code
+
+func _on_search_opened() -> void:
+	player.set_gameplay_active(false)
+	_sync_idle_throttle()
+	_notify_web_shell()
+
+func _on_search_closed() -> void:
+	player.set_gameplay_active(started and not paused and not hud.is_any_modal_open())
+	_sync_idle_throttle()
+	_notify_web_shell()
+
+func _on_room_search_selected(room: Dictionary) -> void:
+	var pos := _get_room_world_pos(room)
+	var label := _format_room_label(room)
+	hud.set_target_room(pos, label)
+	if builder.has_method("set_room_beacon"):
+		builder.set_room_beacon(pos, label)
+	if player.is_drone:
+		player.move_drone_to_target(pos)
+	player.set_gameplay_active(started and not paused and not hud.is_any_modal_open())
+	_sync_idle_throttle()
+	_notify_web_shell()
+
+func _on_room_search_drone_requested(room: Dictionary) -> void:
+	var pos := _get_room_world_pos(room)
+	var label := _format_room_label(room)
+	hud.set_target_room(pos, label)
+	if builder.has_method("set_room_beacon"):
+		builder.set_room_beacon(pos, label)
+	player.move_drone_to_target(pos)
+	hud.set_drone_mode(true, roofs_visible)
+	_refresh_current_room(true)
+	player.set_gameplay_active(started and not paused and not hud.is_any_modal_open())
+	_sync_idle_throttle()
+	_notify_web_shell()
+
+func _on_room_search_cleared() -> void:
+	hud.clear_target_room()
+	if builder.has_method("clear_room_beacon"):
+		builder.clear_room_beacon()
+
+func _toggle_expanded_map() -> void:
+	var next_open: bool = not hud.is_expanded_map_open()
+	hud.set_expanded_map_visible(next_open)
+	if next_open:
+		hud.update_minimap(player.get_view_position(), player.get_view_yaw(), visited_pois, player.is_drone, current_room)
+		player.set_gameplay_active(false)
+	else:
+		player.set_gameplay_active(started and not paused and not hud.is_any_modal_open())
+	_sync_idle_throttle()
+	_notify_web_shell()
 
 func _start_exploration() -> void:
 	started = true
@@ -312,7 +487,7 @@ func _toggle_pause() -> void:
 	paused = not paused
 	get_tree().paused = paused
 	hud.set_pause_visible(paused)
-	player.set_gameplay_active(not paused)
+	player.set_gameplay_active(not paused and not hud.is_any_modal_open())
 	_sync_idle_throttle()
 	_notify_web_shell()
 
@@ -328,6 +503,10 @@ func _close_modals_and_resume() -> void:
 	paused = false
 	get_tree().paused = false
 	hud.set_pause_visible(false)
+	hud.set_expanded_map_visible(false)
+	if hud.is_room_search_open():
+		hud.search_overlay.visible = false
+		hud.search_input.release_focus()
 	player.set_gameplay_active(true)
 	_sync_idle_throttle()
 	_notify_web_shell()
@@ -360,13 +539,16 @@ func _restart_tour() -> void:
 	tour_completed_shown = false
 	_refresh_poi_visuals()
 	hud.set_tour_progress(0, campus_data.get("pois", []).size())
+	_on_room_search_cleared()
 	var sp: Dictionary = campus_data.get("spawn", {})
 	var pos_a: Array = sp.get("position", [-55.0, 1.1, 12.0])
 	var look_a: Array = sp.get("look_at", [-20.0, 1.8, 8.0])
 	if player.is_drone:
-		hud.set_drone_mode(player.toggle_drone_mode())
-	player.global_position = Vector3(float(pos_a[0]), float(pos_a[1]), float(pos_a[2]))
+		player.toggle_drone_mode()
+	set_roofs_visible(true)
+	player.teleport_to(Vector3(float(pos_a[0]), float(pos_a[1]), float(pos_a[2])))
 	player.look_at_point(Vector3(float(look_a[0]), float(look_a[1]), float(look_a[2])))
+	_refresh_current_room(true)
 	_close_modals_and_resume()
 
 func _refresh_poi_visuals() -> void:
@@ -496,6 +678,9 @@ func _ensure_input_map() -> void:
 		"toggle_drone": [KEY_F],
 		"toggle_day_night": [KEY_N],
 		"toggle_mute": [KEY_M],
+		"search_rooms": [KEY_G],
+		"toggle_map": [KEY_TAB],
+		"toggle_roofs": [KEY_T],
 		"pause": [KEY_ESCAPE]
 	}
 	for action in keys.keys():
@@ -552,10 +737,14 @@ func _build_state_dict() -> Dictionary:
 		"started": started,
 		"isNight": is_night,
 		"isDrone": player.is_drone if player else false,
+		"roofsVisible": roofs_visible,
+		"currentRoom": current_room,
 		"modalOpen": hud.is_any_modal_open() if hud else false,
 		"poiModalVisible": hud.poi_panel.visible if hud else false,
 		"completeVisible": hud.complete_panel.visible if hud else false,
 		"pauseVisible": hud.pause_panel.visible if hud else false,
+		"searchVisible": hud.is_room_search_open() if hud else false,
+		"mapVisible": hud.is_expanded_map_open() if hud else false,
 		"visitedCount": visited_pois.size(),
 		"totalPois": _pois_summary.size(),
 		"visitedIds": visited_pois.keys(),
@@ -607,7 +796,7 @@ func _setup_web_bridge() -> void:
 			_resume_game()
 	)
 	add_cb.call(host, "togglePause", func(_args):
-		if started and not hud.poi_panel.visible and not hud.complete_panel.visible:
+		if started and not hud.poi_panel.visible and not hud.complete_panel.visible and not hud.is_room_search_open() and not hud.is_expanded_map_open():
 			_toggle_pause()
 	)
 	add_cb.call(host, "restartTour", func(_args):
@@ -633,9 +822,8 @@ func _setup_web_bridge() -> void:
 		)
 		add_cb.call(test_api, "teleport", func(args):
 			if args.size() >= 3 and player:
-				player.global_position = Vector3(float(args[0]), float(args[1]), float(args[2]))
-				player.velocity = Vector3.ZERO
-				player._update_nearest_poi(true)
+				player.teleport_to(Vector3(float(args[0]), float(args[1]), float(args[2])))
+				_refresh_current_room(true)
 				_notify_web_shell()
 		)
 		add_cb.call(test_api, "interact", func(_args):
@@ -680,7 +868,11 @@ func _setup_web_bridge() -> void:
 		)
 		add_cb.call(test_api, "toggleDrone", func(_args):
 			var d: bool = player.toggle_drone_mode()
-			hud.set_drone_mode(d)
+			if not d:
+				set_roofs_visible(true)
+			else:
+				hud.set_drone_mode(true, roofs_visible)
+			_refresh_current_room(true)
 			_notify_web_shell()
 			return d
 		)
@@ -688,8 +880,38 @@ func _setup_web_bridge() -> void:
 			_restart_tour()
 			_notify_web_shell()
 		)
+		add_cb.call(test_api, "refreshCurrentRoom", func(_args):
+			_refresh_current_room(true)
+			JavaScriptBridge.eval("window.__ifsulLastRoom = " + JSON.stringify(current_room) + ";", false)
+			_notify_web_shell()
+		)
+		add_cb.call(test_api, "searchRoom", func(args):
+			var q := String(args[0]) if args.size() > 0 else ""
+			var matches := search_rooms(q)
+			JavaScriptBridge.eval("window.__ifsulLastSearch = " + JSON.stringify(matches) + ";", false)
+		)
+		add_cb.call(test_api, "setRoofsVisible", func(args):
+			var vis := bool(args[0]) if args.size() > 0 else true
+			set_roofs_visible(vis)
+			_notify_web_shell()
+		)
 		win["__ifsulRaw"] = test_api
 		JavaScriptBridge.eval("window.__ifsulShell && window.__ifsulShell.exposeTestHook && window.__ifsulShell.exposeTestHook();", false)
+		JavaScriptBridge.eval("""
+			if (window.__ifsul && window.__ifsulRaw) {
+				window.__ifsul.getCurrentRoom = function() {
+					window.__ifsulRaw.refreshCurrentRoom();
+					return window.__ifsulLastRoom || {};
+				};
+				window.__ifsul.searchRoom = function(q) {
+					window.__ifsulRaw.searchRoom(String(q || ''));
+					return window.__ifsulLastSearch || [];
+				};
+				window.__ifsul.setRoofsVisible = function(v) {
+					window.__ifsulRaw.setRoofsVisible(Boolean(v));
+				};
+			}
+		""", false)
 
 	JavaScriptBridge.eval("window.__ifsulShell && window.__ifsulShell.onGodotReady && window.__ifsulShell.onGodotReady();", false)
 	_notify_web_shell()

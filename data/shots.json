@@ -7,7 +7,9 @@
     {"id": "05_central_courtyard", "pos": [-2.0, 5.0, 2.0], "look_at": [22.0, 4.0, -18.0], "fov": 65, "hud": false, "night": false},
     {"id": "06_sports_courts", "pos": [-34.0, 12.0, -68.0], "look_at": [-58.0, 3.5, -88.0], "fov": 65, "hud": false, "night": false},
     {"id": "07_parking_lot", "pos": [-50.0, 9.5, 58.0], "look_at": [-22.0, 2.5, 32.0], "fov": 62, "hud": false, "night": false},
-    {"id": "08_material_signage_close", "pos": [8.0, 3.2, -68.0], "look_at": [26.0, 4.2, -80.0], "fov": 55, "hud": false, "night": false},
-    {"id": "09_aerial_night", "pos": [-8.0, 145.0, 25.0], "look_at": [-10.0, 0.0, -25.0], "fov": 60, "hud": false, "night": true}
+    {"id": "08_material_signage_close", "pos": [-13.5, 3.0, 96.0], "look_at": [-17.8, 3.0, 109.0], "fov": 55, "hud": false, "night": false},
+    {"id": "09_aerial_night", "pos": [-8.0, 145.0, 25.0], "look_at": [-10.0, 0.0, -25.0], "fov": 60, "hud": false, "night": true},
+    {"id": "10_interior_corridor", "pos": [-17.9, 1.7, -19.1], "look_at": [9.7, 1.7, -23.7], "fov": 70, "hud": false, "night": false},
+    {"id": "11_interior_biblioteca", "pos": [-17.8, 1.7, 111.0], "look_at": [-19.2, 1.6, 125.0], "fov": 72, "hud": false, "night": false}
   ]
 }

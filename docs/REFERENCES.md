@@ -1,14 +1,10 @@
 # Referências Oficiais e Geoespaciais — IFSul Câmpus Sapucaia do Sul
 
-- https://www.sapucaia.ifsul.edu.br/ — Endereço oficial Av. Copacabana 100, Bairro Piratini/Cohab, CEP 93216-120; área >38.000 m² (~16.000 m² construídos), 18 salas de aula climatizadas.
+- **Mapa Oficial das Salas (DEPEN Sapucaia)** — `assets/ref/plantas_e_mapas/mapa_das_salas_atual.jpg` — Referência primária de setorização e numeração de ambientes: Setor 100 (`101–120`, Saúde `112`, Psicologia `106`, Convivência `119`), Setor 200 (Recepção, Miniauditório `201`, Apoio Acadêmico, CORAC, `204–229`, Labs 1–6), Setor 230 (Cantina, `231–234`, Depep, Lab de Inovação), Setor 300 (Lab de Plásticos, LCQ `303`, Química `304`, Reciclagem `305`, Bio `307`, Modular `309`), Setor 400 (Lab de Mecânica, Manutenção, CNC `401`, Lab 7 `402`, Desenho `403`, DIMP `405`), Auditório `504` (Pedro Kaizer), Bloco 800 (`801–812`, Lab. Física `804`, DA/Grêmio `807`), Biblioteca (setor sul), Sede Social (setor sudeste), Educação Física, 3 quadras esportivas, Horta (nordeste) e Lago dos Patos.
+- https://www.sapucaia.ifsul.edu.br/ — Endereço oficial Av. Copacabana, 100, Bairro Piratini/Cohab, CEP 93216-120; área >38.000 m² (~16.000 m² construídos).
 - https://www.ifsul.edu.br/ — Histórico: inaugurado em 26/02/1996 como primeira UNED fora de Pelotas (ETF-Pelotas), CEFET-RS em 1999, Câmpus IFSul em 2008 (Lei 11.892).
 - https://www.sapucaia.ifsul.edu.br/cursos — Cursos Técnicos (Mecânica, Plásticos, Desenvolvimento de Sistemas, Informática, Eventos, Adm EJA), Graduação (Eng. Mecânica, ADS, Matemática) e Pós-Graduação.
-- https://www.ifsul.edu.br/ — Infraestrutura: Auditório Pedro Kaizer (300 lugares + acessibilidade), miniauditório (50 lugares), Biblioteca própria (2014, >580 m²), quadras poliesportivas, cantina, saúde e labs industriais.
 - https://www.ifsul.edu.br/identidade-visual — Cores institucionais Rede Federal: Verde IF `#2F9E41` (RGB 47,158,65), Vermelho IF `#CD191E` (RGB 205,25,30), Preto `#000000` (Portaria Setec/MEC nº 31/2015).
-- https://www.openstreetmap.org/way/333342533 — Polígono exato do terreno, azimute ~8,7°, 16 edificações mapeadas, 2 quadras (`443457033`, `443460951`), 2 estacionamentos (`443463515`, `443463516`), acessos e ruas do entorno.
-- http://static.sapucaia.ifsul.edu.br/media/acervo/MSS-00.266.jpg — Referência visual da fachada atual, muro frontal e pórtico de entrada na Av. Copacabana.
-- http://static.sapucaia.ifsul.edu.br/media/acervo/MSS-00.2155.jpg — Referência visual da fachada do auditório, volumes em alvenaria clara e três mastros de bandeiras na entrada.
-- http://static.sapucaia.ifsul.edu.br/media/acervo/MSS-00.223.jpg — Referência moderna (2015): caixa d'água branca, fachada do Auditório com marca IFSul em relevo 3D, vagas amarelas, bicicletário e colunata branca.
-- http://static.sapucaia.ifsul.edu.br/media/acervo/MSS-00.442.jpg — Vista aérea completa: pórtico curvo frontal do Auditório, topiaria verde "IFSul" no gramado e Biblioteca branca em cruz.
-- http://static.sapucaia.ifsul.edu.br/media/acervo/MSS-00.446.jpg — Quadra poliesportiva coberta com pilares/treliças metálicas pintadas de azul e alambrado perimetral.
-- https://polyhaven.com/textures — Texturas PBR CC0 (concreto, asfalto, grama, piso, metal) e HDRI CC0 de céu parcialmente nublado.
+- https://www.openstreetmap.org/way/333342533 — Polígono exato do terreno, azimute ~8,7°, 16 edificações mapeadas, complexo esportivo, estacionamentos, acessos e ruas do entorno.
+- **Esri World Imagery (Zoom-19)** — `assets/ref/plantas_e_mapas/ortofoto_campus_alta_res.jpg` — Ortofoto de alta resolução utilizada para conferência da implantação 1:1, da 3ª quadra externa descoberta, da Horta nordeste e das alamedas em Y do setor sul.
+- https://polyhaven.com/textures — Texturas PBR CC0 (concreto, asfalto, grama, piso cerâmico, metal) e HDRI CC0 de céu parcialmente nublado.

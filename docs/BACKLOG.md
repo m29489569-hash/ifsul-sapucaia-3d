@@ -1,9 +1,10 @@
 # Backlog Visual e de Fidelidade (Score = Impacto × Exposição ÷ Custo)
 
 1. **[3.0 | I:3 E:2 C:2]** Sinalização externa viária (`03`, `07`): placas de rua da Av. Copacabana / Rua Palestina e parada de ônibus com abrigo na Rua João Rodrigues (OSM `1251244850`).
-2. **[2.5 | I:3 E:2 C:2.5]** Detalhe arquitetônico de fachada (`03`, `05`): gradil em barra fina na fachada da Av. Copacabana e degraus/rampa de acesso do jardim interno (`MSS-00.406`).
+2. **[2.5 | I:3 E:2 C:2.5]** Detalhe arquitetônico de fachada (`03`, `05`): gradil em barra fina na fachada da Av. Copacabana e rampa/degraus detalhados no jardim interno do Setor 100.
 
 ## Concluídos
+- ~~[20.0]~~ Alinhamento factual 100% ao Mapa Oficial das Salas (DEPEN Sapucaia): correção da inversão `Bloco 800 (B11) ↔ Biblioteca Sul (B15)`, `Sede Social (B16)`, `Setores 100/200/230/300/400/500/800`, 3ª quadra descoberta, Horta nordeste, limpeza de fotos históricas antigas, 8 POIs e interiores navegáveis completos (`data/interiors.json` com 92 salas/ambientes, busca `[G]`, mapa expandido `[Tab]` e modo Raio-X `[T]` no Drone).
 - ~~[15.0]~~ Winding de polígonos, fachadas/janelas externas, reboco claro, placa da entrada e fade no `capture.gd` (`iter-01`, keep).
 - ~~[12.0]~~ Iluminação HDRI CC0, redução da neblina aérea, SSAO/glow e modo noturno com janelas emissivas/refletores (`iter-02`, keep).
 - ~~[7.5]~~ Fidelidade arquitetônica na entrada, Auditório, torre d'água, telhados e quadras (`iter-03`, keep).

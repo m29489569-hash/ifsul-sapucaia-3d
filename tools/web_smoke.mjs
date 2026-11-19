@@ -171,9 +171,9 @@ async function run() {
       };
     });
 
-    // Complete full 6/6 POI tour via window.__ifsul
+    // Complete full 8/8 POI tour via window.__ifsul
     const initialState = await page.evaluate(() => window.__ifsul.getState());
-    assert.equal(initialState.pois.length, 6, 'Esperado 6 POIs no campus');
+    assert.equal(initialState.pois.length, 8, 'Esperado 8 POIs no campus');
 
     for (const poi of initialState.pois) {
       const [px, py, pz] = poi.position;
@@ -187,11 +187,42 @@ async function run() {
     }
 
     const doneState = await page.evaluate(() => window.__ifsul.getState());
-    assert.equal(doneState.visitedCount, 6, 'Tour deve completar 6/6');
-    assert.equal(doneState.completeVisible, true, 'Modal de conclusao deve aparecer em 6/6');
+    assert.equal(doneState.visitedCount, 8, 'Tour deve completar 8/8');
+    assert.equal(doneState.completeVisible, true, 'Modal de conclusao deve aparecer em 8/8');
     await page.screenshot({ path: path.join(shotDir, '03_tour_complete.png'), timeout: 60000 });
 
     await page.evaluate(() => window.__ifsul.closeCompleteModal());
+    await page.waitForTimeout(150);
+
+    // Validate walkable interior lookup (getCurrentRoom), room search (searchRoom), and roof-cut toggle
+    const coracMatches = await page.evaluate(() => window.__ifsul.searchRoom('CORAC'));
+    assert.ok(Array.isArray(coracMatches) && coracMatches.length > 0, 'searchRoom("CORAC") deve retornar resultados');
+    assert.ok(coracMatches.some((r) => String(r.code).toUpperCase() === '203'), 'searchRoom("CORAC") deve conter sala 203');
+
+    const antigaMatches = await page.evaluate(() => window.__ifsul.searchRoom('Antiga Sala 1'));
+    assert.ok(Array.isArray(antigaMatches) && antigaMatches.some((r) => String(r.code) === '205'), 'searchRoom("Antiga Sala 1") deve conter sala 205');
+
+    const bibMatches = await page.evaluate(() => window.__ifsul.searchRoom('Biblioteca'));
+    assert.ok(Array.isArray(bibMatches) && bibMatches.some((r) => String(r.code).toUpperCase() === 'BIB'), 'searchRoom("Biblioteca") deve conter BIB');
+
+    await page.evaluate(() => window.__ifsul.teleport(-8.81, 0.2, -14.43));
+    await page.waitForTimeout(150);
+    const coracRoom = await page.evaluate(() => window.__ifsul.getCurrentRoom());
+    assert.equal(String(coracRoom?.code || ''), '203', `getCurrentRoom() em CORAC deveria retornar 203, obteve ${JSON.stringify(coracRoom)}`);
+    assert.equal(String(coracRoom?.sector || ''), '200', `Setor em CORAC deveria ser 200, obteve ${JSON.stringify(coracRoom)}`);
+
+    await page.evaluate(() => window.__ifsul.teleport(-19.1, 0.2, 122.0));
+    await page.waitForTimeout(150);
+    const bibRoom = await page.evaluate(() => window.__ifsul.getCurrentRoom());
+    assert.equal(String(bibRoom?.code || ''), 'BIB', `getCurrentRoom() na Biblioteca B15 deveria retornar BIB, obteve ${JSON.stringify(bibRoom)}`);
+
+    await page.evaluate(() => window.__ifsul.setRoofsVisible(false));
+    await page.waitForFunction(() => window.__ifsul.getState().roofsVisible === false, { timeout: 5000 });
+    await page.evaluate(() => window.__ifsul.setRoofsVisible(true));
+    await page.waitForFunction(() => window.__ifsul.getState().roofsVisible === true, { timeout: 5000 });
+
+    // Return to spawn for night/resize checks
+    await page.evaluate(() => window.__ifsul.teleport(-55.0, 1.1, 12.0));
     await page.waitForTimeout(150);
 
     // Validate day/night + night screenshot
@@ -304,7 +335,9 @@ async function run() {
       checks: {
         webgl2Fallback: true,
         hookHiddenWithoutTestParam: true,
-        tour6of6: true,
+        tour8of8: true,
+        roomSearchAndCurrentRoom: true,
+        roofToggle: true,
         muteAndQualityPersisted: true,
         pauseResume: true,
         resize800x600AndFullscreen: true,

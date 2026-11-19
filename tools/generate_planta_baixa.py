@@ -10,6 +10,12 @@ os.makedirs(OUT_DIR, exist_ok=True)
 with open(os.path.join("data", "campus.json"), "r", encoding="utf-8") as f:
     CAMPUS = json.load(f)
 
+INTERIORS = {}
+interiors_path = os.path.join("data", "interiors.json")
+if os.path.exists(interiors_path):
+    with open(interiors_path, "r", encoding="utf-8") as f:
+        INTERIORS = json.load(f)
+
 ORIGIN_LAT = CAMPUS["meta"]["origin_lat"]
 ORIGIN_LON = CAMPUS["meta"]["origin_lon"]
 LAT_M = 111132.0
@@ -36,7 +42,7 @@ def tile2lonlat(tx: float, ty: float, z: int):
 
 
 def download_maps():
-    # 1. Stitch ultra-high-res Zoom-19 Esri World Imagery tiles around campus
+    # Compute Zoom-19 Esri World Imagery bounds around campus
     z19 = 19
     n19 = 2 ** z19
     xc = int((ORIGIN_LON + 180.0) / 360.0 * n19)
@@ -44,35 +50,39 @@ def download_maps():
     yc = int((1.0 - math.log(math.tan(lat_r) + 1.0 / math.cos(lat_r)) / math.pi) / 2.0 * n19)
     tx0, tx1 = xc - 2, xc + 3
     ty0, ty1 = yc - 3, yc + 4
-    sat_w, sat_h = (tx1 - tx0) * 256, (ty1 - ty0) * 256
-    sat_img = Image.new("RGB", (sat_w, sat_h))
-    for dy, ty in enumerate(range(ty0, ty1)):
-        for dx, tx in enumerate(range(tx0, tx1)):
-            tmp = os.path.join(OUT_DIR, f"_esri_{tx}_{ty}.jpg")
-            if fetch_file(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z19}/{ty}/{tx}", tmp):
-                sat_img.paste(Image.open(tmp).convert("RGB"), (dx * 256, dy * 256))
-            if os.path.exists(tmp):
-                os.remove(tmp)
-    sat_path = os.path.join(OUT_DIR, "ortofoto_campus_alta_res.jpg")
-    sat_img.save(sat_path, quality=95)
     lon_min, lat_max = tile2lonlat(tx0, ty0, z19)
     lon_max, lat_min = tile2lonlat(tx1, ty1, z19)
 
-    # 2. Stitch 3x4 OSM Zoom-18 tiles around campus center
-    z = 18
-    n = 2 ** z
-    xt = int((ORIGIN_LON + 180.0) / 360.0 * n)
-    yt = int((1.0 - math.log(math.tan(lat_r) + 1.0 / math.cos(lat_r)) / math.pi) / 2.0 * n)
-    osm_img = Image.new("RGB", (256 * 3, 256 * 4))
-    for dy, ty in enumerate(range(yt - 1, yt + 3)):
-        for dx, tx in enumerate(range(xt - 1, xt + 2)):
-            tmp = os.path.join(OUT_DIR, f"_osm_{tx}_{ty}.png")
-            if fetch_file(f"https://tile.openstreetmap.org/{z}/{tx}/{ty}.png", tmp):
-                tile = Image.open(tmp).convert("RGB")
-                osm_img.paste(tile, (dx * 256, dy * 256))
-            if os.path.exists(tmp):
-                os.remove(tmp)
-    osm_img.save(os.path.join(OUT_DIR, "mapa_osm_zoom18.png"))
+    sat_path = os.path.join(OUT_DIR, "ortofoto_campus_alta_res.jpg")
+    if not (os.path.exists(sat_path) and os.path.getsize(sat_path) > 10000):
+        sat_w, sat_h = (tx1 - tx0) * 256, (ty1 - ty0) * 256
+        sat_img = Image.new("RGB", (sat_w, sat_h))
+        for dy, ty in enumerate(range(ty0, ty1)):
+            for dx, tx in enumerate(range(tx0, tx1)):
+                tmp = os.path.join(OUT_DIR, f"_esri_{tx}_{ty}.jpg")
+                if fetch_file(f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z19}/{ty}/{tx}", tmp):
+                    sat_img.paste(Image.open(tmp).convert("RGB"), (dx * 256, dy * 256))
+                if os.path.exists(tmp):
+                    os.remove(tmp)
+        sat_img.save(sat_path, quality=95)
+
+    osm_path = os.path.join(OUT_DIR, "mapa_osm_zoom18.png")
+    if not (os.path.exists(osm_path) and os.path.getsize(osm_path) > 10000):
+        z = 18
+        n = 2 ** z
+        xt = int((ORIGIN_LON + 180.0) / 360.0 * n)
+        yt = int((1.0 - math.log(math.tan(lat_r) + 1.0 / math.cos(lat_r)) / math.pi) / 2.0 * n)
+        osm_img = Image.new("RGB", (256 * 3, 256 * 4))
+        for dy, ty in enumerate(range(yt - 1, yt + 3)):
+            for dx, tx in enumerate(range(xt - 1, xt + 2)):
+                tmp = os.path.join(OUT_DIR, f"_osm_{tx}_{ty}.png")
+                if fetch_file(f"https://tile.openstreetmap.org/{z}/{tx}/{ty}.png", tmp):
+                    tile = Image.open(tmp).convert("RGB")
+                    osm_img.paste(tile, (dx * 256, dy * 256))
+                if os.path.exists(tmp):
+                    os.remove(tmp)
+        osm_img.save(osm_path)
+
     return sat_path, (lon_min, lat_min, lon_max, lat_max)
 
 
@@ -95,9 +105,13 @@ def poly_centroid(poly):
     return sum(p[0] for p in poly) / len(poly), sum(p[1] for p in poly) / len(poly)
 
 
+def hex_to_rgba(h: str, alpha: int = 120):
+    h = h.lstrip("#")
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), alpha)
+
+
 def draw_blueprint(sat_path: str, sat_bounds):
     W, H = 1800, 2400
-    # World metric bounds matching Esri bbox: x=[-115..110] (225m), z=[-175..175] (350m)
     X0, X1 = -115.0, 110.0
     Z0, Z1 = -175.0, 175.0
     PAD_TOP = 130
@@ -170,17 +184,27 @@ def draw_blueprint(sat_path: str, sat_bounds):
         if len(pts) >= 2:
             d.line(pts, fill="#D8D2C5", width=max(3, int(fw.get("width", 2.5) * scale)))
 
+    # Horta landmark
+    horta = CAMPUS.get("landmarks", {}).get("horta", {})
+    if horta and horta.get("polygon"):
+        hpts = [w2p(p[0], p[1]) for p in horta["polygon"]]
+        d.polygon(hpts, fill="#A5D6A7", outline="#2E7D32", width=2)
+        hcx, hcy = poly_centroid(horta["polygon"])
+        hpx, hpy = w2p(hcx, hcy)
+        d.text((hpx - 28, hpy - 8), "Horta", fill="#1B5E20", font=font_sm)
+
     # Courts
     for c in CAMPUS.get("courts", []):
         pts = [w2p(p[0], p[1]) for p in c["polygon"]]
-        fill = "#89B4D8" if c["sport"] == "multi" else "#E3C9A3"
+        sp = c.get("sport", "")
+        fill = "#89B4D8" if sp == "multi" else ("#B0BEC5" if sp == "outdoor_multi" else "#E3C9A3")
         d.polygon(pts, fill=fill, outline="#1F3B52", width=3)
         cx, cy = poly_centroid(c["polygon"])
         px, py = w2p(cx, cy)
         sz = c["size"]
         d.text((px - 55, py - 14), f"{c['name']}\n{sz[0]:.1f}m × {sz[1]:.1f}m", fill="#102536", font=font_xs)
 
-    # Buildings with footprints, areas, floors, height
+    # Buildings colored by official Mapa das Salas sector palette
     svg_elems = []
     for idx, b in enumerate(CAMPUS.get("buildings", []), start=1):
         poly = b["polygon"]
@@ -188,23 +212,23 @@ def draw_blueprint(sat_path: str, sat_bounds):
         area = poly_area(poly)
         x0, z0, x1, z1 = poly_bbox(poly)
         bw, bd = x1 - x0, z1 - z0
-        fill = "#D98E7C" if b["type"] == "auditorium" else ("#B9D8BD" if b["type"] == "corridor" else "#FFFFFF")
-        outline = "#9E1C20" if b["type"] == "auditorium" else "#1E5E2C"
+        fill = b.get("map_color", "#FFFFFF")
+        outline = "#1B3A24" if b.get("type") != "auditorium" else "#8A6D0B"
         d.polygon(pts, fill=fill, outline=outline, width=3)
         if b.get("courtyard_inset"):
             cx0, cz0 = poly_centroid(poly)
-            inset_pts = [w2p(p[0] + (cx0 - p[0]) * 0.42, p[1] + (cz0 - p[1]) * 0.42) for p in poly]
+            inset_pts = [w2p(p[0] + (cx0 - p[0]) * 0.48, p[1] + (cz0 - p[1]) * 0.48) for p in poly]
             d.polygon(inset_pts, fill="#CFE3CE", outline="#1E5E2C", width=2)
         cx, cy = poly_centroid(poly)
         px, py = w2p(cx, cy)
-        short = b["name"].split("—")[0][:24]
+        short = b["name"].split("—")[0].strip()[:26]
         label = f"B{idx}: {short}\n{bw:.1f}×{bd:.1f}m ({area:.0f}m²)\n{b['floors']} pav. | h={b['height_m']}m"
         d.text((px - 55, py - 18), label, fill="#111913", font=font_xs)
         svg_pts = " ".join(f"{p[0]:.1f},{p[1]:.1f}" for p in pts)
         svg_elems.append(f'<polygon points="{svg_pts}" fill="{fill}" stroke="{outline}" stroke-width="2.5"/>')
         svg_elems.append(f'<text x="{px:.1f}" y="{py:.1f}" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B{idx}: {short} ({area:.0f}m², {b["floors"]}p)</text>')
 
-    # Water tower + POIs
+    # Water tower + 8 POIs
     wt = CAMPUS.get("landmarks", {}).get("water_tower", {})
     if wt:
         wx, wy = w2p(wt["position"][0], wt["position"][2])
@@ -212,15 +236,17 @@ def draw_blueprint(sat_path: str, sat_bounds):
         d.ellipse([wx - rr, wy - rr, wx + rr, wy + rr], fill="#64748B", outline="#0F172A", width=2)
         d.text((wx + rr + 4, wy - 6), "Caixa d'Água", fill="#0F172A", font=font_xs)
 
-    for i, poi in enumerate(CAMPUS.get("pois", []), start=1):
+    pois = CAMPUS.get("pois", [])
+    for i, poi in enumerate(pois, start=1):
         px, py = w2p(poi["position"][0], poi["position"][2])
-        d.ellipse([px - 7, py - 7, px + 7, py + 7], fill="#F5C43D", outline="#111111", width=2)
+        d.ellipse([px - 8, py - 8, px + 8, py + 8], fill="#F5C43D", outline="#111111", width=2)
         d.text((px - 4, py - 7), str(i), fill="#000000", font=font_xs)
 
     # Header & Legend & North Rose & Scale Bar
     d.rectangle([0, 0, W, 102], fill="#143D1E")
     d.text((36, 20), "PLANTA-BAIXA DE IMPLANTAÇÃO COTADA — IFSul CÂMPUS SAPUCAIA DO SUL", fill="#FFFFFF", font=font_lg)
-    d.text((36, 58), f"{CAMPUS['meta']['address']} | Área total: ~38.600 m² | Área construída: ~16.000 m² | Escala métrica 1:1 (OSM + Satélite Esri)", fill="#C8E6CE", font=font_md)
+    room_cnt = len(INTERIORS.get("rooms", []))
+    d.text((36, 58), f"{CAMPUS['meta']['address']} | Área: ~38.600 m² | 16 Blocos | {room_cnt} Salas/Ambientes | {len(pois)} POIs (Mapa das Salas + OSM + Esri)", fill="#C8E6CE", font=font_md)
 
     # Scale bar (50m) + North arrow
     sb_x, sb_y = W - 420, H - 72
@@ -231,7 +257,7 @@ def draw_blueprint(sat_path: str, sat_bounds):
     nx, ny = W - 80, 175
     d.polygon([(nx, ny - 34), (nx - 14, ny + 12), (nx, ny + 2), (nx + 14, ny + 12)], fill="#CD191E", outline="#111")
     d.text((nx - 6, ny - 54), "N", fill="#CD191E", font=font_md)
-    d.text((36, H - 78), "Legenda: B1..B16 Blocos (OSM) | Amarelo 1..6 = POIs do Tour | Verde = Portaria/Campus | Terracota = Auditório Pedro Kaizer", fill="#1B3321", font=font_md)
+    d.text((36, H - 78), f"Legenda: Cores = Setores oficiais (100 Azul, 200/230 Verde, 300/400 Laranja, 500 Amarelo, 800 Verde-claro, Biblioteca Turquesa) | Amarelo 1..{len(pois)} = POIs", fill="#1B3321", font=font_sm)
 
     out_png = os.path.join(OUT_DIR, "planta_baixa_tecnica_cotada.png")
     img.save(out_png)
@@ -265,18 +291,24 @@ def draw_blueprint(sat_path: str, sat_bounds):
 
         p_sat = [s2p(p[0], p[1]) for p in CAMPUS.get("perimeter", [])]
         od.polygon(p_sat, outline=(47, 255, 95, 220), width=4)
+        if horta and horta.get("polygon"):
+            hp_sat = [s2p(p[0], p[1]) for p in horta["polygon"]]
+            od.polygon(hp_sat, fill=(102, 187, 106, 75), outline=(129, 230, 134, 235), width=2)
         for idx, b in enumerate(CAMPUS.get("buildings", []), start=1):
             bp = [s2p(p[0], p[1]) for p in b["polygon"]]
-            od.polygon(bp, fill=(255, 255, 255, 55), outline=(255, 230, 80, 235), width=2)
+            col_rgba = hex_to_rgba(b.get("map_color", "#FFFFFF"), 80)
+            od.polygon(bp, fill=col_rgba, outline=(255, 230, 80, 235), width=2)
             cx, cy = poly_centroid(b["polygon"])
             sx, sy = s2p(cx, cy)
-            od.text((sx - 30, sy - 6), f"B{idx}: {b['name'][:18]}", fill=(255, 255, 255, 255), font=font_xs)
+            short = b["name"].split("—")[0].strip()[:20]
+            od.text((sx - 34, sy - 6), f"B{idx}: {short}", fill=(255, 255, 255, 255), font=font_xs)
         for c in CAMPUS.get("courts", []):
             cp = [s2p(p[0], p[1]) for p in c["polygon"]]
             od.polygon(cp, outline=(56, 189, 248, 240), width=3)
-        for i, poi in enumerate(CAMPUS.get("pois", []), start=1):
+        for i, poi in enumerate(pois, start=1):
             sx, sy = s2p(poi["position"][0], poi["position"][2])
-            od.ellipse([sx - 8, sy - 8, sx + 8, sy + 8], fill=(245, 196, 61, 255), outline=(0, 0, 0, 255), width=2)
+            od.ellipse([sx - 9, sy - 9, sx + 9, sy + 9], fill=(245, 196, 61, 255), outline=(0, 0, 0, 255), width=2)
+            od.text((sx - 4, sy - 7), str(i), fill=(0, 0, 0, 255), font=font_xs)
         hybrid = Image.alpha_composite(sat, ov).convert("RGB")
         hybrid.save(os.path.join(OUT_DIR, "planta_baixa_sobre_satelite.png"))
 

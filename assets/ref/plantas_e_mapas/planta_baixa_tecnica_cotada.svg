@@ -1,32 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="2400" viewBox="0 0 1800 2400"><rect width="100%" height="100%" fill="#f6f8f6"/><polygon points="345.9,321.7 1190.6,191.4 1406.8,1667.6 726.8,2197.1 647.5,2208.7 518.5,1377.6 551.7,1372.7 521.6,1195.2 493.3,1200.1" fill="#e4efe3" stroke="#1b6e2b" stroke-width="4"/><polygon points="525.3,1254.1 556.0,1249.2 563.4,1297.1 532.7,1302.1" fill="#FFFFFF" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="544.3" y="1275.6" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B1: Guarita e Portaria Princ (40m², 1p)</text>
-<polygon points="507.5,970.3 687.5,939.0 710.2,1068.6 721.2,1133.1 541.3,1164.5" fill="#FFFFFF" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="633.5" y="1055.1" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B2: Bloco Administrativo e D (954m², 2p)</text>
-<polygon points="710.2,1068.6 751.3,1063.1 765.5,1150.3 721.2,1133.1" fill="#B9D8BD" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="737.1" y="1103.8" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B3: Passarela Coberta Centra (84m², 1p)</text>
-<polygon points="746.4,1037.3 1013.0,993.1 1018.6,1020.7 1029.6,1091.4 1035.8,1129.4 854.5,1159.5 862.5,1209.3 942.4,1270.1 933.8,1282.4 867.4,1233.3 765.5,1150.3 751.3,1063.1" fill="#FFFFFF" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="901.7" y="1136.7" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B4: Bloco de Ensino e Inform (1086m², 2p)</text>
-<polygon points="867.4,1233.3 933.8,1282.4 1003.8,1334.6 938.1,1346.3 947.9,1453.2 917.2,1455.6 883.4,1450.7 851.5,1444.0 822.0,1428.0 801.1,1406.5 782.7,1377.0 771.6,1348.1 766.7,1311.9 878.5,1290.4" fill="#D98E7C" stroke="#9E1C20" stroke-width="2.5"/>
-<text x="869.0" y="1368.7" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B5: Auditório Pedro Kaizer (714m², 2p)</text>
-<polygon points="1035.8,1129.4 1085.5,1122.1 1158.6,1112.2 1180.1,1109.2 1221.9,1383.1 1198.5,1386.2 1132.2,1394.8 1139.0,1427.4 1003.8,1334.6 933.8,1282.4 942.4,1270.1 1011.8,1319.3 1065.9,1310.7" fill="#FFFFFF" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="1085.3" y="1275.5" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B6: Bloco Didático Leste e M (1179m², 2p)</text>
-<polygon points="1048.0,894.2 1239.1,864.1 1269.2,1053.3 1151.9,1071.7 1078.8,1084.0 1067.1,1013.3 1057.9,955.6" fill="#FFFFFF" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="1130.3" y="990.9" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B7: Complexo de Laboratórios (982m², 2p)</text>
-<polygon points="1018.6,1020.7 1067.1,1013.3 1078.8,1084.0 1029.6,1091.4" fill="#B9D8BD" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="1048.5" y="1052.4" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B8: Anexo de Laboratórios Oe (94m², 1p)</text>
-<polygon points="1078.8,1084.0 1085.5,1122.1 1158.6,1112.2 1151.9,1071.7" fill="#B9D8BD" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="1118.7" y="1097.5" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B9: Anexo de Laboratórios Ce (78m², 1p)</text>
-<polygon points="925.8,932.9 912.9,859.2 967.0,849.9 979.9,923.7" fill="#FFFFFF" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="946.4" y="891.4" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B10: Laboratório de Química e (109m², 1p)</text>
-<polygon points="1057.3,724.0 1054.8,705.6 1052.3,690.8 1025.9,673.0 1064.0,615.3 1097.8,637.4 1126.1,631.9 1148.8,600.5 1205.3,641.1 1183.8,671.2 1189.3,704.4 1223.7,728.3 1182.6,786.7 1145.1,760.9 1115.0,764.6 1091.0,794.7 1036.4,750.4" fill="#FFFFFF" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="1117.6" y="698.9" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B11: Biblioteca do Câmpus (611m², 2p)</text>
-<polygon points="1137.7,1437.8 1204.1,1429.8 1325.1,1410.8 1354.6,1601.8 1165.4,1631.3" fill="#FFFFFF" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="1237.4" y="1502.3" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B12: Pavilhão de Engenharia,  (977m², 2p)</text>
-<polygon points="1132.2,1394.8 1198.5,1386.2 1204.1,1429.8 1137.7,1437.8" fill="#B9D8BD" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="1168.1" y="1412.2" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B13: Passarela Bloco Sul (77m², 1p)</text>
-<polygon points="467.5,462.9 576.3,445.1 590.4,533.6 481.7,550.8" fill="#FFFFFF" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="529.0" y="498.1" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B14: Academia, Vestiários e A (261m², 1p)</text>
-<polygon points="773.5,1858.6 840.4,1863.5 837.3,1903.4 855.2,1932.3 898.2,1938.5 889.6,1997.4 853.3,1992.5 826.3,2014.6 825.1,2048.4 755.0,2046.0 756.3,2005.4 737.2,1981.5 699.1,1978.4 704.7,1909.6 747.0,1913.3 770.4,1890.5" fill="#FFFFFF" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="798.0" y="1954.6" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B15: Espaço de Convivência, C (583m², 1p)</text>
-<polygon points="1049.9,1749.9 1074.5,1813.1 1144.5,1786.7 1120.5,1722.8 1070.2,1741.9" fill="#FFFFFF" stroke="#1E5E2C" stroke-width="2.5"/>
-<text x="1091.9" y="1762.9" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B16: Bloco de Manutenção e Al (136m², 1p)</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="2400" viewBox="0 0 1800 2400"><rect width="100%" height="100%" fill="#f6f8f6"/><polygon points="345.9,321.7 1190.6,191.4 1406.8,1667.6 726.8,2197.1 647.5,2208.7 518.5,1377.6 551.7,1372.7 521.6,1195.2 493.3,1200.1" fill="#e4efe3" stroke="#1b6e2b" stroke-width="4"/><polygon points="525.3,1254.1 556.0,1249.2 563.4,1297.1 532.7,1302.1" fill="#59E31C" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="544.3" y="1275.6" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B1: Entrada (40m², 1p)</text>
+<polygon points="507.5,970.3 687.5,939.0 710.2,1068.6 721.2,1133.1 541.3,1164.5" fill="#7FA8C9" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="633.5" y="1055.1" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B2: Setor 100 (954m², 1p)</text>
+<polygon points="710.2,1068.6 751.3,1063.1 765.5,1150.3 721.2,1133.1" fill="#7FA8C9" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="737.1" y="1103.8" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B3: Setor 100 (84m², 1p)</text>
+<polygon points="746.4,1037.3 1013.0,993.1 1018.6,1020.7 1029.6,1091.4 1035.8,1129.4 854.5,1159.5 862.5,1209.3 942.4,1270.1 933.8,1282.4 867.4,1233.3 765.5,1150.3 751.3,1063.1" fill="#58B37B" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="901.7" y="1136.7" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B4: Setor 200 (1086m², 1p)</text>
+<polygon points="867.4,1233.3 933.8,1282.4 1003.8,1334.6 938.1,1346.3 947.9,1453.2 917.2,1455.6 883.4,1450.7 851.5,1444.0 822.0,1428.0 801.1,1406.5 782.7,1377.0 771.6,1348.1 766.7,1311.9 878.5,1290.4" fill="#F2DF2F" stroke="#8A6D0B" stroke-width="2.5"/>
+<text x="869.0" y="1368.7" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B5: Auditório 504 (714m², 1p)</text>
+<polygon points="1035.8,1129.4 1085.5,1122.1 1158.6,1112.2 1180.1,1109.2 1221.9,1383.1 1198.5,1386.2 1132.2,1394.8 1139.0,1427.4 1003.8,1334.6 933.8,1282.4 942.4,1270.1 1011.8,1319.3 1065.9,1310.7" fill="#58B37B" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="1085.3" y="1275.5" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B6: Setor 230 (1179m², 1p)</text>
+<polygon points="1048.0,894.2 1239.1,864.1 1269.2,1053.3 1151.9,1071.7 1078.8,1084.0 1067.1,1013.3 1057.9,955.6" fill="#F0A84B" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="1130.3" y="990.9" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B7: Setor 300 (982m², 1p)</text>
+<polygon points="1018.6,1020.7 1067.1,1013.3 1078.8,1084.0 1029.6,1091.4" fill="#CBD5E1" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="1048.5" y="1052.4" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B8: Conexão Setores 200 / 300  (94m², 1p)</text>
+<polygon points="1078.8,1084.0 1085.5,1122.1 1158.6,1112.2 1151.9,1071.7" fill="#CBD5E1" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="1118.7" y="1097.5" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B9: Conexão Setores 200 / 300  (78m², 1p)</text>
+<polygon points="925.8,932.9 912.9,859.2 967.0,849.9 979.9,923.7" fill="#F0A84B" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="946.4" y="891.4" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B10: Setor 300 (109m², 1p)</text>
+<polygon points="1057.3,724.0 1054.8,705.6 1052.3,690.8 1025.9,673.0 1064.0,615.3 1097.8,637.4 1126.1,631.9 1148.8,600.5 1205.3,641.1 1183.8,671.2 1189.3,704.4 1223.7,728.3 1182.6,786.7 1145.1,760.9 1115.0,764.6 1091.0,794.7 1036.4,750.4" fill="#7AC790" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="1117.6" y="698.9" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B11: Bloco 800 (611m², 1p)</text>
+<polygon points="1137.7,1437.8 1204.1,1429.8 1325.1,1410.8 1354.6,1601.8 1165.4,1631.3" fill="#E8983C" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="1237.4" y="1502.3" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B12: Setor 400 (977m², 1p)</text>
+<polygon points="1132.2,1394.8 1198.5,1386.2 1204.1,1429.8 1137.7,1437.8" fill="#CBD5E1" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="1168.1" y="1412.2" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B13: Conexão Setores 230 / 400 (77m², 1p)</text>
+<polygon points="467.5,462.9 576.3,445.1 590.4,533.6 481.7,550.8" fill="#6EE09B" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="529.0" y="498.1" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B14: Educação Física (261m², 1p)</text>
+<polygon points="773.5,1858.6 840.4,1863.5 837.3,1903.4 855.2,1932.3 898.2,1938.5 889.6,1997.4 853.3,1992.5 826.3,2014.6 825.1,2048.4 755.0,2046.0 756.3,2005.4 737.2,1981.5 699.1,1978.4 704.7,1909.6 747.0,1913.3 770.4,1890.5" fill="#1EC7C3" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="798.0" y="1954.6" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B15: Biblioteca do Câmpus (583m², 1p)</text>
+<polygon points="1049.9,1749.9 1074.5,1813.1 1144.5,1786.7 1120.5,1722.8 1070.2,1741.9" fill="#72C850" stroke="#1B3A24" stroke-width="2.5"/>
+<text x="1091.9" y="1762.9" font-size="11" font-family="Arial" text-anchor="middle" fill="#111">B16: Sede Social (136m², 1p)</text></svg>

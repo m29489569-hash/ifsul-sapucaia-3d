@@ -28,6 +28,16 @@ var _last_poi_drone := false
 
 func _ready() -> void:
 	set_physics_process(false)
+	# Smooth navigation through 1.2m-2.6m interior doorways and ceramic floor transitions
+	floor_snap_length = 0.14
+	floor_max_angle = deg_to_rad(46.0)
+	wall_min_slide_angle = 0.08
+	safe_margin = 0.02
+	var col := get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if col and col.shape is CapsuleShape3D:
+		var cap := (col.shape as CapsuleShape3D).duplicate() as CapsuleShape3D
+		cap.radius = minf(cap.radius, 0.30)
+		col.shape = cap
 
 func setup_pois(poi_list: Array, footstep_stream: AudioStream) -> void:
 	pois = poi_list
@@ -53,12 +63,22 @@ func look_at_point(target: Vector3) -> void:
 		rotation.y = atan2(-flat_dir.x, -flat_dir.z)
 		head.rotation.x = 0.0
 
+func teleport_to(pos: Vector3) -> void:
+	global_position = pos
+	velocity = Vector3.ZERO
+	_update_nearest_poi(true)
+
 func toggle_drone_mode() -> bool:
 	is_drone = not is_drone
 	if is_drone:
-		drone_cam.global_position = global_position + Vector3(0.0, 18.0, 12.0)
+		var start_y := maxf(global_position.y + 20.0, 20.0)
+		drone_cam.global_position = Vector3(
+			clampf(global_position.x, -220.0, 220.0),
+			clampf(start_y, 8.0, 160.0),
+			clampf(global_position.z + 12.0, -280.0, 280.0)
+		)
 		drone_yaw = rotation.y
-		drone_pitch = -0.55
+		drone_pitch = -0.58
 		drone_cam.rotation = Vector3(drone_pitch, drone_yaw, 0.0)
 		drone_cam.fov = 68.0
 		drone_cam.current = true
@@ -68,6 +88,20 @@ func toggle_drone_mode() -> bool:
 		drone_cam.current = false
 	_update_nearest_poi(true)
 	return is_drone
+
+func move_drone_to_target(world_pos: Vector3) -> void:
+	if not is_drone:
+		toggle_drone_mode()
+	drone_cam.global_position = Vector3(
+		clampf(world_pos.x, -220.0, 220.0),
+		clampf(maxf(world_pos.y + 26.0, 26.0), 10.0, 160.0),
+		clampf(world_pos.z + 14.0, -280.0, 280.0)
+	)
+	drone_yaw = 0.0
+	drone_pitch = -1.04
+	drone_cam.rotation = Vector3(drone_pitch, drone_yaw, 0.0)
+	drone_cam.fov = 64.0
+	_update_nearest_poi(true)
 
 func get_view_position() -> Vector3:
 	return drone_cam.global_position if is_drone else global_position

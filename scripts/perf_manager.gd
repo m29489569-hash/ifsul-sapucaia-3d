@@ -27,6 +27,9 @@ var _last_detail_aerial := false
 var _bg_hidden := false
 var _last_throttle_state := -1
 var _vp_active := true
+var _interior_timer := 0.0
+var _last_interior_cam_pos := Vector3(1e9, 0.0, 1e9)
+var _last_interior_aerial := false
 
 func reset_auto_timers(warmup: float = 2.0) -> void:
 	_low_perf_accum = 0.0
@@ -200,6 +203,16 @@ func update_runtime_systems(delta: float, vp: Viewport, builder, is_night: bool,
 		builder.apply_detail_range_scale(mult)
 		if player != null and player.fps_cam != null:
 			player.fps_cam.far = _fps_far_distance
+
+	# 1b. Interior sector proximity culling (active both day and night, throttled)
+	_interior_timer += delta
+	var int_moved_sq := cam_pos.distance_squared_to(_last_interior_cam_pos)
+	if _interior_timer >= 0.25 or int_moved_sq > 6.25 or is_aerial != _last_interior_aerial:
+		_interior_timer = 0.0
+		_last_interior_cam_pos = cam_pos
+		_last_interior_aerial = is_aerial
+		if builder.has_method("update_interior_visibility"):
+			builder.update_interior_visibility(cam_pos, is_aerial)
 
 	# 2. Snap night_factor when external tools (e.g. capture.gd) toggle is_night without tweening
 	if not _night_tween_active and is_night != _last_is_night:
