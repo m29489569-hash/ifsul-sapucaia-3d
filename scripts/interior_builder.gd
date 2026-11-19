@@ -403,7 +403,7 @@ func _build_interior_floors(buildings: Array, mats: CampusMaterials) -> void:
 			var mi := MeshInstance3D.new()
 			mi.name = "InteriorTileFloors"
 			mi.mesh = mesh
-			mi.material_override = mats.get_planar_ground_material("tile", Color("#DCD8D0"))
+			mi.material_override = mats.get_planar_ground_material("interior_floor", Color("#AEAAA2"))
 			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			_interiors_root.add_child(mi)
 
@@ -415,7 +415,7 @@ func _build_interior_floors(buildings: Array, mats: CampusMaterials) -> void:
 			var lmi := MeshInstance3D.new()
 			lmi.name = "CourtyardInsetLawns"
 			lmi.mesh = lmesh
-			lmi.material_override = mats.get_planar_ground_material("grass", Color("#4E8540"))
+			lmi.material_override = mats.get_planar_ground_material("grass", Color("#D8ECD0"))
 			lmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			_interiors_root.add_child(lmi)
 
@@ -552,7 +552,7 @@ func _build_courtyards(courtyards: Array, mats: CampusMaterials) -> void:
 			var gmi := MeshInstance3D.new()
 			gmi.name = "CourtyardLawns"
 			gmi.mesh = gmesh
-			gmi.material_override = mats.get_planar_ground_material("grass", Color("#4E8840"))
+			gmi.material_override = mats.get_planar_ground_material("grass", Color("#DCEFD4"))
 			gmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			cy_root.add_child(gmi)
 

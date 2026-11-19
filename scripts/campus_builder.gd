@@ -510,13 +510,13 @@ func _flush_ribbon_builders(root: Node3D) -> void:
 	if st_root == null:
 		st_root = root
 	if _walk_st != null:
-		_commit_ribbon_mesh(st_root, "MergedSidewalks", _walk_st, mats.get_planar_ground_material("sidewalk", Color("#BDB9B0")))
+		_commit_ribbon_mesh(st_root, "MergedSidewalks", _walk_st, mats.get_planar_ground_material("paver", Color("#9C9993")))
 		_walk_st = null
 	if _road_st != null:
-		_commit_ribbon_mesh(st_root, "MergedAsphalt", _road_st, mats.get_planar_ground_material("asphalt", Color("#323539")))
+		_commit_ribbon_mesh(st_root, "MergedAsphalt", _road_st, mats.get_planar_ground_material("asphalt", Color("#72767C")))
 		_road_st = null
 	if _foot_st != null:
-		_commit_ribbon_mesh(st_root, "MergedFootways", _foot_st, mats.get_planar_ground_material("concrete", Color("#CBC6BC")))
+		_commit_ribbon_mesh(st_root, "MergedFootways", _foot_st, mats.get_planar_ground_material("paver", Color("#A4A19B")))
 		_foot_st = null
 
 func _build_ground(root: Node3D) -> void:
@@ -544,7 +544,7 @@ func _build_ground(root: Node3D) -> void:
 	st.generate_tangents()
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
-	mi.material_override = mats.get_planar_ground_material("grass", Color("#476F38"))
+	mi.material_override = mats.get_planar_ground_material("grass", Color("#B9CFAF"))
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	body.add_child(mi)
 	root.add_child(body)
@@ -557,7 +557,7 @@ func _build_campus_pad(root: Node3D, perim: Array) -> void:
 	var mi := MeshInstance3D.new()
 	mi.name = "CampusGroundPad"
 	mi.mesh = mesh
-	mi.material_override = mats.get_planar_ground_material("grass", Color("#4E803E"))
+	mi.material_override = mats.get_planar_ground_material("grass", Color("#D8ECD0"))
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(mi)
 
@@ -568,7 +568,7 @@ func _build_campus_pad(root: Node3D, perim: Array) -> void:
 	var plaza_mi := MeshInstance3D.new()
 	plaza_mi.name = "CentralPlaza"
 	plaza_mi.mesh = _extrude_polygon_mesh(plaza_pts, 0.018, false)
-	plaza_mi.material_override = mats.get_planar_ground_material("concrete", Color("#C8C3B9"))
+	plaza_mi.material_override = mats.get_planar_ground_material("paver", Color("#A09D97"))
 	plaza_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(plaza_mi)
 
@@ -579,7 +579,7 @@ func _build_campus_pad(root: Node3D, perim: Array) -> void:
 	var inner_mi := MeshInstance3D.new()
 	inner_mi.name = "InnerCourtyardTile"
 	inner_mi.mesh = _extrude_polygon_mesh(inner_pts, 0.025, false)
-	inner_mi.material_override = mats.get_planar_ground_material("tile", Color("#CFC9BE"))
+	inner_mi.material_override = mats.get_planar_ground_material("tile", Color("#A8A49D"))
 	inner_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(inner_mi)
 
@@ -1904,8 +1904,8 @@ func _build_parking_lots(root: Node3D, lots: Array) -> void:
 	var p_root := Node3D.new()
 	p_root.name = "ParkingLots"
 	root.add_child(p_root)
-	var asp := mats.get_planar_ground_material("asphalt", Color("#393C41"))
-	var paver_asp := mats.get_planar_ground_material("concrete", Color("#8F8B85"))
+	var asp := mats.get_planar_ground_material("asphalt", Color("#7C8087"))
+	var paver_asp := mats.get_planar_ground_material("paver", Color("#94918B"))
 	var white_col := Color("#F5F5F0")
 	var yellow_col := Color("#EAB308")
 
@@ -2278,7 +2278,7 @@ func _build_entrance_signage(root: Node3D, data: Dictionary) -> void:
 	isl_mi.mesh = _make_cylinder_mesh(2.8, 3.2, 0.28, 22)
 	isl_mi.scale = Vector3(1.7, 1.0, 0.9)
 	isl_mi.position = Vector3(1.5, 0.14, 0.0)
-	isl_mi.material_override = mats.get_material("grass", lawn_col)
+	isl_mi.material_override = mats.get_material("grass", Color("#D2E8C8"))
 	isl_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	pond_node.add_child(isl_mi)
 	var bh_col := Color("#F3F2EE")

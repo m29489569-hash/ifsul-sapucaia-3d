@@ -2,22 +2,22 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cc4rcfx06qcas"
-path="res://.godot/imported/asphalt_rough.jpg-0ebe5543a8bf8180f5a6cfd653aa3d2e.ctex"
+uid="uid://c8ltlmqy4d2pu"
+path="res://.godot/imported/paver_diff.jpg-475461dd72429dbdc96d6a0695507cd9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/asphalt_rough.jpg"
-dest_files=["res://.godot/imported/asphalt_rough.jpg-0ebe5543a8bf8180f5a6cfd653aa3d2e.ctex"]
+source_file="res://assets/textures/paver_diff.jpg"
+dest_files=["res://.godot/imported/paver_diff.jpg-475461dd72429dbdc96d6a0695507cd9.ctex"]
 
 [params]
 
 compress/mode=1
 compress/high_quality=false
-compress/lossy_quality=0.75
+compress/lossy_quality=0.72
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1

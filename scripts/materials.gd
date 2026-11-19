@@ -19,7 +19,7 @@ func get_material(key: String, tint: Color = Color.WHITE, uv_scale: Vector3 = Ve
 	var mat := StandardMaterial3D.new()
 	if compat:
 		mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-	var default_uv := Vector3(0.14, 0.14, 0.14) if key in ["grass", "asphalt", "concrete", "sidewalk", "wall", "metal"] else Vector3.ONE
+	var default_uv := Vector3(2.0, 2.0, 1.0) if key in ["grass", "asphalt", "concrete", "sidewalk", "paver", "wall", "metal"] else Vector3.ONE
 	mat.uv1_scale = uv_scale if uv_scale != Vector3.ONE else default_uv
 	# Planar/extruded surfaces already supply metric UVs; keep triplanar disabled to cut texture fetches by 3x.
 	var use_triplanar := (key == "metal" and not compat and uv_scale == Vector3.ONE)
@@ -28,29 +28,34 @@ func get_material(key: String, tint: Color = Color.WHITE, uv_scale: Vector3 = Ve
 
 	match key:
 		"grass":
-			mat.albedo_color = tint if tint != Color.WHITE else Color("#528540")
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#D8ECD0")
 			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-			_apply_pbr(mat, "grass_diff.jpg", "", "grass_rough.jpg", 0.92, 0.0, 2.5, 0.04)
+			_apply_pbr(mat, "grass_diff.jpg", "", "", 0.92, 0.0, 2.5, 0.04)
 		"asphalt":
-			mat.albedo_color = tint if tint != Color.WHITE else Color("#4C5056")
-			_apply_pbr(mat, "asphalt_diff.jpg", "asphalt_nor.jpg", "asphalt_rough.jpg", 0.88, 0.0, 4.0, 0.06)
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#72767C")
+			_apply_pbr(mat, "asphalt_diff.jpg", "", "", 0.88, 0.0, 4.0, 0.06)
 			mat.normal_scale = 0.45
-		"concrete", "sidewalk":
-			mat.albedo_color = tint if tint != Color.WHITE else Color("#D5D1C8")
+		"paver", "sidewalk":
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#9C9993")
 			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-			_apply_pbr(mat, "concrete_diff.jpg", "concrete_nor.jpg", "concrete_rough.jpg", 0.85, 0.0, 3.0, 0.04)
+			_apply_pbr(mat, "paver_diff.jpg", "", "", 0.86, 0.0, 3.0, 0.04)
 			mat.normal_scale = 0.35
+		"concrete":
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#9A9790")
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+			_apply_pbr(mat, "wall_diff.jpg", "", "", 0.85, 0.0, 3.0, 0.04)
+			mat.normal_scale = 0.30
 		"wall":
 			mat.albedo_color = tint
 			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-			_apply_pbr(mat, "", "", "", 0.78, 0.0, 1.8, 0.015)
+			_apply_pbr(mat, "wall_diff.jpg", "", "", 0.78, 0.0, 1.8, 0.015)
 			mat.normal_scale = 0.25
 		"tile":
-			mat.albedo_color = tint if tint != Color.WHITE else Color("#D8D4CC")
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#A6A29B")
 			_apply_pbr(mat, "tile_diff.jpg", "", "", 0.62, 0.05, 6.0, 0.02)
 		"metal":
-			mat.albedo_color = tint if tint != Color.WHITE else Color("#4A5056")
-			_apply_pbr(mat, "metal_diff.jpg", "", "", 0.38, 0.82, 8.0, 0.015)
+			mat.albedo_color = tint if tint != Color.WHITE else Color("#586068")
+			_apply_pbr(mat, "metal_diff.jpg", "", "", 0.36, 0.82, 8.0, 0.015)
 		"glass":
 			# Opaque slate-blue reflective glass sits flush over solid exterior walls: avoids alpha sorting/overdraw.
 			mat.albedo_color = Color("#3A5B73")
@@ -142,7 +147,19 @@ func get_material(key: String, tint: Color = Color.WHITE, uv_scale: Vector3 = Ve
 	return mat
 
 func get_planar_ground_material(key: String, tint: Color = Color.WHITE) -> StandardMaterial3D:
-	return get_material(key, tint, Vector3(0.999, 0.999, 1.0))
+	var scale := Vector3(1.6, 1.6, 1.0)
+	match key:
+		"paver", "sidewalk":
+			scale = Vector3(3.0, 3.0, 1.0)
+		"asphalt":
+			scale = Vector3(1.8, 1.8, 1.0)
+		"grass":
+			scale = Vector3(1.5, 1.5, 1.0)
+		"tile":
+			scale = Vector3(2.2, 2.2, 1.0)
+		"interior_floor":
+			scale = Vector3(1.4, 1.4, 1.0)
+	return get_material(key, tint, scale)
 
 func get_batch_material(bucket: String) -> StandardMaterial3D:
 	if batch_cache.has(bucket):
@@ -156,13 +173,15 @@ func get_batch_material(bucket: String) -> StandardMaterial3D:
 		"vcol_wall":
 			mat.roughness = 0.78
 			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-			_apply_pbr(mat, "", "", "", 0.78, 0.0, 1.8, 0.015)
+			_apply_pbr(mat, "wall_diff.jpg", "", "", 0.78, 0.0, 1.8, 0.015)
 			mat.normal_scale = 0.25
+			mat.uv1_scale = Vector3(1.5, 1.5, 1.0)
 		"vcol_roof":
-			mat.roughness = 0.84
+			mat.roughness = 0.82
 			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-			_apply_pbr(mat, "concrete_diff.jpg", "concrete_nor.jpg", "concrete_rough.jpg", 0.84, 0.0, 3.0, 0.04)
+			_apply_pbr(mat, "roof_diff.jpg", "", "", 0.82, 0.0, 3.0, 0.04)
 			mat.normal_scale = 0.30
+			mat.uv1_scale = Vector3(2.2, 2.2, 1.0)
 		"batch_wall":
 			mat.roughness = 0.78
 			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED

@@ -1,18 +1,18 @@
 {
-  "hash": "496ef95b",
-  "version": "496ef95b",
-  "builtAt": "2026-11-19T19:24:04.918Z",
-  "executable": "/game/ifsul.496ef95b",
-  "mainPack": "/game/ifsul.496ef95b.pck",
+  "hash": "ec9673d0",
+  "version": "ec9673d0",
+  "builtAt": "2026-11-19T20:16:27.792Z",
+  "executable": "/game/ifsul.ec9673d0",
+  "mainPack": "/game/ifsul.ec9673d0.pck",
   "files": {
-    "js": "ifsul.496ef95b.js",
-    "wasm": "ifsul.496ef95b.wasm",
-    "pck": "ifsul.496ef95b.pck"
+    "js": "ifsul.ec9673d0.js",
+    "wasm": "ifsul.ec9673d0.wasm",
+    "pck": "ifsul.ec9673d0.pck"
   },
   "sizes": {
     "js": 279815,
     "wasm": 39509339,
-    "pck": 917944,
-    "total": 40707098
+    "pck": 721812,
+    "total": 40510966
   }
 }

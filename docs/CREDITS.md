@@ -1,6 +1,6 @@
 # Créditos dos Assets
 
-- **Texturas PBR (Concreto, Asfalto, Grama, Pisos, Metal)** — Poly Haven (`concrete_floor_02`, `asphalt_02`, `aerial_grass_rock`, `floor_tiles_06`, `rusty_metal_04`) — Autores: Poly Haven (Rob Tuytel, Dimitrios Savva, Amal Kumar) — Licença: **CC0 1.0 Universal** — https://polyhaven.com/textures
+- **Texturas PBR Seamless do Câmpus (Paver Intertravado, Asfalto, Grama, Piso Cerâmico, Reboco Acrílico, Telhado Ondulado, Aço Escovado)** (`assets/textures/paver_diff.jpg`, `asphalt_diff.jpg`, `grass_diff.jpg`, `tile_diff.jpg`, `wall_diff.jpg`, `roof_diff.jpg`, `metal_diff.jpg`) — Geradas via IA generativa (Nano Banana) e calibradas sob medida para a arquitetura do IFSul Câmpus Sapucaia do Sul — Licença: **CC0 1.0 Universal** — Local (`assets/textures/`)
 - **HDRI Céu** — Poly Haven (`kloofendal_48d_partly_cloudy_puresky_1k.hdr`) — Autor: Greg Zaal / Jarod Guest — Licença: **CC0 1.0 Universal** — https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky
 - **Áudio Ambiente (Pássaros/Vento) e Passos** (`assets/audio/ambient_birds_wind.wav`, `assets/audio/footstep.wav`) — Síntese procedural original gerada no projeto — Licença: **CC0 1.0 Universal** — Local (`tools/fetch_assets.sh` / fallback em `scripts/main.gd`)
 - **Logo Vetorial IFSul e Texturas Procedurais** (`scripts/materials.gd`) — Gerados em código seguindo o Manual de Identidade Visual da Rede Federal — Licença: **CC0 / Uso Institucional Educacional** — https://www.ifsul.edu.br/identidade-visual
