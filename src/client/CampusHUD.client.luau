@@ -18,8 +18,13 @@ local playerGui = player:WaitForChild("PlayerGui")
 local IFSulFolder = ReplicatedStorage:WaitForChild("IFSul")
 local Config = require(IFSulFolder:WaitForChild("Config"))
 local CampusData = require(IFSulFolder:WaitForChild("CampusData"))
+local ShopCatalog = require(IFSulFolder:WaitForChild("ShopCatalog"))
 local remotes = IFSulFolder:WaitForChild("Remotes")
 local teleportRemote = remotes:WaitForChild("TeleportToLocation") :: RemoteEvent
+local shopGetStateRF = remotes:WaitForChild("ShopGetState") :: RemoteFunction
+local shopBuyCoinsRF = remotes:WaitForChild("ShopBuyCoins") :: RemoteFunction
+local shopBuyRobuxRF = remotes:WaitForChild("ShopBuyRobux") :: RemoteFunction
+local shopOwnedUpdatedRE = remotes:WaitForChild("ShopOwnedUpdated") :: RemoteEvent
 
 local isTouchOnly = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
@@ -36,17 +41,62 @@ screenGui.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = playerGui
 
--- Contador de moedas responsivo (Phone, Tablet, Desktop e Console/TV)
+-- Barra superior esquerda responsiva (Contador de Moedas + Botão Loja)
 -- Usa CoreUISafeInsets para respeitar Topbar, notches/bordas arredondadas e overscan de TV.
+local topLeftHud = Instance.new("Frame")
+topLeftHud.Name = "TopLeftHud"
+topLeftHud.AnchorPoint = Vector2.new(0, 0)
+topLeftHud.AutomaticSize = Enum.AutomaticSize.XY
+topLeftHud.Size = UDim2.fromOffset(0, 46)
+topLeftHud.Position = UDim2.fromOffset(16, 12)
+topLeftHud.BackgroundTransparency = 1
+topLeftHud.Parent = screenGui
+
+local topLeftLayout = Instance.new("UIListLayout")
+topLeftLayout.FillDirection = Enum.FillDirection.Horizontal
+topLeftLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+topLeftLayout.Padding = UDim.new(0, 8)
+topLeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+topLeftLayout.Parent = topLeftHud
+
 local coinCounter = Instance.new("Frame")
 coinCounter.Name = "CoinCounter"
+coinCounter.LayoutOrder = 1
 coinCounter.AnchorPoint = Vector2.new(0, 0)
 coinCounter.AutomaticSize = Enum.AutomaticSize.X
 coinCounter.Size = UDim2.fromOffset(0, 46)
-coinCounter.Position = UDim2.fromOffset(16, 12)
 coinCounter.BackgroundColor3 = Config.Colors.PanelBg
 coinCounter.BackgroundTransparency = 0.22
-coinCounter.Parent = screenGui
+coinCounter.Parent = topLeftHud
+
+local shopBtn = Instance.new("TextButton")
+shopBtn.Name = "ShopButton"
+shopBtn.LayoutOrder = 2
+shopBtn.AutomaticSize = Enum.AutomaticSize.X
+shopBtn.Size = UDim2.fromOffset(0, 46)
+shopBtn.BackgroundColor3 = Config.Colors.IFSulGreen
+shopBtn.BackgroundTransparency = 0.1
+shopBtn.Font = Enum.Font.GothamBold
+shopBtn.TextSize = 16
+shopBtn.TextColor3 = Color3.new(1, 1, 1)
+shopBtn.Text = "Loja"
+shopBtn.AutoButtonColor = true
+shopBtn.Parent = topLeftHud
+
+local shopBtnCorner = Instance.new("UICorner")
+shopBtnCorner.CornerRadius = UDim.new(1, 0)
+shopBtnCorner.Parent = shopBtn
+
+local shopBtnStroke = Instance.new("UIStroke")
+shopBtnStroke.Color = Color3.fromRGB(224, 180, 64)
+shopBtnStroke.Thickness = 1.6
+shopBtnStroke.Transparency = 0.15
+shopBtnStroke.Parent = shopBtn
+
+local shopBtnPad = Instance.new("UIPadding")
+shopBtnPad.PaddingLeft = UDim.new(0, 16)
+shopBtnPad.PaddingRight = UDim.new(0, 16)
+shopBtnPad.Parent = shopBtn
 
 local coinScale = Instance.new("UIScale")
 coinScale.Scale = 1
@@ -195,8 +245,9 @@ end
 local function applyCoinResponsiveLayout()
 	local profileName = detectDeviceProfile()
 	local p = COIN_PROFILES[profileName] or COIN_PROFILES.Desktop
+	topLeftHud.Position = UDim2.fromOffset(p.posX, p.posY)
+	topLeftLayout.Padding = UDim.new(0, p.gap)
 	coinCounter.Size = UDim2.fromOffset(0, p.height)
-	coinCounter.Position = UDim2.fromOffset(p.posX, p.posY)
 	coinConstraint.MinSize = Vector2.new(p.minWidth, p.height)
 	coinConstraint.MaxSize = Vector2.new(340, p.height)
 	coinStroke.Thickness = p.strokeThickness
@@ -206,6 +257,11 @@ local function applyCoinResponsiveLayout()
 	coinIcon.Size = UDim2.fromOffset(p.iconSize, p.iconSize)
 	coinLbl.Size = UDim2.fromOffset(0, p.iconSize)
 	coinLbl.TextSize = p.textSize
+	shopBtn.Size = UDim2.fromOffset(0, p.height)
+	shopBtn.TextSize = math.max(13, p.textSize - 2)
+	shopBtnStroke.Thickness = p.strokeThickness
+	shopBtnPad.PaddingLeft = UDim.new(0, p.padRight)
+	shopBtnPad.PaddingRight = UDim.new(0, p.padRight)
 end
 
 local function bindViewportResize(cam: Camera?)
@@ -556,16 +612,528 @@ modalBackdrop.MouseButton1Click:Connect(function()
 	setFinderVisible(false)
 end)
 
+-- ============================================================================
+-- LOJA DE ARMAS E ITENS (MOEDAS + ROBUX)
+-- ============================================================================
+local shopBackdrop = Instance.new("TextButton")
+shopBackdrop.Name = "ShopBackdrop"
+shopBackdrop.Size = UDim2.fromScale(1, 1)
+shopBackdrop.BackgroundColor3 = Color3.new(0, 0, 0)
+shopBackdrop.BackgroundTransparency = 0.52
+shopBackdrop.Text = ""
+shopBackdrop.AutoButtonColor = false
+shopBackdrop.Visible = false
+shopBackdrop.ZIndex = 20
+shopBackdrop.Parent = screenGui
+
+local shopModal = Instance.new("Frame")
+shopModal.Name = "ShopModal"
+shopModal.AnchorPoint = Vector2.new(0.5, 0.5)
+shopModal.Position = UDim2.fromScale(0.5, 0.5)
+shopModal.Size = UDim2.fromScale(0.9, 0.84)
+shopModal.BackgroundColor3 = Config.Colors.PanelBg
+shopModal.BackgroundTransparency = 0.04
+shopModal.ZIndex = 21
+shopModal.Parent = shopBackdrop
+
+local shopModalConstraint = Instance.new("UISizeConstraint")
+shopModalConstraint.MinSize = Vector2.new(300, 260)
+shopModalConstraint.MaxSize = Vector2.new(760, 560)
+shopModalConstraint.Parent = shopModal
+
+local shopModalCorner = Instance.new("UICorner")
+shopModalCorner.CornerRadius = UDim.new(0, 14)
+shopModalCorner.Parent = shopModal
+
+local shopModalStroke = Instance.new("UIStroke")
+shopModalStroke.Color = Color3.fromRGB(224, 180, 64)
+shopModalStroke.Thickness = 1.8
+shopModalStroke.Parent = shopModal
+
+-- Cabeçalho da loja
+local shopHeader = Instance.new("Frame")
+shopHeader.Size = UDim2.new(1, -24, 0, 38)
+shopHeader.Position = UDim2.fromOffset(12, 10)
+shopHeader.BackgroundTransparency = 1
+shopHeader.ZIndex = 22
+shopHeader.Parent = shopModal
+
+local shopTitle = Instance.new("TextLabel")
+shopTitle.Size = UDim2.new(0.55, 0, 1, 0)
+shopTitle.BackgroundTransparency = 1
+shopTitle.Font = Enum.Font.GothamBlack
+shopTitle.TextSize = 18
+shopTitle.TextXAlignment = Enum.TextXAlignment.Left
+shopTitle.TextColor3 = Config.Colors.TextPrimary
+shopTitle.Text = "Loja do Câmpus"
+shopTitle.ZIndex = 22
+shopTitle.Parent = shopHeader
+
+local shopBalancePill = Instance.new("Frame")
+shopBalancePill.AnchorPoint = Vector2.new(1, 0.5)
+shopBalancePill.Position = UDim2.new(1, -40, 0.5, 0)
+shopBalancePill.AutomaticSize = Enum.AutomaticSize.X
+shopBalancePill.Size = UDim2.fromOffset(0, 30)
+shopBalancePill.BackgroundColor3 = Color3.fromRGB(26, 34, 44)
+shopBalancePill.ZIndex = 22
+shopBalancePill.Parent = shopHeader
+
+local sbPillCorner = Instance.new("UICorner")
+sbPillCorner.CornerRadius = UDim.new(1, 0)
+sbPillCorner.Parent = shopBalancePill
+
+local sbPillPad = Instance.new("UIPadding")
+sbPillPad.PaddingLeft = UDim.new(0, 6)
+sbPillPad.PaddingRight = UDim.new(0, 12)
+sbPillPad.Parent = shopBalancePill
+
+local sbPillLayout = Instance.new("UIListLayout")
+sbPillLayout.FillDirection = Enum.FillDirection.Horizontal
+sbPillLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+sbPillLayout.Padding = UDim.new(0, 6)
+sbPillLayout.Parent = shopBalancePill
+
+local sbCoinIcon = Instance.new("ImageLabel")
+sbCoinIcon.Size = UDim2.fromOffset(22, 22)
+sbCoinIcon.BackgroundTransparency = 1
+sbCoinIcon.ScaleType = Enum.ScaleType.Fit
+sbCoinIcon.Image = Config.CoinIconAssetId
+sbCoinIcon.ZIndex = 23
+sbCoinIcon.Parent = shopBalancePill
+
+local shopBalanceLbl = Instance.new("TextLabel")
+shopBalanceLbl.AutomaticSize = Enum.AutomaticSize.X
+shopBalanceLbl.Size = UDim2.fromOffset(0, 22)
+shopBalanceLbl.BackgroundTransparency = 1
+shopBalanceLbl.Font = Enum.Font.GothamBold
+shopBalanceLbl.TextSize = 14
+shopBalanceLbl.TextColor3 = Color3.fromRGB(250, 214, 92)
+shopBalanceLbl.Text = "0"
+shopBalanceLbl.ZIndex = 23
+shopBalanceLbl.Parent = shopBalancePill
+
+local shopCloseBtn = Instance.new("TextButton")
+shopCloseBtn.Size = UDim2.fromOffset(32, 32)
+shopCloseBtn.AnchorPoint = Vector2.new(1, 0.5)
+shopCloseBtn.Position = UDim2.new(1, 0, 0.5, 0)
+shopCloseBtn.BackgroundColor3 = Color3.fromRGB(38, 48, 58)
+shopCloseBtn.Font = Enum.Font.GothamBold
+shopCloseBtn.TextSize = 15
+shopCloseBtn.TextColor3 = Config.Colors.TextPrimary
+shopCloseBtn.Text = "X"
+shopCloseBtn.ZIndex = 22
+shopCloseBtn.Parent = shopHeader
+
+local shopCloseCorner = Instance.new("UICorner")
+shopCloseCorner.CornerRadius = UDim.new(0, 8)
+shopCloseCorner.Parent = shopCloseBtn
+
+-- Abas de categoria
+local tabBar = Instance.new("Frame")
+tabBar.Size = UDim2.new(1, -24, 0, 30)
+tabBar.Position = UDim2.fromOffset(12, 54)
+tabBar.BackgroundTransparency = 1
+tabBar.ZIndex = 22
+tabBar.Parent = shopModal
+
+local tabLayout = Instance.new("UIListLayout")
+tabLayout.FillDirection = Enum.FillDirection.Horizontal
+tabLayout.Padding = UDim.new(0, 6)
+tabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+tabLayout.Parent = tabBar
+
+local CATEGORIES = { "Todos", "Armas", "Mobilidade", "Especiais" }
+local activeCategory = "Todos"
+local tabButtons: { [string]: TextButton } = {}
+
+-- Grade de itens
+local shopGridFrame = Instance.new("ScrollingFrame")
+shopGridFrame.Size = UDim2.new(1, -24, 1, -130)
+shopGridFrame.Position = UDim2.fromOffset(12, 92)
+shopGridFrame.BackgroundTransparency = 1
+shopGridFrame.ScrollBarThickness = 6
+shopGridFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+shopGridFrame.CanvasSize = UDim2.fromOffset(0, 0)
+shopGridFrame.ZIndex = 22
+shopGridFrame.Parent = shopModal
+
+local shopGridLayout = Instance.new("UIGridLayout")
+shopGridLayout.CellSize = UDim2.fromOffset(224, 152)
+shopGridLayout.CellPadding = UDim2.fromOffset(10, 10)
+shopGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+shopGridLayout.Parent = shopGridFrame
+
+local shopGridPad = Instance.new("UIPadding")
+shopGridPad.PaddingTop = UDim.new(0, 2)
+shopGridPad.PaddingBottom = UDim.new(0, 8)
+shopGridPad.Parent = shopGridFrame
+
+-- Barra de status / feedback
+local shopToast = Instance.new("TextLabel")
+shopToast.Size = UDim2.new(1, -24, 0, 26)
+shopToast.AnchorPoint = Vector2.new(0, 1)
+shopToast.Position = UDim2.new(0, 12, 1, -8)
+shopToast.BackgroundColor3 = Color3.fromRGB(24, 32, 42)
+shopToast.Font = Enum.Font.GothamSemibold
+shopToast.TextSize = 12
+shopToast.TextColor3 = Config.Colors.TextMuted
+shopToast.Text = "Colete cartazes pelos corredores para ganhar moedas ou compre com Robux!"
+shopToast.ZIndex = 22
+shopToast.Parent = shopModal
+
+local toastCorner = Instance.new("UICorner")
+toastCorner.CornerRadius = UDim.new(0, 7)
+toastCorner.Parent = shopToast
+
+local ownedSet: { [string]: boolean } = {}
+local isPurchasing = false
+
+local function setShopToast(msg: string, isOk: boolean?)
+	shopToast.Text = msg
+	if isOk == true then
+		shopToast.TextColor3 = Color3.fromRGB(110, 235, 130)
+	elseif isOk == false then
+		shopToast.TextColor3 = Color3.fromRGB(252, 165, 110)
+	else
+		shopToast.TextColor3 = Config.Colors.TextMuted
+	end
+end
+
+local function updateTabStyles()
+	for cat, btn in pairs(tabButtons) do
+		local selected = (cat == activeCategory)
+		btn.BackgroundColor3 = if selected then Config.Colors.IFSulGreen else Color3.fromRGB(30, 39, 50)
+		btn.TextColor3 = if selected then Color3.new(1, 1, 1) else Config.Colors.TextMuted
+	end
+end
+
+local function rebuildShopGrid()
+	for _, child in ipairs(shopGridFrame:GetChildren()) do
+		if child:IsA("Frame") then
+			child:Destroy()
+		end
+	end
+
+	local rawCoins = player:GetAttribute("Coins")
+	local currentCoins = if typeof(rawCoins) == "number" then rawCoins else 0
+	shopBalanceLbl.Text = formatCoins(currentCoins)
+
+	for idx, item in ipairs(ShopCatalog.Items) do
+		if activeCategory == "Todos" or item.category == activeCategory then
+			local owned = ownedSet[item.id] == true
+
+			local card = Instance.new("Frame")
+			card.Name = "Card_" .. item.id
+			card.LayoutOrder = idx
+			card.BackgroundColor3 = Color3.fromRGB(24, 32, 42)
+			card.ZIndex = 23
+			card.Parent = shopGridFrame
+
+			local cardCorner = Instance.new("UICorner")
+			cardCorner.CornerRadius = UDim.new(0, 10)
+			cardCorner.Parent = card
+
+			local cardStroke = Instance.new("UIStroke")
+			cardStroke.Color = if owned then Config.Colors.IFSulGreen else item.accentColor
+			cardStroke.Thickness = if item.rarity == "Lendário" then 1.8 else 1.2
+			cardStroke.Transparency = 0.25
+			cardStroke.Parent = card
+
+			-- Faixa superior de raridade
+			local accentBar = Instance.new("Frame")
+			accentBar.Size = UDim2.new(1, 0, 0, 4)
+			accentBar.BackgroundColor3 = item.accentColor
+			accentBar.BorderSizePixel = 0
+			accentBar.ZIndex = 24
+			accentBar.Parent = card
+
+			-- Ícone do item
+			local iconBox = Instance.new("Frame")
+			iconBox.Size = UDim2.fromOffset(44, 44)
+			iconBox.Position = UDim2.fromOffset(10, 12)
+			iconBox.BackgroundColor3 = Color3.fromRGB(16, 22, 30)
+			iconBox.ZIndex = 24
+			iconBox.Parent = card
+
+			local iconCorner = Instance.new("UICorner")
+			iconCorner.CornerRadius = UDim.new(0, 8)
+			iconCorner.Parent = iconBox
+
+			if item.icon ~= "" then
+				local img = Instance.new("ImageLabel")
+				img.Size = UDim2.fromScale(0.84, 0.84)
+				img.AnchorPoint = Vector2.new(0.5, 0.5)
+				img.Position = UDim2.fromScale(0.5, 0.5)
+				img.BackgroundTransparency = 1
+				img.ScaleType = Enum.ScaleType.Fit
+				img.Image = item.icon
+				img.ZIndex = 25
+				img.Parent = iconBox
+			else
+				local mono = Instance.new("TextLabel")
+				mono.Size = UDim2.fromScale(1, 1)
+				mono.BackgroundTransparency = 1
+				mono.Font = Enum.Font.GothamBlack
+				mono.TextSize = 18
+				mono.TextColor3 = item.accentColor
+				mono.Text = "🔦"
+				mono.ZIndex = 25
+				mono.Parent = iconBox
+			end
+
+			-- Nome + raridade
+			local nameLbl = Instance.new("TextLabel")
+			nameLbl.Size = UDim2.new(1, -66, 0, 20)
+			nameLbl.Position = UDim2.fromOffset(60, 12)
+			nameLbl.BackgroundTransparency = 1
+			nameLbl.Font = Enum.Font.GothamBold
+			nameLbl.TextSize = 13
+			nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+			nameLbl.TextTruncate = Enum.TextTruncate.AtEnd
+			nameLbl.TextColor3 = Config.Colors.TextPrimary
+			nameLbl.Text = item.name
+			nameLbl.ZIndex = 24
+			nameLbl.Parent = card
+
+			local rarityLbl = Instance.new("TextLabel")
+			rarityLbl.Size = UDim2.new(1, -66, 0, 16)
+			rarityLbl.Position = UDim2.fromOffset(60, 32)
+			rarityLbl.BackgroundTransparency = 1
+			rarityLbl.Font = Enum.Font.GothamSemibold
+			rarityLbl.TextSize = 11
+			rarityLbl.TextXAlignment = Enum.TextXAlignment.Left
+			rarityLbl.TextColor3 = item.accentColor
+			rarityLbl.Text = item.rarity .. " • " .. item.category
+			rarityLbl.ZIndex = 24
+			rarityLbl.Parent = card
+
+			-- Descrição
+			local descLbl = Instance.new("TextLabel")
+			descLbl.Size = UDim2.new(1, -20, 0, 42)
+			descLbl.Position = UDim2.fromOffset(10, 60)
+			descLbl.BackgroundTransparency = 1
+			descLbl.Font = Enum.Font.Gotham
+			descLbl.TextSize = 11
+			descLbl.TextWrapped = true
+			descLbl.TextXAlignment = Enum.TextXAlignment.Left
+			descLbl.TextYAlignment = Enum.TextYAlignment.Top
+			descLbl.TextColor3 = Config.Colors.TextMuted
+			descLbl.Text = item.description
+			descLbl.ZIndex = 24
+			descLbl.Parent = card
+
+			-- Botões de compra (Moedas + Robux) ou Equipar
+			if owned then
+				local equipBtn = Instance.new("TextButton")
+				equipBtn.Size = UDim2.new(1, -20, 0, 32)
+				equipBtn.Position = UDim2.new(0, 10, 1, -40)
+				equipBtn.BackgroundColor3 = Config.Colors.IFSulGreen
+				equipBtn.Font = Enum.Font.GothamBold
+				equipBtn.TextSize = 12
+				equipBtn.TextColor3 = Color3.new(1, 1, 1)
+				equipBtn.Text = "✓ Adquirido • Pegar na Mochila"
+				equipBtn.ZIndex = 24
+				equipBtn.Parent = card
+
+				local ec = Instance.new("UICorner")
+				ec.CornerRadius = UDim.new(0, 7)
+				ec.Parent = equipBtn
+
+				equipBtn.MouseButton1Click:Connect(function()
+					if isPurchasing then
+						return
+					end
+					isPurchasing = true
+					local ok, res = pcall(function()
+						return shopBuyCoinsRF:InvokeServer(item.id)
+					end)
+					isPurchasing = false
+					if ok and typeof(res) == "table" then
+						setShopToast(res.message or "Item equipado!", res.ok == true)
+					end
+				end)
+			else
+				local canAfford = currentCoins >= item.coinPrice
+
+				local coinBuyBtn = Instance.new("TextButton")
+				coinBuyBtn.Size = UDim2.new(0.56, -12, 0, 32)
+				coinBuyBtn.Position = UDim2.new(0, 10, 1, -40)
+				coinBuyBtn.BackgroundColor3 = if canAfford
+					then Config.Colors.IFSulGreen
+					else Color3.fromRGB(44, 54, 66)
+				coinBuyBtn.Font = Enum.Font.GothamBold
+				coinBuyBtn.TextSize = 12
+				coinBuyBtn.TextColor3 = if canAfford then Color3.new(1, 1, 1) else Config.Colors.TextMuted
+				coinBuyBtn.Text = formatCoins(item.coinPrice) .. " Moedas"
+				coinBuyBtn.ZIndex = 24
+				coinBuyBtn.Parent = card
+
+				local cbc = Instance.new("UICorner")
+				cbc.CornerRadius = UDim.new(0, 7)
+				cbc.Parent = coinBuyBtn
+
+				local robuxBuyBtn = Instance.new("TextButton")
+				robuxBuyBtn.Size = UDim2.new(0.44, -12, 0, 32)
+				robuxBuyBtn.Position = UDim2.new(0.56, 2, 1, -40)
+				robuxBuyBtn.BackgroundColor3 = Color3.fromRGB(32, 42, 54)
+				robuxBuyBtn.Font = Enum.Font.GothamBold
+				robuxBuyBtn.TextSize = 12
+				robuxBuyBtn.TextColor3 = Color3.fromRGB(250, 214, 92)
+				robuxBuyBtn.Text = "R$ " .. tostring(item.robuxPrice)
+				robuxBuyBtn.ZIndex = 24
+				robuxBuyBtn.Parent = card
+
+				local rbc = Instance.new("UICorner")
+				rbc.CornerRadius = UDim.new(0, 7)
+				rbc.Parent = robuxBuyBtn
+
+				local rbs = Instance.new("UIStroke")
+				rbs.Color = Color3.fromRGB(224, 180, 64)
+				rbs.Thickness = 1.1
+				rbs.Transparency = 0.25
+				rbs.Parent = robuxBuyBtn
+
+				coinBuyBtn.MouseButton1Click:Connect(function()
+					if isPurchasing then
+						return
+					end
+					isPurchasing = true
+					local ok, res = pcall(function()
+						return shopBuyCoinsRF:InvokeServer(item.id)
+					end)
+					isPurchasing = false
+					if ok and typeof(res) == "table" then
+						if typeof(res.owned) == "table" then
+							table.clear(ownedSet)
+							for _, oid in ipairs(res.owned) do
+								ownedSet[oid] = true
+							end
+						end
+						setShopToast(res.message or "", res.ok == true)
+						rebuildShopGrid()
+					else
+						setShopToast("Erro ao processar compra.", false)
+					end
+				end)
+
+				robuxBuyBtn.MouseButton1Click:Connect(function()
+					if isPurchasing then
+						return
+					end
+					isPurchasing = true
+					local ok, res = pcall(function()
+						return shopBuyRobuxRF:InvokeServer(item.id)
+					end)
+					isPurchasing = false
+					if ok and typeof(res) == "table" then
+						setShopToast(res.message or "", res.ok == true)
+					else
+						setShopToast("Erro ao iniciar compra por Robux.", false)
+					end
+				end)
+			end
+		end
+	end
+end
+
+for _, cat in ipairs(CATEGORIES) do
+	local btn = Instance.new("TextButton")
+	btn.AutomaticSize = Enum.AutomaticSize.X
+	btn.Size = UDim2.fromOffset(0, 28)
+	btn.BackgroundColor3 = Color3.fromRGB(30, 39, 50)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 12
+	btn.TextColor3 = Config.Colors.TextMuted
+	btn.Text = cat
+	btn.ZIndex = 22
+	btn.Parent = tabBar
+
+	local tc = Instance.new("UICorner")
+	tc.CornerRadius = UDim.new(0, 7)
+	tc.Parent = btn
+
+	local tp = Instance.new("UIPadding")
+	tp.PaddingLeft = UDim.new(0, 12)
+	tp.PaddingRight = UDim.new(0, 12)
+	tp.Parent = btn
+
+	tabButtons[cat] = btn
+	btn.MouseButton1Click:Connect(function()
+		activeCategory = cat
+		updateTabStyles()
+		rebuildShopGrid()
+	end)
+end
+
+local function setShopVisible(visible: boolean)
+	shopBackdrop.Visible = visible
+	if visible then
+		modalBackdrop.Visible = false
+		updateTabStyles()
+		rebuildShopGrid()
+	end
+end
+
+shopBtn.MouseButton1Click:Connect(function()
+	setShopVisible(not shopBackdrop.Visible)
+end)
+shopCloseBtn.MouseButton1Click:Connect(function()
+	setShopVisible(false)
+end)
+shopBackdrop.MouseButton1Click:Connect(function()
+	setShopVisible(false)
+end)
+
+shopOwnedUpdatedRE.OnClientEvent:Connect(function(ownedList: unknown)
+	if typeof(ownedList) == "table" then
+		table.clear(ownedSet)
+		for _, oid in ipairs(ownedList :: { string }) do
+			ownedSet[oid] = true
+		end
+		if shopBackdrop.Visible then
+			rebuildShopGrid()
+		end
+	end
+end)
+
+player:GetAttributeChangedSignal("Coins"):Connect(function()
+	if shopBackdrop.Visible then
+		rebuildShopGrid()
+	end
+end)
+
+-- Carrega estado inicial de itens adquiridos
+task.spawn(function()
+	local ok, res = pcall(function()
+		return shopGetStateRF:InvokeServer()
+	end)
+	if ok and typeof(res) == "table" and typeof(res.owned) == "table" then
+		table.clear(ownedSet)
+		for _, oid in ipairs(res.owned) do
+			ownedSet[oid] = true
+		end
+	end
+end)
+
 -- Atalhos de teclado
 UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessed: boolean)
-	if input.KeyCode == Enum.KeyCode.Escape and modalBackdrop.Visible then
-		setFinderVisible(false)
-		return
+	if input.KeyCode == Enum.KeyCode.Escape then
+		if shopBackdrop.Visible then
+			setShopVisible(false)
+			return
+		end
+		if modalBackdrop.Visible then
+			setFinderVisible(false)
+			return
+		end
 	end
 	if gameProcessed then
 		return
 	end
-	if input.KeyCode == Enum.KeyCode.G then
+	if input.KeyCode == Enum.KeyCode.B then
+		setShopVisible(not shopBackdrop.Visible)
+	elseif input.KeyCode == Enum.KeyCode.G then
+		setShopVisible(false)
 		setFinderVisible(not modalBackdrop.Visible)
 	elseif input.KeyCode == Enum.KeyCode.N then
 		applyLocalLighting(not isNight)
