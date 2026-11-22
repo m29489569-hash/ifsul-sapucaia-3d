@@ -19,6 +19,9 @@ local COLOR_GALV_STEEL = Color3.fromRGB(168, 174, 178)
 local COLOR_CONCRETE_BLOCK = Color3.fromRGB(132, 128, 122)
 local COLOR_BUS_BLUE = Color3.fromRGB(22, 78, 155)
 
+local COLOR_CANOPY_ROOF = Color3.fromRGB(240, 233, 173)
+local COLOR_CANOPY_GREEN = Color3.fromRGB(46, 110, 54)
+
 export type FrameBasis = {
 	center: Vector3,
 	east: Vector3,
@@ -177,7 +180,12 @@ local function pt(b: FrameBasis, e: number, y: number, s: number): Vector3
 	return b.center + b.east * e + Vector3.new(0, y, 0) + b.south * s
 end
 
-local function sanitizeBaseline(campus: Instance, buildings: Instance, props: Instance, signage: Instance, lights: Instance)
+local function toLocal(b: FrameBasis, p: Vector3): (number, number, number)
+	local d = p - b.center
+	return d:Dot(b.east), p.Y, d:Dot(b.south)
+end
+
+local function sanitizeBaseline(campus: Instance, buildings: Instance, props: Instance, signage: Instance, lights: Instance, basis: FrameBasis)
 	-- Limpa instâncias geradas por execuções anteriores de EntranceEnhancer
 	for _, host in ipairs({ campus, buildings, props, signage, lights }) do
 		local prev = host:FindFirstChild("EntranceEnhanced")
@@ -193,6 +201,17 @@ local function sanitizeBaseline(campus: Instance, buildings: Instance, props: In
 			local pos = p.Position
 			local col = p.Color
 			local r, g, b = math.round(col.R * 255), math.round(col.G * 255), math.round(col.B * 255)
+			local le, ly, ls = toLocal(basis, pos)
+			local maxSz = math.max(p.Size.X, p.Size.Y, p.Size.Z)
+
+			local inOldWalkwayNS = le >= -4.0 and le <= 16.0 and ls >= -54.5 and ls <= -13.0 and ly >= 0.5 and ly <= 12.0
+			local inOldWalkwayCorner = le >= -4.0 and le < 7.35 and ls >= -65.0 and ls < -54.5 and ly >= 0.5 and ly <= 12.0
+			local isOldWalkwayRoof = (inOldWalkwayNS or inOldWalkwayCorner)
+				and r >= 230 and g >= 220 and b >= 160 and b <= 185 and ly >= 10.0 and ly <= 12.0
+			local isOldWalkwayGreen = (inOldWalkwayNS or inOldWalkwayCorner)
+				and g > r + 20 and g > b + 20 and r < 80 and b < 80 and maxSz < 50
+			local isOldWalkwayLight = inOldWalkwayNS and ls <= -14.6 and ly >= 10.2 and ly <= 11.2 and maxSz < 6
+				and ((r > 230 and g > 230 and b > 200) or (r >= 145 and r <= 170 and g >= 150 and g <= 175 and b >= 160 and b <= 185))
 
 			local isFakeTotemWall = pos.X >= -231.5 and pos.X <= -227.0 and pos.Z >= -4.0 and pos.Z <= 20.5 and pos.Y > 3.5
 			local isGreenLollipop = pos.X >= -236.0 and pos.X <= -232.0 and pos.Z >= 34.0 and pos.Z <= 43.0 and pos.Y > 1.0 and pos.Y < 8.5
@@ -205,7 +224,7 @@ local function sanitizeBaseline(campus: Instance, buildings: Instance, props: In
 			local isGuaritaWestGreenBand = pos.X >= -226.5 and pos.X <= -223.5 and pos.Z >= 30.0 and pos.Z <= 54.0 and pos.Y > 10.5 and g > 120 and r < 80
 			local isGuaritaWestMullion = pos.X >= -227.0 and pos.X <= -222.5 and pos.Z >= 31.0 and pos.Z <= 53.0 and pos.Y >= 4.5 and pos.Y <= 9.0 and p.Size.Y > 4 and r < 60 and g < 60 and b < 60
 
-			if isFakeTotemWall or isGreenLollipop or isSolidVehicleGate or isFrontYellowCurb or isDrivewayCrosswalk or isNorthWallGreenCap or isSouthWallGreenCap or isGuaritaWestGlass or isGuaritaWestGreenBand or isGuaritaWestMullion then
+			if isOldWalkwayRoof or isOldWalkwayGreen or isOldWalkwayLight or isFakeTotemWall or isGreenLollipop or isSolidVehicleGate or isFrontYellowCurb or isDrivewayCrosswalk or isNorthWallGreenCap or isSouthWallGreenCap or isGuaritaWestGlass or isGuaritaWestGreenBand or isGuaritaWestMullion then
 				table.insert(toDestroy, p)
 			elseif pos.X >= -226 and pos.X <= -205 and pos.Z >= 25 and pos.Z <= 57 then
 				-- Converte guarita e faixas N/S/L para o creme institucional da fachada
@@ -480,52 +499,136 @@ local function addTubularFencePanel(
 	end
 end
 
-local function buildNorthWalkwayAndFence(folder: Folder, b: FrameBasis)
-	local fenceE = -9.1
-	local sWall = -39.6
-	local sGateStart = -20.5
-	local sGuarita = -14.1
+local function buildCoveredWalkwayL(folder: Folder, b: FrameBasis)
+	-- Passarela coberta reta saindo da guarita (e constante) com curva de 90° para o corredor leste-oeste
+	local walkE0 = -2.0
+	local walkE1 = 7.33
+	local walkW = walkE1 - walkE0
+	local walkECenter = (walkE0 + walkE1) * 0.5
+	local sStart = -14.1
+	local sEnd = -64.08
+	local roofY = 11.07
 
-	-- Fechamento curto ligando o muro norte (e = -14.4) à linha da grade (e = -9.1)
-	addTubularFencePanel(folder, "NorthWallReturnFence", pt(b, -14.4, 0, sWall), pt(b, fenceE, 0, sWall), 7.6, 0.85, true)
-	-- Grade tubular vazada norte (deixa ver o jardim interno)
+	-- Telhado translúcido ondulado reto (alinhado com a guarita e com a passarela leste-oeste)
+	local stripPitch = 0.86
+	local sCur = sEnd + stripPitch * 0.5
+	while sCur < sStart do
+		local stripPos = pt(b, walkECenter, roofY, sCur)
+		local stripCF = CFrame.lookAt(stripPos, stripPos + b.south)
+		local strip = makePart(
+			folder,
+			"WalkwayRoofStrip",
+			Vector3.new(walkW, 0.14, stripPitch - 0.04),
+			stripCF,
+			COLOR_CANOPY_ROOF,
+			Enum.Material.Grass,
+			false
+		)
+		strip.Transparency = 0.12
+		sCur += stripPitch
+	end
+
+	-- Estrutura metálica verde-escuro (vigas longitudinais, travessas e pilares)
+	local colEW = -1.6
+	local colEE = 6.9
+	local beamY = 10.90
+
+	local function addBeam(name: string, p0: Vector3, p1: Vector3, w: number, h: number)
+		local delta = p1 - p0
+		local len = delta.Magnitude
+		if len < 0.1 then return end
+		local cf = CFrame.lookAt((p0 + p1) * 0.5, p1)
+		makePart(folder, name, Vector3.new(w, h, len), cf, COLOR_CANOPY_GREEN, Enum.Material.Metal, false)
+	end
+
+	-- Vigas longitudinais ao longo da passarela norte-sul
+	addBeam("WalkwayBeamW", pt(b, colEW, beamY, sEnd + 0.45), pt(b, colEW, beamY, sStart), 0.30, 0.28)
+	addBeam("WalkwayBeamE", pt(b, colEE, beamY, -54.5), pt(b, colEE, beamY, sStart), 0.30, 0.28)
+	addBeam("WalkwayRidge", pt(b, walkECenter, 11.00, sEnd + 0.45), pt(b, walkECenter, 11.00, sStart), 0.20, 0.19)
+
+	-- Vigas de transição na curva 90° conectando à passarela leste-oeste existente
+	addBeam("WalkwayCornerBeamN", pt(b, colEW, beamY, -63.6), pt(b, 14.40, beamY, -63.6), 0.30, 0.28)
+	addBeam("WalkwayCornerBeamS", pt(b, colEE, beamY, -54.5), pt(b, 14.56, beamY, -54.78), 0.30, 0.28)
+
+	-- Travessas transversais e pilares verticais (passagem de pedestres em s=[-20.5..-14.1] livre)
+	local sStations = { -14.5, -24.5, -34.5, -44.5, -54.5, -63.6 }
+	for _, sPos in ipairs(sStations) do
+		addBeam("WalkwayCrossBeam", pt(b, colEW, beamY, sPos), pt(b, colEE, beamY, sPos), 0.25, 0.27)
+
+		local postW = pt(b, colEW, 5.45, sPos)
+		makePart(folder, "WalkwayPostW", Vector3.new(0.30, 10.90, 0.30), CFrame.lookAt(postW, postW + b.south), COLOR_CANOPY_GREEN, Enum.Material.Metal, true)
+
+		if sPos > -60.0 then
+			local postE = pt(b, colEE, 5.45, sPos)
+			makePart(folder, "WalkwayPostE", Vector3.new(0.30, 10.90, 0.30), CFrame.lookAt(postE, postE + b.south), COLOR_CANOPY_GREEN, Enum.Material.Metal, true)
+		end
+	end
+
+	-- Luminárias fluorescentes no teto da passarela
+	for _, sLight in ipairs({ -24.5, -40.0, -56.0 }) do
+		local lPos = pt(b, walkECenter, 10.75, sLight)
+		local lCF = CFrame.lookAt(lPos, lPos + b.south)
+		makePart(folder, "WalkwayLightBody", Vector3.new(0.32, 0.28, 4.4), lCF, Color3.fromRGB(244, 244, 240), Enum.Material.Metal, false)
+		makePart(folder, "WalkwayLightTube", Vector3.new(0.20, 0.10, 3.9), lCF * CFrame.new(0, -0.15, 0), Color3.fromRGB(255, 244, 214), Enum.Material.Neon, false)
+	end
+end
+
+local function buildNorthWalkwayAndFence(folder: Folder, b: FrameBasis)
+	-- Grade recuada (mais para trás, próxima à passarela coberta) ligando-se ao fim do muro norte
+	local fenceE = -3.2
+	local sWall = -48.0
+	local sGateStart = -20.5
+
+	-- Fechamento curto ligando o fundo do muro de concreto norte (e = -6.0) à linha recuada da grade (e = -3.2)
+	addTubularFencePanel(folder, "NorthWallReturnFence", pt(b, -6.0, 0, sWall), pt(b, fenceE, 0, sWall), 7.6, 0.85, true)
+	-- Grade tubular vazada norte recuada (separada da parada de ônibus)
 	addTubularFencePanel(folder, "NorthFrontFence", pt(b, fenceE, 0, sWall), pt(b, fenceE, 0, sGateStart), 7.6, 0.85, true)
 
-	-- Poste esquerdo do portão de pedestres e folha aberta recolhida para dentro (passagem 100% livre)
+	-- Poste esquerdo do portão de pedestres e folha aberta recolhida paralela à grade (passagem 100% livre)
 	makePart(folder, "PedGatePostL", Vector3.new(0.32, 8.2, 0.32), CFrame.lookAt(pt(b, fenceE, 4.1, sGateStart), pt(b, fenceE, 4.1, sGateStart) + b.west), COLOR_DARK_GREEN, Enum.Material.Metal)
-	addTubularFencePanel(folder, "PedGateOpenLeaf", pt(b, fenceE, 0, sGateStart), pt(b, fenceE + 4.8, 0, sGateStart), 7.5, 0.85, false)
+	addTubularFencePanel(folder, "PedGateOpenLeaf", pt(b, fenceE + 0.55, 0, sGateStart), pt(b, fenceE + 0.55, 0, sGateStart - 4.8), 7.5, 0.85, false)
 
-	-- Cobertura escura de telha ondulada estendendo o abrigo até a calçada
-	local roofE0, roofE1 = -14.8, -0.5
-	local roofLen = sGuarita - sWall + 1.2
-	local roofW = roofE1 - roofE0
-	local roofCenter = pt(b, (roofE0 + roofE1) * 0.5, 8.95, (sWall + sGuarita) * 0.5)
-	local roofCF = CFrame.lookAt(roofCenter, roofCenter + b.west) * CFrame.Angles(math.rad(4), 0, 0)
-	makePart(folder, "WalkwayCanopyRoof", Vector3.new(roofLen, 0.24, roofW), roofCF, COLOR_DARK_ROOF, Enum.Material.Metal, false)
-	makePart(folder, "WalkwayCanopyFasciaW", Vector3.new(roofLen + 0.1, 0.44, 0.24), roofCF * CFrame.new(0, -0.08, -roofW * 0.5), COLOR_DARK_ROOF, Enum.Material.Metal, false)
+	-- Parada de ônibus independente na calçada (área frontal isolada, sem ligação com o fundo ou a guarita)
+	local busE0, busE1 = -15.4, -9.4
+	local busS0, busS1 = -39.6, -22.0
+	local busLen = busS1 - busS0
+	local busW = busE1 - busE0
+	local busCenter = pt(b, (busE0 + busE1) * 0.5, 8.85, (busS0 + busS1) * 0.5)
+	local busCF = CFrame.lookAt(busCenter, busCenter + b.west) * CFrame.Angles(math.rad(4), 0, 0)
+	makePart(folder, "BusStopRoof", Vector3.new(busLen, 0.24, busW), busCF, COLOR_DARK_ROOF, Enum.Material.Metal, false)
+	makePart(folder, "BusStopFasciaW", Vector3.new(busLen + 0.1, 0.42, 0.22), busCF * CFrame.new(0, -0.08, -busW * 0.5), COLOR_DARK_ROOF, Enum.Material.Metal, false)
 
-	-- Nervuras da telha ondulada
-	for s = sWall + 0.5, sGuarita - 0.5, 1.4 do
-		local ribPos = pt(b, (roofE0 + roofE1) * 0.5, 9.10, s)
+	-- Nervuras da telha ondulada da parada de ônibus
+	for s = busS0 + 0.6, busS1 - 0.6, 1.4 do
+		local ribPos = pt(b, (busE0 + busE1) * 0.5, 9.00, s)
 		local ribCF = CFrame.lookAt(ribPos, ribPos + b.west) * CFrame.Angles(math.rad(4), 0, 0)
-		makePart(folder, "CanopyRib", Vector3.new(0.16, 0.14, roofW), ribCF, Color3.fromRGB(36, 40, 42), Enum.Material.Metal, false)
+		makePart(folder, "BusStopRib", Vector3.new(0.16, 0.14, busW), ribCF, Color3.fromRGB(36, 40, 42), Enum.Material.Metal, false)
 	end
 
-	-- Colunas verde-escuro sustentando o abrigo externo (fora do fluxo central de entrada)
-	for _, sCol in ipairs({ sWall + 0.6, -32.2, -25.2, -20.6, sGuarita - 0.4 }) do
-		makeSegmentCylinder(folder, "CanopyColW", pt(b, -13.6, 0, sCol), pt(b, -13.6, 8.6, sCol), 0.28, COLOR_DARK_GREEN, Enum.Material.Metal, true)
+	-- Colunas e vigas próprias sustentando a parada de ônibus isolada
+	local colFrontE = -14.7
+	local colBackE = -10.1
+	local busCols = { busS0 + 0.6, -33.5, -28.0, busS1 - 0.6 }
+	for _, sCol in ipairs(busCols) do
+		makeSegmentCylinder(folder, "BusStopColW", pt(b, colFrontE, 0, sCol), pt(b, colFrontE, 8.50, sCol), 0.26, COLOR_DARK_GREEN, Enum.Material.Metal, true)
+		makeSegmentCylinder(folder, "BusStopColE", pt(b, colBackE, 0, sCol), pt(b, colBackE, 8.75, sCol), 0.26, COLOR_DARK_GREEN, Enum.Material.Metal, true)
+		makeSegmentCylinder(folder, "BusStopCrossBeam", pt(b, colFrontE, 8.42, sCol), pt(b, colBackE, 8.68, sCol), 0.20, COLOR_DARK_GREEN, Enum.Material.Metal, false)
 	end
-	makeSegmentCylinder(folder, "CanopyFrontBeam", pt(b, -13.6, 8.5, sWall), pt(b, -13.6, 8.5, sGuarita), 0.24, COLOR_DARK_GREEN, Enum.Material.Metal, false)
+	makeSegmentCylinder(folder, "BusStopFrontBeam", pt(b, colFrontE, 8.42, busS0 + 0.4), pt(b, colFrontE, 8.42, busS1 - 0.4), 0.22, COLOR_DARK_GREEN, Enum.Material.Metal, false)
+	makeSegmentCylinder(folder, "BusStopBackBeam", pt(b, colBackE, 8.68, busS0 + 0.4), pt(b, colBackE, 8.68, busS1 - 0.4), 0.22, COLOR_DARK_GREEN, Enum.Material.Metal, false)
 
-	-- 2 bancos escuros de espera sob a cobertura norte
-	for _, sBench in ipairs({ -36.0, -28.8 }) do
-		local benchCenter = pt(b, -11.8, 1.65, sBench)
+	-- 2 bancos escuros de espera sob a parada de ônibus
+	for _, sBench in ipairs({ -34.8, -26.8 }) do
+		local benchCenter = pt(b, -11.4, 1.65, sBench)
 		local bcf = CFrame.lookAt(benchCenter, benchCenter + b.west)
-		makePart(folder, "ShelterBenchTop", Vector3.new(5.6, 0.18, 1.5), bcf, Color3.fromRGB(48, 52, 50), Enum.Material.Metal, true)
-		for _, ds in ipairs({ -2.1, 2.1 }) do
+		makePart(folder, "ShelterBenchTop", Vector3.new(5.4, 0.18, 1.5), bcf, Color3.fromRGB(48, 52, 50), Enum.Material.Metal, true)
+		for _, ds in ipairs({ -2.0, 2.0 }) do
 			makePart(folder, "ShelterBenchLeg", Vector3.new(0.22, 1.6, 1.2), bcf * CFrame.new(ds, -0.82, 0), COLOR_DARK_GREEN, Enum.Material.Metal, true)
 		end
 	end
+
+	-- Passarela coberta reta saindo da guarita com curva 90°
+	buildCoveredWalkwayL(folder, b)
 end
 
 local function buildSouthGatesBannerAndSign(folder: Folder, b: FrameBasis)
@@ -777,9 +880,8 @@ function EntranceEnhancer.Apply(campusRoot: Instance): Folder
 	local signage = campusRoot:WaitForChild("Signage")
 	local lights = campusRoot:WaitForChild("Lights")
 
-	sanitizeBaseline(campusRoot, buildings, props, signage, lights)
-
 	local basis = detectGuaritaBasis(buildings)
+	sanitizeBaseline(campusRoot, buildings, props, signage, lights, basis)
 
 	local folder = Instance.new("Folder")
 	folder.Name = "EntranceEnhanced"
