@@ -257,7 +257,7 @@ local function openInteriorCorridorSeams(campusRoot: Instance)
 		{ p = Vector3.new(120.2, 9.2, -50.7), tan = Vector3.new(-0.99, 0, 0.13).Unit, maxA = 20.0, maxP = 2.5 },
 		-- Círculo 2: Setor 100 <-> Corredor de Convivência <-> Saguão Principal <-> Corredor Cantina/Auditório 504
 		{ p = Vector3.new(-116.1, 9.2, -60.5), tan = Vector3.new(0.17, 0, 0.99).Unit, maxA = 7.2, maxP = 2.5 },
-		{ p = Vector3.new(-91.2, 9.2, -57.1), tan = Vector3.new(-0.16, 0, -0.99).Unit, maxA = 7.2, maxP = 2.5 },
+		{ p = Vector3.new(-91.2, 9.2, -57.1), tan = Vector3.new(-0.16, 0, -0.99).Unit, maxA = 16.5, maxP = 2.5 },
 		{ p = Vector3.new(14.0, 9.2, 47.0), tan = Vector3.new(0.80, 0, 0.60).Unit, maxA = 38.0, maxP = 3.5 },
 		{ p = Vector3.new(13.2, 9.2, 41.5), tan = Vector3.new(0.57, 0, -0.82).Unit, maxA = 16.0, maxP = 2.8 },
 	}
@@ -509,6 +509,95 @@ local function fixDoorRelocations(campusRoot: Instance, interiors: Instance, geo
 			counter
 		)
 	end
+	-- 3) Fecha 7 portas externas/de jardim extras em Buildings que não existem no mapa oficial (só há porta onde há cinza escuro)
+	local buildingsFolder = campusRoot:FindFirstChild("Buildings")
+	if buildingsFolder then
+		local unwantedDoorCenters = {
+			Vector3.new(-184.8, 9.2, -145.1), -- Setor 100 Oeste (entre 113 e 114)
+			Vector3.new(-165.2, 9.2, -33.1),  -- Setor 100 Leste (entre 103 e 104)
+			Vector3.new(-201.4, 9.0, -84.5),  -- Jardim Setor 100 Sul
+			Vector3.new(-169.6, 9.0, -58.7),  -- Jardim Setor 100 Leste
+			Vector3.new(-17.5, 9.2, -110.4),  -- Setor 200 Oeste (entre 211 e 212)
+			Vector3.new(17.2, 9.2, -35.6),    -- Jardim Central 200 Oeste
+			Vector3.new(79.2, 9.2, 8.7),      -- Jardim Central 200 Norte
+		}
+		for idx, target in ipairs(unwantedDoorCenters) do
+			local header: BasePart? = nil
+			local bestDist = 3.5
+			for _, d in ipairs(buildingsFolder:GetDescendants()) do
+				if d:IsA("BasePart") and not d:GetAttribute("RelocatedHidden") then
+					local col = d.Color
+					if math.round(col.R * 255) == 38 and math.round(col.G * 255) == 48 and math.round(col.B * 255) == 43 and d.Size.Y < 1.0 then
+						local dist = (d.Position - target).Magnitude
+						if dist < bestDist then
+							bestDist = dist
+							header = d
+						end
+					end
+				end
+			end
+			if header then
+				local doorW = header.Size.Z
+				local hCF = CFrame.new(header.Position.X, 0, header.Position.Z) * header.CFrame.Rotation
+				-- Oculta batentes e verga da porta indesejada
+				for _, d in ipairs(buildingsFolder:GetDescendants()) do
+					if d:IsA("BasePart") and not d:GetAttribute("RelocatedHidden") then
+						local col = d.Color
+						if math.round(col.R * 255) == 38 and math.round(col.G * 255) == 48 and math.round(col.B * 255) == 43 then
+							if (Vector2.new(d.Position.X - header.Position.X, d.Position.Z - header.Position.Z)).Magnitude <= doorW * 0.5 + 1.5 then
+								hideOriginalPart(d)
+							end
+						end
+					end
+				end
+				-- Fecha vão com parede sólida + barrado verde interno + faixa de janela azul coerente com fachada
+				local closeH = math.max(8.8, header.Position.Y + 0.15)
+				Helpers.MakePart(geomFolder, "ClosedExtDoor_" .. idx .. "_Wall", Vector3.new(0.88, closeH, doorW), hCF * CFrame.new(0, closeH * 0.5, 0), C.WallWhite, Enum.Material.SmoothPlastic, true, true, counter)
+				Helpers.MakePart(geomFolder, "ClosedExtDoor_" .. idx .. "_Base", Vector3.new(0.94, 0.43, doorW), hCF * CFrame.new(0, 0.38, 0), C.BaseboardGrey, Enum.Material.SmoothPlastic, false, false, counter)
+				Helpers.MakePart(geomFolder, "ClosedExtDoor_" .. idx .. "_Dado", Vector3.new(0.92, 3.85, doorW), hCF * CFrame.new(0, 0.56 + 3.85 * 0.5, 0), C.CorridorGreenDado, Enum.Material.SmoothPlastic, false, false, counter)
+				Helpers.MakePart(geomFolder, "ClosedExtDoor_" .. idx .. "_Win", Vector3.new(0.96, 4.4, doorW - 1.2), hCF * CFrame.new(0, 6.8, 0), Color3.fromRGB(58, 91, 115), Enum.Material.Glass, false, false, counter)
+			end
+		end
+	end
+
+	-- 4) Realoca Sala 120 (Telefonia) para fora do meio do corredor, alinhada na coluna 118 -> 119 -> 120
+	for _, d in ipairs(interiors:GetDescendants()) do
+		if d:IsA("BasePart") and not d:GetAttribute("RelocatedHidden") and d.Position.Y > 0.32 then
+			local rel120 = (CFrame.new(-99.25, 0, -61.46) * CFrame.Angles(0, math.rad(8.5), 0)):PointToObjectSpace(Vector3.new(d.Position.X, 0, d.Position.Z))
+			if math.abs(rel120.X) <= 5.6 and math.abs(rel120.Z) <= 4.9 then
+				hideOriginalPart(d)
+			end
+		end
+	end
+	if signage then
+		for _, s in ipairs(signage:GetDescendants()) do
+			if s:IsA("BasePart") and Vector2.new(s.Position.X + 99.25, s.Position.Z + 61.46).Magnitude <= 8.5 then
+				hideOriginalPart(s)
+			end
+		end
+	end
+
+	-- Reconstrói Sala 120 alinhada logo acima de 119 (-92.14, -70.36), liberando corredor amplo até o Saguão
+	local c120CF = CFrame.new(-92.14, 0, -70.36) * CFrame.Angles(0, math.rad(8.5), 0)
+	local s120W, s120D = 6.43, 7.86
+	local thk120 = 0.50
+	local ceil120 = raycastCeilingY(buildingsRP, c120CF.Position, 10.0) or 15.5
+	-- Paredes Oeste (-X), Leste (+X) e Norte (-Z) sólidas
+	buildWrappedWallSegment(geomFolder, c120CF * CFrame.new(-s120W * 0.5, 0, 0), thk120, s120D, ceil120, "S120_West", counter)
+	buildWrappedWallSegment(geomFolder, c120CF * CFrame.new(s120W * 0.5, 0, 0), thk120, s120D, ceil120, "S120_East", counter)
+	buildWrappedWallSegment(geomFolder, c120CF * CFrame.new(0, 0, -s120D * 0.5), s120W, thk120, ceil120, "S120_North", counter)
+	-- Parede Sul (+Z) com porta centralizada (4.29 studs) voltada para o corredor amplo
+	local dW120 = 4.29
+	local seg120 = (s120W - dW120) * 0.5
+	local southWallCF = c120CF * CFrame.new(0, 0, s120D * 0.5)
+	for _, dir in ipairs({ -1, 1 }) do
+		buildWrappedWallSegment(geomFolder, southWallCF * CFrame.new(dir * (dW120 * 0.5 + seg120 * 0.5), 0, 0), seg120, thk120, ceil120, "S120_SouthSeg", counter)
+	end
+	local lintel120H = math.max(0.5, ceil120 - 8.02)
+	Helpers.MakePart(geomFolder, "S120_Lintel", Vector3.new(dW120, lintel120H, thk120), southWallCF * CFrame.new(0, 8.04 + lintel120H * 0.5, 0), C.WallWhite, Enum.Material.SmoothPlastic, true, false, counter)
+	buildDoorFrame(southWallCF, Vector3.zero, dW120, 0.60, false, "S120_Door")
+	local out120 = -southWallCF.LookVector
+	placeDoorSignPlate(geomFolder, "S120_Sign", (southWallCF * CFrame.new(0, 8.82, 0)).Position + out120 * (thk120 * 0.5 + 0.08), out120, "120 • Telefonia", Color3.fromRGB(126, 168, 201), counter)
 end
 
 -- Converte pisos arenosos/Slate em cerâmica cinza-grafite, fecha vãos até o teto e aplica barrado verde-IFSul
@@ -1174,10 +1263,10 @@ local function buildCorridorPropsAndSigns(interiors: Instance, geomFolder: Folde
 		}
 	)
 
-	-- 3. Placa oficial Saguão / Setor 100 (parede norte do corredor de convivência)
+	-- 3. Placa oficial Saguão / Setor 100 (parede sólida entre 118 e 119 no corredor de convivência)
 	placeSignOnWall(
 		"Sign_Setor100_Saguao",
-		{ -28.5, -16.2 },
+		{ -29.8, -17.0 },
 		Vector3.new(0, 0, -1),
 		4.4,
 		4.8,

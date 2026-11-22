@@ -597,18 +597,18 @@
       ],
       "preset": "admin",
       "center": [
-        -27.79,
-        -17.21
+        -25.8,
+        -19.7
       ],
       "size": [
-        2.8,
-        2.4
+        1.8,
+        2.2
       ],
       "rot_deg": 8.5,
       "ceiling_h": 3.2,
       "doors": [
         {
-          "side": "west",
+          "side": "south",
           "offset": 0.0,
           "width": 1.2
         }
