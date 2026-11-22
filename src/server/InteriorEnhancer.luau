@@ -37,11 +37,44 @@ local function isOldRecepcaoProp(posStuds: Vector3, sizeStuds: Vector3): boolean
 	return false
 end
 
+local function hideOriginalPart(inst: Instance)
+	if inst:IsA("BasePart") then
+		inst:SetAttribute("RelocatedHidden", true)
+		inst.Transparency = 1
+		inst.CanCollide = false
+		inst.CanQuery = false
+	end
+	for _, g in ipairs(inst:GetDescendants()) do
+		if g:IsA("SurfaceGui") then
+			g:SetAttribute("RelocatedHidden", true)
+			g.Enabled = false
+		end
+	end
+end
+
 local function sanitizeBaseline(campusRoot: Instance, interiors: Instance, lights: Instance)
 	for _, host in ipairs({ campusRoot, interiors, lights }) do
 		local prev = host:FindFirstChild("InteriorEnhanced")
 		if prev then
 			prev:Destroy()
+		end
+	end
+
+	-- Restaura peças originalmente ocultadas por relocação de portas para manter idempotência
+	for _, container in ipairs({ interiors, campusRoot:FindFirstChild("Signage") }) do
+		if container then
+			for _, d in ipairs(container:GetDescendants()) do
+				if d:GetAttribute("RelocatedHidden") then
+					d:SetAttribute("RelocatedHidden", nil)
+					if d:IsA("BasePart") then
+						d.Transparency = 0
+						d.CanCollide = true
+						d.CanQuery = true
+					elseif d:IsA("SurfaceGui") then
+						d.Enabled = true
+					end
+				end
+			end
 		end
 	end
 
@@ -56,12 +89,361 @@ local function sanitizeBaseline(campusRoot: Instance, interiors: Instance, light
 	end
 end
 
--- Converte pisos arenosos/Slate em cerâmica cinza-grafite e aplica barrado verde-IFSul / faixa verde-lima
-local function upgradeFloorsAndWalls(interiors: Instance, geomFolder: Folder, counter: { count: number })
-	local wallCache: { BasePart } = {}
+local function makeBuildingsRayParams(buildings: Instance?): RaycastParams?
+	if not buildings then
+		return nil
+	end
+	local rp = RaycastParams.new()
+	rp.FilterType = Enum.RaycastFilterType.Include
+	rp.FilterDescendantsInstances = { buildings }
+	return rp
+end
 
+local function raycastCeilingY(rp: RaycastParams?, pos: Vector3, startY: number): number?
+	if not rp then
+		return nil
+	end
+	local res = workspace:Raycast(Vector3.new(pos.X, startY, pos.Z), Vector3.new(0, 20, 0), rp)
+	if res then
+		return res.Position.Y
+	end
+	return nil
+end
+
+local function placeDoorSignPlate(
+	geomFolder: Folder,
+	name: string,
+	pos: Vector3,
+	outwardNormal: Vector3,
+	text: string,
+	accentColor: Color3,
+	counter: { count: number }
+)
+	local n = Vector3.new(outwardNormal.X, 0, outwardNormal.Z).Unit
+	local cf = CFrame.lookAt(pos, pos + n)
+	local w = 6.2
+	local h = 0.89
+	local backing = Helpers.MakePart(
+		geomFolder,
+		name .. "_Plate",
+		Vector3.new(w, h, 0.10),
+		cf,
+		Color3.fromRGB(30, 37, 45),
+		Enum.Material.SmoothPlastic,
+		false,
+		false,
+		counter
+	)
+	Helpers.MakePart(
+		geomFolder,
+		name .. "_Accent",
+		Vector3.new(0.30, h, 0.10),
+		cf * CFrame.new(w * 0.5 + 0.15, 0, 0),
+		accentColor,
+		Enum.Material.SmoothPlastic,
+		false,
+		false,
+		counter
+	)
+
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = Enum.NormalId.Front
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
+	gui.CanvasSize = Vector2.new(620, 90)
+	gui.LightInfluence = 0.2
+	gui.Parent = backing
+
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.fromScale(1, 1)
+	lbl.BackgroundTransparency = 1
+	lbl.Text = text
+	lbl.TextColor3 = Color3.fromRGB(245, 248, 250)
+	lbl.Font = Enum.Font.GothamBold
+	lbl.TextScaled = false
+	lbl.TextSize = 36
+	lbl.Parent = gui
+end
+
+local function buildWrappedWallSegment(
+	geomFolder: Folder,
+	baseCF: CFrame,
+	sizeX: number,
+	sizeZ: number,
+	ceilY: number,
+	namePrefix: string,
+	counter: { count: number }
+)
+	local wallH = math.max(1.0, ceilY - 0.14)
+	Helpers.MakePart(
+		geomFolder,
+		namePrefix .. "_Wall",
+		Vector3.new(sizeX, wallH, sizeZ),
+		baseCF * CFrame.new(0, 0.16 + wallH * 0.5, 0),
+		C.WallWhite,
+		Enum.Material.SmoothPlastic,
+		true,
+		false,
+		counter
+	)
+
+	local xThin = sizeX < sizeZ
+	local wrapX = if xThin then sizeX + 0.04 else sizeX
+	local wrapZ = if xThin then sizeZ else sizeZ + 0.04
+	local baseWrapX = if xThin then sizeX + 0.05 else sizeX
+	local baseWrapZ = if xThin then sizeZ else sizeZ + 0.05
+
+	Helpers.MakePart(
+		geomFolder,
+		namePrefix .. "_Baseboard",
+		Vector3.new(baseWrapX, 0.43, baseWrapZ),
+		baseCF * CFrame.new(0, 0.38, 0),
+		C.BaseboardGrey,
+		Enum.Material.SmoothPlastic,
+		false,
+		false,
+		counter
+	)
+
+	if isInSaguaoZone(baseCF.Position) then
+		local bandH = 2.15
+		Helpers.MakePart(
+			geomFolder,
+			namePrefix .. "_LimeBand",
+			Vector3.new(wrapX, bandH, wrapZ),
+			baseCF * CFrame.new(0, math.min(ceilY, 12.86) - bandH * 0.5 - 0.05, 0),
+			C.HallLimeBand,
+			Enum.Material.SmoothPlastic,
+			false,
+			false,
+			counter
+		)
+	else
+		local dadoH = 3.85
+		Helpers.MakePart(
+			geomFolder,
+			namePrefix .. "_Dado",
+			Vector3.new(wrapX, dadoH, wrapZ),
+			baseCF * CFrame.new(0, 0.56 + dadoH * 0.5, 0),
+			C.CorridorGreenDado,
+			Enum.Material.SmoothPlastic,
+			false,
+			false,
+			counter
+		)
+	end
+end
+
+-- Realoca portas bloqueadas contra paredes traseiras (WC-F230 leste->oeste e Sala 112 centro->leste)
+local function fixDoorRelocations(campusRoot: Instance, interiors: Instance, geomFolder: Folder, counter: { count: number })
+	local buildingsRP = makeBuildingsRayParams(campusRoot:FindFirstChild("Buildings"))
+	local signage = campusRoot:FindFirstChild("Signage")
+
+	local function buildDoorFrame(baseCF: CFrame, doorLocalPos: Vector3, doorW: number, thkFrame: number, alongZ: boolean, prefix: string)
+		local jambH = 7.86
+		local jambSz = if alongZ then Vector3.new(thkFrame, jambH, 0.20) else Vector3.new(0.20, jambH, thkFrame)
+		local headSz = if alongZ then Vector3.new(thkFrame, 0.22, doorW) else Vector3.new(doorW, 0.22, thkFrame)
+		local off = doorW * 0.5 - 0.10
+		local j1 = if alongZ then Vector3.new(0, 4.11, -off) else Vector3.new(-off, 4.11, 0)
+		local j2 = if alongZ then Vector3.new(0, 4.11, off) else Vector3.new(off, 4.11, 0)
+		Helpers.MakePart(geomFolder, prefix .. "_Jamb1", jambSz, baseCF * CFrame.new(doorLocalPos + j1), Color3.fromRGB(43, 50, 56), Enum.Material.SmoothPlastic, true, false, counter)
+		Helpers.MakePart(geomFolder, prefix .. "_Jamb2", jambSz, baseCF * CFrame.new(doorLocalPos + j2), Color3.fromRGB(43, 50, 56), Enum.Material.SmoothPlastic, true, false, counter)
+		Helpers.MakePart(geomFolder, prefix .. "_Head", headSz, baseCF * CFrame.new(doorLocalPos + Vector3.new(0, 7.93, 0)), Color3.fromRGB(43, 50, 56), Enum.Material.SmoothPlastic, true, false, counter)
+	end
+
+	-- 1) WC-F230 (banheiro_fem_cantina): fecha porta Leste (encostada na Cantina) e abre na Oeste
+	local eastLintel: BasePart? = nil
+	local westWall: BasePart? = nil
 	for _, d in ipairs(interiors:GetDescendants()) do
 		if d:IsA("BasePart") then
+			local col = d.Color
+			local r, g, b = math.round(col.R * 255), math.round(col.G * 255), math.round(col.B * 255)
+			local dEast = Vector2.new(d.Position.X - 108.90, d.Position.Z - 84.95).Magnitude
+			if dEast <= 4.2 and d.Position.Y > 0.5 and d.Position.Y < 13.5 then
+				if (r < 60 and g < 65 and b < 70 and d.Size.Y < 8.5)
+					or (math.min(d.Size.X, d.Size.Y, d.Size.Z) <= 0.15 and d.Position.Y > 7.5 and d.Position.Y < 9.8) then
+					hideOriginalPart(d)
+				elseif r >= 225 and g >= 225 and b >= 220 and d.Position.Y >= 8.5 and d.Size.Y < 8.0 and dEast <= 1.2 then
+					eastLintel = d
+					hideOriginalPart(d)
+				end
+			end
+
+			local dWest = Vector2.new(d.Position.X - 95.95, d.Position.Z - 86.90).Magnitude
+			if dWest <= 1.5 then
+				if d.Size.Y >= 10.0 and d.Size.Z >= 8.0 then
+					westWall = d
+					hideOriginalPart(d)
+				elseif d.Position.Y < 0.8 and d.Size.Y <= 0.65 then
+					hideOriginalPart(d)
+				end
+			end
+		end
+	end
+
+	if signage then
+		for _, s in ipairs(signage:GetDescendants()) do
+			if s:IsA("BasePart") then
+				if Vector2.new(s.Position.X - 108.90, s.Position.Z - 84.95).Magnitude <= 14.0 and s.Position.Y > 7.5 then
+					for _, lbl in ipairs(s:GetDescendants()) do
+						if lbl:IsA("TextLabel") and (string.find(lbl.Text, "WC%-F230") or string.find(lbl.Text, "Banheiro Feminino")) then
+							hideOriginalPart(s)
+							break
+						end
+					end
+				end
+			end
+		end
+	end
+
+	if eastLintel then
+		local lCF = eastLintel.CFrame * CFrame.new(0, -eastLintel.Position.Y, 0)
+		local ceilY = raycastCeilingY(buildingsRP, eastLintel.Position, 12.9) or 17.71
+		buildWrappedWallSegment(geomFolder, lCF, eastLintel.Size.X, eastLintel.Size.Z, ceilY, "WC_F230_EastClose", counter)
+	end
+
+	if westWall then
+		local wCF = westWall.CFrame * CFrame.new(0, -westWall.Position.Y, 0)
+		local ceilY = raycastCeilingY(buildingsRP, westWall.Position, westWall.Position.Y + westWall.Size.Y * 0.5 + 0.05) or 17.71
+		local thk = westWall.Size.X
+		local totalLen = westWall.Size.Z
+		local doorW = 4.46
+		local sideLen = (totalLen - doorW) * 0.5
+		if sideLen > 0.3 then
+			for _, dir in ipairs({ -1, 1 }) do
+				local segCF = wCF * CFrame.new(0, 0, dir * (doorW * 0.5 + sideLen * 0.5))
+				buildWrappedWallSegment(geomFolder, segCF, thk, sideLen, ceilY, "WC_F230_WestSide", counter)
+			end
+			local lintelH = math.max(0.5, ceilY - 8.02)
+			Helpers.MakePart(
+				geomFolder,
+				"WC_F230_WestLintel",
+				Vector3.new(thk, lintelH, doorW),
+				wCF * CFrame.new(0, 8.04 + lintelH * 0.5, 0),
+				C.WallWhite,
+				Enum.Material.SmoothPlastic,
+				true,
+				false,
+				counter
+			)
+			buildDoorFrame(wCF, Vector3.zero, doorW, 0.60, true, "WC_F230_WestDoor")
+			local roomCenter = Vector3.new(102.43, 0, 85.93)
+			local toOut = (Vector3.new(westWall.Position.X, 0, westWall.Position.Z) - roomCenter).Unit
+			local outwardWest = if toOut:Dot(wCF.RightVector) >= 0 then wCF.RightVector else -wCF.RightVector
+			placeDoorSignPlate(
+				geomFolder,
+				"WC_F230_WestSign",
+				Vector3.new(westWall.Position.X, 8.82, westWall.Position.Z) + outwardWest * (thk * 0.5 + 0.08),
+				outwardWest,
+				"WC-F230 • Banheiro Feminino",
+				Color3.fromRGB(88, 178, 123),
+				counter
+			)
+		end
+	end
+
+	-- 2) Sala 112 (Setor de Saúde): fecha porta central (bloqueada pela Sala 111) e abre no corredor Setor 100 (leste da parede sul)
+	local s112Lintel: BasePart? = nil
+	local s112RightWall: BasePart? = nil
+	for _, d in ipairs(interiors:GetDescendants()) do
+		if d:IsA("BasePart") then
+			local col = d.Color
+			local r, g, b = math.round(col.R * 255), math.round(col.G * 255), math.round(col.B * 255)
+			local dCenter = Vector2.new(d.Position.X + 221.85, d.Position.Z + 120.70).Magnitude
+			if dCenter <= 3.6 and d.Position.Y > 0.5 and d.Position.Y < 13.5 then
+				if (r < 60 and g < 65 and b < 70 and d.Size.Y < 8.5)
+					or (math.min(d.Size.X, d.Size.Y, d.Size.Z) <= 0.15 and d.Position.Y > 7.5 and d.Position.Y < 9.8) then
+					hideOriginalPart(d)
+				elseif r >= 225 and g >= 225 and b >= 220 and d.Position.Y >= 8.5 and d.Size.Y < 8.0 and dCenter <= 1.2 then
+					s112Lintel = d
+					hideOriginalPart(d)
+				end
+			end
+
+			local dRight = Vector2.new(d.Position.X + 215.75, d.Position.Z + 121.75).Magnitude
+			if dRight <= 1.5 then
+				if d.Size.Y >= 10.0 and d.Size.X >= 6.0 then
+					s112RightWall = d
+					hideOriginalPart(d)
+				elseif d.Position.Y < 0.8 and d.Size.Y <= 0.65 then
+					hideOriginalPart(d)
+				end
+			end
+		end
+	end
+
+	if signage then
+		for _, s in ipairs(signage:GetDescendants()) do
+			if s:IsA("BasePart") and Vector2.new(s.Position.X + 221.64, s.Position.Z + 120.31).Magnitude <= 4.0 and s.Position.Y > 7.5 then
+				hideOriginalPart(s)
+			end
+		end
+	end
+
+	if s112Lintel then
+		local lCF = s112Lintel.CFrame * CFrame.new(0, -s112Lintel.Position.Y, 0)
+		local ceilY = raycastCeilingY(buildingsRP, s112Lintel.Position, 12.2) or 17.00
+		buildWrappedWallSegment(geomFolder, lCF, s112Lintel.Size.X, s112Lintel.Size.Z, ceilY, "S112_CenterClose", counter)
+	end
+
+	if s112RightWall then
+		local rCF = s112RightWall.CFrame * CFrame.new(0, -s112RightWall.Position.Y, 0)
+		local ceilY = raycastCeilingY(buildingsRP, s112RightWall.Position, s112RightWall.Position.Y + s112RightWall.Size.Y * 0.5 + 0.05) or 17.00
+		local totalLen = s112RightWall.Size.X -- 7.70
+		local thk = s112RightWall.Size.Z -- 0.50
+		local doorW = 4.29 -- 1.2m
+		local eastSign = if rCF.RightVector.X >= 0 then 1 else -1
+		local doorLocalX = eastSign * 0.80 -- alinha com offset +1.95m da sala 112 (abertura franca no corredor N-S)
+		local leftEdge = -totalLen * 0.5
+		local rightEdge = totalLen * 0.5
+		local dLeft = doorLocalX - doorW * 0.5
+		local dRight = doorLocalX + doorW * 0.5
+		local leftSegLen = dLeft - leftEdge
+		local rightSegLen = rightEdge - dRight
+
+		if leftSegLen > 0.25 then
+			buildWrappedWallSegment(geomFolder, rCF * CFrame.new(leftEdge + leftSegLen * 0.5, 0, 0), leftSegLen, thk, ceilY, "S112_RightSegL", counter)
+		end
+		if rightSegLen > 0.25 then
+			buildWrappedWallSegment(geomFolder, rCF * CFrame.new(dRight + rightSegLen * 0.5, 0, 0), rightSegLen, thk, ceilY, "S112_RightSegR", counter)
+		end
+
+		local lintelH = math.max(0.5, ceilY - 8.02)
+		Helpers.MakePart(
+			geomFolder,
+			"S112_NewLintel",
+			Vector3.new(doorW, lintelH, thk),
+			rCF * CFrame.new(doorLocalX, 8.04 + lintelH * 0.5, 0),
+			C.WallWhite,
+			Enum.Material.SmoothPlastic,
+			true,
+			false,
+			counter
+		)
+		buildDoorFrame(rCF, Vector3.new(doorLocalX, 0, 0), doorW, 0.60, false, "S112_NewDoor")
+		local s112Center = Vector3.new(-223.14, 0, -128.18)
+		local toOut = (Vector3.new(s112RightWall.Position.X, 0, s112RightWall.Position.Z) - s112Center).Unit
+		local outwardSouth = if toOut:Dot(rCF.LookVector) >= 0 then rCF.LookVector else -rCF.LookVector
+		local signWorldPos = (rCF * CFrame.new(doorLocalX, 8.82, 0)).Position + outwardSouth * (thk * 0.5 + 0.08)
+		placeDoorSignPlate(
+			geomFolder,
+			"S112_NewSign",
+			signWorldPos,
+			outwardSouth,
+			"112 • Setor de Saúde",
+			Color3.fromRGB(126, 168, 201),
+			counter
+		)
+	end
+end
+
+-- Converte pisos arenosos/Slate em cerâmica cinza-grafite, fecha vãos até o teto e aplica barrado verde-IFSul
+local function upgradeFloorsAndWalls(campusRoot: Instance, interiors: Instance, geomFolder: Folder, counter: { count: number })
+	local buildingsRP = makeBuildingsRayParams(campusRoot:FindFirstChild("Buildings"))
+	local wallCache: { BasePart } = {}
+	local ceilingExtendCache: { BasePart } = {}
+
+	for _, d in ipairs(interiors:GetDescendants()) do
+		if d:IsA("BasePart") and not d:GetAttribute("RelocatedHidden") and d.Transparency < 0.99 then
 			local col = d.Color
 			local r = math.round(col.R * 255)
 			local g = math.round(col.G * 255)
@@ -75,11 +457,18 @@ local function upgradeFloorsAndWalls(interiors: Instance, geomFolder: Folder, co
 				d.Material = Enum.Material.SmoothPlastic
 				d.Reflectance = 0
 			elseif d.Position.Y > 0.5 and d.Position.Y < 9.5 and d.Size.Y >= 10.0 and math.min(d.Size.X, d.Size.Z) <= 0.9 then
-				local isWallColor = (r >= 225 and g >= 225 and b >= 220)
-				if isWallColor then
+				if r >= 220 and g >= 220 and b >= 215 then
 					d.Color = C.WallWhite
 					d.Material = Enum.Material.SmoothPlastic
 					table.insert(wallCache, d)
+					table.insert(ceilingExtendCache, d)
+				end
+			elseif d.Position.Y >= 8.0 and d.Position.Y <= 13.5 and d.Size.Y >= 2.5 and d.Size.Y < 10.0 and math.min(d.Size.X, d.Size.Z) >= 0.3 and math.min(d.Size.X, d.Size.Z) <= 0.9 then
+				-- Bandeiras / vergas acima das portas
+				if r >= 220 and g >= 220 and b >= 215 then
+					d.Color = C.WallWhite
+					d.Material = Enum.Material.SmoothPlastic
+					table.insert(ceilingExtendCache, d)
 				end
 			elseif d.Position.Y > 0.25 and d.Position.Y < 0.75 and d.Size.Y <= 0.65 and r == 75 and g == 82 and b == 89 then
 				d.Color = C.BaseboardGrey
@@ -123,6 +512,188 @@ local function upgradeFloorsAndWalls(interiors: Instance, geomFolder: Folder, co
 				false,
 				counter
 			)
+		end
+	end
+
+	-- Fecha todos os vãos entre o topo das divisórias/vergas de porta e a laje do teto
+	for _, wall in ipairs(ceilingExtendCache) do
+		local topY = wall.Position.Y + wall.Size.Y * 0.5
+		local ceilY = raycastCeilingY(buildingsRP, wall.Position, topY + 0.05)
+		if ceilY then
+			local gap = ceilY - topY
+			if gap >= 0.15 and gap <= 12.0 then
+				local fillerH = gap + 0.02
+				local baseCF = CFrame.new(wall.Position.X, 0, wall.Position.Z) * wall.CFrame.Rotation
+				Helpers.MakePart(
+					geomFolder,
+					"WallTopFiller",
+					Vector3.new(wall.Size.X, fillerH, wall.Size.Z),
+					baseCF * CFrame.new(0, topY + fillerH * 0.5, 0),
+					C.WallWhite,
+					Enum.Material.SmoothPlastic,
+					true,
+					false,
+					counter
+				)
+			end
+		end
+	end
+end
+
+-- Fecha frestas estreitas entre salas adjacentes (preservando passagens/portas reais e recorte da porta 112)
+local function fillInterRoomGaps(campusRoot: Instance, geomFolder: Folder, counter: { count: number })
+	local buildingsRP = makeBuildingsRayParams(campusRoot:FindFirstChild("Buildings"))
+	local roomsByBuilding: { [string]: { CampusData.RoomData } } = {}
+	for _, rm in ipairs(CampusData.Rooms) do
+		if rm.buildingId ~= "bloco_800" then
+			roomsByBuilding[rm.buildingId] = roomsByBuilding[rm.buildingId] or {}
+			table.insert(roomsByBuilding[rm.buildingId], rm)
+		end
+	end
+
+	local function hasOpeningOnSide(rm: CampusData.RoomData, side: string, sMin: number, sMax: number): boolean
+		for _, os in ipairs(rm.openSides) do
+			if os == side then
+				return true
+			end
+		end
+		for _, dr in ipairs(rm.doors) do
+			if dr.side == side then
+				local hw = dr.width * 0.5
+				if dr.offset + hw >= sMin and dr.offset - hw <= sMax then
+					return true
+				end
+			end
+		end
+		return false
+	end
+
+	local function buildGapFillerBox(centerCF: CFrame, wallSize: Vector3, dadoSize: Vector3, baseSize: Vector3, ceilY: number)
+		local wallH = math.max(1.0, ceilY - 0.14)
+		Helpers.MakePart(
+			geomFolder,
+			"WallGapFiller",
+			Vector3.new(wallSize.X, wallH, wallSize.Z),
+			centerCF * CFrame.new(0, 0.16 + wallH * 0.5, 0),
+			C.WallWhite,
+			Enum.Material.SmoothPlastic,
+			true,
+			false,
+			counter
+		)
+		Helpers.MakePart(
+			geomFolder,
+			"WallGapBaseboard",
+			Vector3.new(baseSize.X, 0.43, baseSize.Z),
+			centerCF * CFrame.new(0, 0.38, 0),
+			C.BaseboardGrey,
+			Enum.Material.SmoothPlastic,
+			false,
+			false,
+			counter
+		)
+		if isInSaguaoZone(centerCF.Position) then
+			local bandH = 2.15
+			Helpers.MakePart(
+				geomFolder,
+				"WallGapLimeBand",
+				Vector3.new(dadoSize.X, bandH, dadoSize.Z),
+				centerCF * CFrame.new(0, math.min(ceilY, 12.86) - bandH * 0.5 - 0.05, 0),
+				C.HallLimeBand,
+				Enum.Material.SmoothPlastic,
+				false,
+				false,
+				counter
+			)
+		else
+			local dadoH = 3.85
+			Helpers.MakePart(
+				geomFolder,
+				"WallGapDado",
+				Vector3.new(dadoSize.X, dadoH, dadoSize.Z),
+				centerCF * CFrame.new(0, 0.56 + dadoH * 0.5, 0),
+				C.CorridorGreenDado,
+				Enum.Material.SmoothPlastic,
+				false,
+				false,
+				counter
+			)
+		end
+	end
+
+	local minGap = 0.08 * STUDS_PER_METER
+	local maxGap = 1.15 * STUDS_PER_METER
+	local minOverlap = 1.2 * STUDS_PER_METER
+
+	for _, list in pairs(roomsByBuilding) do
+		for i = 1, #list do
+			local A = list[i]
+			local aCF = CFrame.new(A.center.X, 0, A.center.Z) * CFrame.Angles(0, math.rad(A.rotDeg), 0)
+			local ax0, az0 = A.size.X * 0.5, A.size.Y * 0.5
+
+			for j = i + 1, #list do
+				local B = list[j]
+				local diff = math.abs((A.rotDeg - B.rotDeg + 180) % 360 - 180)
+				if diff <= 5 then
+					local rel = aCF:PointToObjectSpace(Vector3.new(B.center.X, 0, B.center.Z))
+					local bx, bz = rel.X, rel.Z
+					local bx0, bz0 = B.size.X * 0.5, B.size.Y * 0.5
+
+					-- 1) Fresta ao longo de X (Leste/Oeste entre A e B)
+					local xGap = if bx > 0 then (bx - bx0 - ax0) else (-ax0 - (bx + bx0))
+					local zMin, zMax = math.max(-az0, bz - bz0), math.min(az0, bz + bz0)
+					local zLen = zMax - zMin
+					if xGap >= minGap and xGap <= maxGap and zLen >= minOverlap then
+						local aSide = if bx > 0 then "east" else "west"
+						local bSide = if bx > 0 then "west" else "east"
+						if not hasOpeningOnSide(A, aSide, zMin, zMax) and not hasOpeningOnSide(B, bSide, zMin - bz, zMax - bz) then
+							local xMid = if bx > 0 then (ax0 + xGap * 0.5) else (-ax0 - xGap * 0.5)
+							local zMid = (zMin + zMax) * 0.5
+							local worldCF = aCF * CFrame.new(xMid, 0, zMid)
+							local ceilY = raycastCeilingY(buildingsRP, worldCF.Position, 10.0) or (A.ceilingH + 5.0)
+							local xSpan = xGap + 0.40
+							buildGapFillerBox(
+								worldCF,
+								Vector3.new(xSpan, 1, zLen + 0.50),
+								Vector3.new(xSpan - 0.02, 1, zLen + 0.54),
+								Vector3.new(xSpan - 0.02, 1, zLen + 0.55),
+								ceilY
+							)
+						end
+					end
+
+					-- 2) Fresta ao longo de Z (Norte/Sul entre A e B)
+					local zGap = if bz > 0 then (bz - bz0 - az0) else (-az0 - (bz + bz0))
+					local xMin, xMax = math.max(-ax0, bx - bx0), math.min(ax0, bx + bx0)
+					-- Recorta atrás da Sala 111 para não invadir a nova porta leste-sul da Sala 112
+					if (A.id == "sala_112" and B.id == "sala_111") or (A.id == "sala_111" and B.id == "sala_112") then
+						if A.id == "sala_112" then
+							xMax = math.min(xMax, 4.10)
+						else
+							xMax = math.min(xMax, bx + 4.10)
+						end
+					end
+					local xLen = xMax - xMin
+					if zGap >= minGap and zGap <= maxGap and xLen >= minOverlap then
+						local aSide = if bz > 0 then "south" else "north"
+						local bSide = if bz > 0 then "north" else "south"
+						if not hasOpeningOnSide(A, aSide, xMin, xMax) and not hasOpeningOnSide(B, bSide, xMin - bx, xMax - bx) then
+							local zMid = if bz > 0 then (az0 + zGap * 0.5) else (-az0 - zGap * 0.5)
+							local xMid = (xMin + xMax) * 0.5
+							local worldCF = aCF * CFrame.new(xMid, 0, zMid)
+							local ceilY = raycastCeilingY(buildingsRP, worldCF.Position, 10.0) or (A.ceilingH + 5.0)
+							local zSpan = zGap + 0.40
+							buildGapFillerBox(
+								worldCF,
+								Vector3.new(xLen + 0.50, 1, zSpan),
+								Vector3.new(xLen + 0.54, 1, zSpan - 0.02),
+								Vector3.new(xLen + 0.55, 1, zSpan - 0.02),
+								ceilY
+							)
+						end
+					end
+				end
+			end
 		end
 	end
 end
@@ -236,7 +807,7 @@ local function buildCorridorInfrastructure(geomFolder: Folder, lightsFolder: Fol
 		{ name = "Setor300_NS", p0 = { 34.5, -51.0 }, p1 = { 37.5, -22.5 }, ceilY = 22.0, trayY = 15.0, lampY = 13.8, pipeOff = -6.2, lampSpacing = 19.5 },
 		{ name = "Setor300_EW_W", p0 = { 24.5, -36.5 }, p1 = { 33.8, -37.9 }, ceilY = 22.0, trayY = 15.0, lampY = 13.8, pipeOff = 6.0, lampSpacing = 14.0 },
 		{ name = "Setor300_EW_E", p0 = { 39.2, -38.7 }, p1 = { 53.0, -40.8 }, ceilY = 22.0, trayY = 15.0, lampY = 13.8, pipeOff = 0, lampSpacing = 16.0 },
-		{ name = "Setor400_EW", p0 = { 39.5, 53.5 }, p1 = { 68.0, 49.0 }, ceilY = 22.0, trayY = 15.0, lampY = 13.8, pipeOff = 6.2, lampSpacing = 20.0 },
+		{ name = "Setor400_EW", p0 = { 39.5, 53.5 }, p1 = { 68.0, 49.0 }, ceilY = 22.0, trayY = 15.0, lampY = 13.8, pipeOff = 0, lampSpacing = 20.0 },
 		{ name = "Bloco800_NS", p0 = { 26.5, -72.0 }, p1 = { 40.5, -92.5 }, ceilY = 18.4, trayY = 14.2, lampY = 13.1, pipeOff = 0, lampSpacing = 18.0 },
 		{ name = "Bloco800_EW", p0 = { 23.0, -89.5 }, p1 = { 44.0, -75.0 }, ceilY = 18.4, trayY = 14.2, lampY = 13.1, pipeOff = 0, lampSpacing = 18.0 },
 	}
@@ -585,8 +1156,14 @@ function InteriorEnhancer.Apply(campusRoot: Instance): Folder
 		task.wait()
 	end
 
+	runChunk("DoorRelocations", function(f)
+		fixDoorRelocations(campusRoot, interiors, f, counter)
+	end)
 	runChunk("WallsAndDado", function(f)
-		upgradeFloorsAndWalls(interiors, f, counter)
+		upgradeFloorsAndWalls(campusRoot, interiors, f, counter)
+	end)
+	runChunk("InterRoomGaps", function(f)
+		fillInterRoomGaps(campusRoot, f, counter)
 	end)
 	runChunk("TileGrid", function(f)
 		buildTileGridAccents(f, counter)
