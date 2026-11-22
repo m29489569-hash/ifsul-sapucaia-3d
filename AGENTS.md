@@ -28,7 +28,10 @@ ifsul-sapucaia-3d/
 ├── tools/                          # Utilitários Python de manutenção
 │   ├── sync_campus_data.py         # Sincroniza data/*.json -> src/shared/CampusData.luau
 │   └── generate_planta_baixa.py    # Gera planta-baixa técnica cotada (SVG/PNG)
-├── assets/ref/                     # Plantas oficiais (DEPEN), ortofoto e mapa OSM (somente referência)
+├── assets/ref/                     # Referências oficiais (somente consulta)
+│   ├── fotos_atuais/               # 7 fotos presenciais mais atuais do câmpus (19/11/2026)
+│   ├── plantas_e_mapas/            # Mapa oficial das salas (DEPEN), ortofoto e OSM
+│   └── INDEX_REFERENCIAS.md        # Catálogo detalhado de todas as referências
 └── docs/                           # Screenshots do Roblox Studio, backlog, créditos e referências
 ```
 
