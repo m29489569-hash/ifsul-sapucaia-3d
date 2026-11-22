@@ -499,15 +499,25 @@ local function spawnPosters()
 		sound.Volume = 0.55
 		sound.Parent = part
 
+		local promptAnchor = Instance.new("Attachment")
+		promptAnchor.Name = "PromptAnchor"
+		-- Posiciona o prompt abaixo da borda inferior do cartaz (sobre o barrado verde),
+		-- mantendo 100% da frase legível ao se aproximar.
+		promptAnchor.Position = Vector3.new(0, -(POSTER_HEIGHT * 0.5 + 0.85), -0.1)
+		promptAnchor.Parent = part
+
 		local prompt = Instance.new("ProximityPrompt")
 		prompt.Name = "CollectPrompt"
-		prompt.ActionText = "Coletar Cartaz"
-		prompt.ObjectText = "+" .. tostring(currentDef.reward) .. " Moedas (" .. currentDef.rarity .. ")"
+		prompt.ActionText = "Coletar"
+		prompt.ObjectText = if currentDef.rarity == "Raro"
+			then ("+" .. tostring(currentDef.reward) .. " • Raro")
+			else ("+" .. tostring(currentDef.reward) .. " moedas")
 		prompt.KeyboardKeyCode = Enum.KeyCode.E
 		prompt.HoldDuration = 0.2
-		prompt.MaxActivationDistance = 11
+		prompt.MaxActivationDistance = 9
 		prompt.RequiresLineOfSight = false
-		prompt.Parent = part
+		prompt.UIOffset = Vector2.new(0, 12)
+		prompt.Parent = promptAnchor
 
 		prompt.Triggered:Connect(function(player: Player)
 			if collected then
@@ -553,7 +563,9 @@ local function spawnPosters()
 				currentDef = rollPosterDef(false)
 				buildPosterVisual(part, currentDef)
 				part.Transparency = 0
-				prompt.ObjectText = "+" .. tostring(currentDef.reward) .. " Moedas (" .. currentDef.rarity .. ")"
+				prompt.ObjectText = if currentDef.rarity == "Raro"
+					then ("+" .. tostring(currentDef.reward) .. " • Raro")
+					else ("+" .. tostring(currentDef.reward) .. " moedas")
 				prompt.Enabled = true
 				collected = false
 			end)
