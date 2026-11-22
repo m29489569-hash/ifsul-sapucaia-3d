@@ -129,6 +129,13 @@ function CampusBuilder.BuildFromBase64(b64Payload: string, removeBaseplate: bool
 		end
 		part.Anchored = true
 		part.CanCollide = (col == 1)
+		part.CanTouch = false
+		if col == 0 then
+			part.CanQuery = false
+		end
+		if tr > 0.05 or ci == 3 or (sx < 1.5 and sy < 1.5 and sz < 1.5) then
+			part.CastShadow = false
+		end
 		part.Material = MATERIALS[mi] or Enum.Material.SmoothPlastic
 		part.Color = Color3.fromRGB(cr, cg, cb)
 		part.Transparency = tr

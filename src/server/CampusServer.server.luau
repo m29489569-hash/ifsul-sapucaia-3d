@@ -1,8 +1,9 @@
 --!strict
 -- Servidor principal do IFSul — Câmpus Sapucaia do Sul (Roblox)
--- Gerencia iluminação Dia/Noite e teleporte seguro para salas e POIs.
+-- Configura iluminação/atmosfera inicial e gerencia teleporte seguro (com cooldown e suporte a Streaming).
 
 local Lighting = game:GetService("Lighting")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
@@ -29,18 +30,38 @@ local function ensureRemote(name: string): RemoteEvent
 	return re
 end
 
-local toggleDayNightRemote = ensureRemote("ToggleDayNight")
 local teleportRemote = ensureRemote("TeleportToLocation")
 
-local isNight = false
-
-local function applyLighting(night: boolean)
-	isNight = night
-	local preset = if night then Config.Lighting.Night else Config.Lighting.Day
-	Lighting.ClockTime = preset.ClockTime
-	Lighting.Brightness = preset.Brightness
-	Lighting.OutdoorAmbient = preset.OutdoorAmbient
+-- Configura atmosfera e nuvens iniciais (Dia/Noite é alternado localmente em cada cliente para evitar trollagem)
+local function setupInitialEnvironment()
+	local day = Config.Lighting.Day
+	Lighting.ClockTime = day.ClockTime
+	Lighting.Brightness = day.Brightness
+	Lighting.OutdoorAmbient = day.OutdoorAmbient
 	Lighting.GeographicLatitude = Config.GeographicLatitude
+	Lighting.GlobalShadows = true
+
+	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+	if not atmosphere then
+		atmosphere = Instance.new("Atmosphere")
+		atmosphere.Name = "CampusAtmosphere"
+		atmosphere.Parent = Lighting
+	end
+	atmosphere.Density = day.AtmosphereDensity
+	atmosphere.Offset = 0.25
+	atmosphere.Color = day.AtmosphereColor
+	atmosphere.Decay = day.AtmosphereDecay
+	atmosphere.Glare = 0.15
+	atmosphere.Haze = day.AtmosphereHaze
+
+	local terrain = Workspace:FindFirstChildOfClass("Terrain")
+	if terrain and not terrain:FindFirstChildOfClass("Clouds") then
+		local clouds = Instance.new("Clouds")
+		clouds.Cover = 0.45
+		clouds.Density = 0.55
+		clouds.Color = Color3.fromRGB(245, 248, 255)
+		clouds.Parent = terrain
+	end
 
 	local campus = Workspace:FindFirstChild("IFSul_Campus")
 	if campus then
@@ -48,7 +69,7 @@ local function applyLighting(night: boolean)
 		if lightsFolder then
 			for _, desc in ipairs(lightsFolder:GetDescendants()) do
 				if desc:IsA("PointLight") then
-					desc.Enabled = night
+					desc.Enabled = false
 				end
 			end
 		end
@@ -66,9 +87,11 @@ for _, room in ipairs(CampusData.Rooms) do
 	validTargets["room:" .. room.id] = room.center + Vector3.new(0, 1.5, 0)
 end
 
-toggleDayNightRemote.OnServerEvent:Connect(function(_player: Player)
-	applyLighting(not isNight)
-	toggleDayNightRemote:FireAllClients(isNight)
+-- Cooldown por jogador para evitar spam de teleporte
+local lastTeleport: { [Player]: number } = {}
+
+Players.PlayerRemoving:Connect(function(player: Player)
+	lastTeleport[player] = nil
 end)
 
 teleportRemote.OnServerEvent:Connect(function(player: Player, targetKey: unknown)
@@ -79,14 +102,33 @@ teleportRemote.OnServerEvent:Connect(function(player: Player, targetKey: unknown
 	if not dest then
 		return
 	end
+
+	local now = os.clock()
+	local prev = lastTeleport[player]
+	if prev and (now - prev) < Config.TeleportCooldown then
+		return
+	end
+	lastTeleport[player] = now
+
+	-- Se StreamingEnabled estiver ativo, solicita o carregamento da área antes de mover o personagem
+	if Workspace.StreamingEnabled then
+		pcall(function()
+			player:RequestStreamAroundAsync(dest, 3)
+		end)
+	end
+
 	local char = player.Character
 	if not char then
 		return
 	end
 	local hrp = char:FindFirstChild("HumanoidRootPart") :: BasePart?
-	if hrp then
-		hrp.CFrame = CFrame.new(dest)
+	if not hrp then
+		return
 	end
+
+	hrp.AssemblyLinearVelocity = Vector3.zero
+	hrp.AssemblyAngularVelocity = Vector3.zero
+	char:PivotTo(CFrame.new(dest))
 end)
 
-applyLighting(false)
+setupInitialEnvironment()

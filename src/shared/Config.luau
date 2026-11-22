@@ -25,17 +25,30 @@ Config.Colors = {
 	TextMuted = Color3.fromRGB(168, 178, 188),
 }
 
+-- Movimentação e segurança
+Config.WalkSpeed = 16
+Config.SprintSpeed = 28
+Config.TeleportCooldown = 1.0
+
 -- Iluminação Dia / Noite
 Config.Lighting = {
 	Day = {
 		ClockTime = 14,
 		Brightness = 2.2,
 		OutdoorAmbient = Color3.fromRGB(115, 125, 135),
+		AtmosphereDensity = 0.24,
+		AtmosphereColor = Color3.fromRGB(199, 218, 236),
+		AtmosphereDecay = Color3.fromRGB(120, 145, 175),
+		AtmosphereHaze = 1.2,
 	},
 	Night = {
 		ClockTime = 21.5,
 		Brightness = 0.65,
 		OutdoorAmbient = Color3.fromRGB(35, 45, 65),
+		AtmosphereDensity = 0.34,
+		AtmosphereColor = Color3.fromRGB(28, 38, 58),
+		AtmosphereDecay = Color3.fromRGB(18, 24, 40),
+		AtmosphereHaze = 2.0,
 	},
 }
 
