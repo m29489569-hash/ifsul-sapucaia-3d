@@ -6,6 +6,8 @@ local EncodingService = game:GetService("EncodingService")
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 
+local EntranceEnhancer = require(script.Parent.EntranceEnhancer)
+
 local CampusBuilder = {}
 
 local MATERIALS = {
@@ -231,6 +233,8 @@ function CampusBuilder.BuildFromBase64(b64Payload: string, removeBaseplate: bool
 		p.Parent = fLights
 	end
 	task.wait()
+
+	EntranceEnhancer.Apply(root)
 
 	return N, L, K
 end
