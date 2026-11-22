@@ -61,8 +61,8 @@ local function sanitizeBaseline(campusRoot: Instance, interiors: Instance, light
 		end
 	end
 
-	-- Restaura peças originalmente ocultadas por relocação de portas/mobiliário para manter idempotência
-	for _, container in ipairs({ interiors, campusRoot:FindFirstChild("Signage"), campusRoot:FindFirstChild("Props") }) do
+	-- Restaura peças originalmente ocultadas por relocação de portas/mobiliário/vãos para manter idempotência
+	for _, container in ipairs({ interiors, campusRoot:FindFirstChild("Signage"), campusRoot:FindFirstChild("Props"), campusRoot:FindFirstChild("Buildings") }) do
 		if container then
 			for _, d in ipairs(container:GetDescendants()) do
 				if d:GetAttribute("RelocatedHidden") then
@@ -231,6 +231,80 @@ local function buildWrappedWallSegment(
 			false,
 			counter
 		)
+	end
+end
+
+-- Remove paredes/portas intermediárias artificiais entre blocos que compartilham corredores abertos internos
+-- (1: ligação Setor 200 <-> Setor 300; 2: Setor 100 <-> Convivência <-> Saguão <-> Cantina/Auditório)
+local function openInteriorCorridorSeams(campusRoot: Instance)
+	local buildings = campusRoot:FindFirstChild("Buildings")
+	if not buildings then
+		return
+	end
+
+	type SeamSpec = {
+		p: Vector3,
+		tan: Vector3,
+		maxA: number,
+		maxP: number,
+	}
+
+	local seams: { SeamSpec } = {
+		-- Círculo 1: Corredor aberto Setor 200 <-> Setor 300 (ponte E-W e corredor N-S entre 216/217/218 e Plásticos)
+		{ p = Vector3.new(62.8, 9.2, -86.6), tan = Vector3.new(-0.15, 0, -0.99).Unit, maxA = 7.2, maxP = 2.0 },
+		{ p = Vector3.new(92.1, 9.2, -90.9), tan = Vector3.new(0.16, 0, 0.99).Unit, maxA = 7.2, maxP = 2.0 },
+		{ p = Vector3.new(116.2, 9.2, -74.3), tan = Vector3.new(0.99, 0, -0.17).Unit, maxA = 20.0, maxP = 2.5 },
+		{ p = Vector3.new(120.2, 9.2, -50.7), tan = Vector3.new(-0.99, 0, 0.13).Unit, maxA = 20.0, maxP = 2.5 },
+		-- Círculo 2: Setor 100 <-> Corredor de Convivência <-> Saguão Principal <-> Corredor Cantina/Auditório 504
+		{ p = Vector3.new(-116.1, 9.2, -60.5), tan = Vector3.new(0.17, 0, 0.99).Unit, maxA = 7.2, maxP = 2.5 },
+		{ p = Vector3.new(-91.2, 9.2, -57.1), tan = Vector3.new(-0.16, 0, -0.99).Unit, maxA = 7.2, maxP = 2.5 },
+		{ p = Vector3.new(14.0, 9.2, 47.0), tan = Vector3.new(0.80, 0, 0.60).Unit, maxA = 38.0, maxP = 3.5 },
+		{ p = Vector3.new(13.2, 9.2, 41.5), tan = Vector3.new(0.57, 0, -0.82).Unit, maxA = 16.0, maxP = 2.8 },
+	}
+
+	local function getThinAxis(part: BasePart): Vector3
+		local sz = part.Size
+		if sz.X <= sz.Y and sz.X <= sz.Z then
+			return part.CFrame.RightVector
+		elseif sz.Y <= sz.X and sz.Y <= sz.Z then
+			return part.CFrame.UpVector
+		else
+			return part.CFrame.LookVector
+		end
+	end
+
+	for _, d in ipairs(buildings:GetDescendants()) do
+		if d:IsA("BasePart") and not d:GetAttribute("RelocatedHidden") then
+			-- Preserva apenas lajes horizontais de teto/telhado (Y >= 13.5), permitindo ocultar vergas/batentes em Y ~ 9.2
+			local isHorizontalRoof = math.abs(d.CFrame.UpVector.Y) > 0.7 and d.Size.Y <= 0.5 and d.Position.Y >= 13.5
+			if not isHorizontalRoof and d.Position.Y >= 1.0 and d.Position.Y <= 16.2 then
+				local col = d.Color
+				local r, g, b = math.round(col.R * 255), math.round(col.G * 255), math.round(col.B * 255)
+				local isDoorFrame = (r == 38 and g == 48 and b == 43)
+				local isWindowMullion = (r == 39 and g == 43 and b == 48)
+				local isWindowGlass = (r == 58 and g == 91 and b == 115)
+				local isTerracotta = (r == 186 and g == 113 and b == 92)
+				local isTrimPillar = (r == 242 and g == 241 and b == 237 and d.Size.X <= 1.2 and d.Size.Z <= 1.5)
+				local isWhiteWallSkin = (r >= 245 and g >= 245 and b >= 245 and math.min(d.Size.X, d.Size.Y, d.Size.Z) <= 0.25)
+
+				if isDoorFrame or isWindowMullion or isWindowGlass or isTerracotta or isTrimPillar or isWhiteWallSkin then
+					local thinAxis = getThinAxis(d)
+					local isDoorJambOrSoffit = isWhiteWallSkin and (math.min(d.Size.X, d.Size.Z) <= 1.2 or d.Position.Y <= 9.5)
+					for _, s in ipairs(seams) do
+						local nrm = Vector3.new(-s.tan.Z, 0, s.tan.X)
+						local delta = Vector3.new(d.Position.X - s.p.X, 0, d.Position.Z - s.p.Z)
+						local along = math.abs(delta:Dot(s.tan))
+						local perp = math.abs(delta:Dot(nrm))
+						if along <= s.maxA and perp <= s.maxP then
+							if isDoorFrame or isWindowMullion or isTrimPillar or isDoorJambOrSoffit or math.abs(thinAxis:Dot(nrm)) > 0.75 then
+								hideOriginalPart(d)
+								break
+							end
+						end
+					end
+				end
+			end
+		end
 	end
 end
 
@@ -1156,6 +1230,8 @@ function InteriorEnhancer.Apply(campusRoot: Instance): Folder
 		chunk.Parent = geomFolder
 		task.wait()
 	end
+
+	openInteriorCorridorSeams(campusRoot)
 
 	runChunk("DoorRelocations", function(f)
 		fixDoorRelocations(campusRoot, interiors, f, counter)
