@@ -69,7 +69,14 @@ local function setupInitialEnvironment()
 		if lightsFolder then
 			for _, desc in ipairs(lightsFolder:GetDescendants()) do
 				if desc:IsA("PointLight") then
-					desc.Enabled = false
+					local alwaysOn = desc:GetAttribute("AlwaysOn") == true
+					desc.Enabled = alwaysOn
+					if alwaysOn then
+						local dayB = desc:GetAttribute("DayBrightness")
+						if typeof(dayB) == "number" then
+							desc.Brightness = dayB
+						end
+					end
 				end
 			end
 		end

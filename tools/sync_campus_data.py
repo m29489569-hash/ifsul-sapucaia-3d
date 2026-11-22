@@ -49,12 +49,32 @@ def main() -> None:
         "\tcolor: Color3,",
         "}",
         "",
+        "export type DoorSpec = {",
+        "\tside: string,",
+        "\toffset: number,",
+        "\twidth: number,",
+        "}",
+        "",
         "export type RoomData = {",
         "\tid: string,",
         "\tcode: string,",
         "\tname: string,",
         "\tsector: string,",
+        "\tbuildingId: string,",
+        "\tpreset: string,",
+        "\tceilingH: number,",
         "\taliases: { string },",
+        "\tcenter: Vector3,",
+        "\tsize: Vector2,",
+        "\trotDeg: number,",
+        "\tdoors: { DoorSpec },",
+        "\topenSides: { string },",
+        "}",
+        "",
+        "export type CourtyardData = {",
+        "\tid: string,",
+        "\tbuildingId: string,",
+        "\tname: string,",
         "\tcenter: Vector3,",
         "\tsize: Vector2,",
         "\trotDeg: number,",
@@ -102,11 +122,39 @@ def main() -> None:
         sw = round(sz[0] * STUDS_PER_METER, 2)
         sd = round(sz[1] * STUDS_PER_METER, 2)
         aliases = ", ".join(lua_str(a) for a in rm.get("aliases", []))
+        doors_items = []
+        for d in rm.get("doors", []):
+            d_side = lua_str(str(d.get("side", "north")))
+            d_off = round(float(d.get("offset", 0.0)) * STUDS_PER_METER, 2)
+            d_w = round(float(d.get("width", 1.3)) * STUDS_PER_METER, 2)
+            doors_items.append(f"{{ side = {d_side}, offset = {d_off}, width = {d_w} }}")
+        doors_str = ", ".join(doors_items)
+        open_str = ", ".join(lua_str(str(o)) for o in rm.get("open_sides", []))
+        ceil_h = round(float(rm.get("ceiling_h", 3.6)) * STUDS_PER_METER, 2)
         lines.append(
             f"\t{{ id = {lua_str(rm['id'])}, code = {lua_str(str(rm.get('code', '')))}, "
             f"name = {lua_str(rm.get('name', ''))}, sector = {lua_str(str(rm.get('sector', '')))}, "
-            f"aliases = {{ {aliases} }}, center = Vector3.new({cx}, 4.5, {cz}), "
-            f"size = Vector2.new({sw}, {sd}), rotDeg = {round(float(rm.get('rot_deg', 0.0)), 2)} }},"
+            f"buildingId = {lua_str(str(rm.get('building_id', '')))}, preset = {lua_str(str(rm.get('preset', 'admin')))}, "
+            f"ceilingH = {ceil_h}, aliases = {{ {aliases} }}, center = Vector3.new({cx}, 4.5, {cz}), "
+            f"size = Vector2.new({sw}, {sd}), rotDeg = {round(float(rm.get('rot_deg', 0.0)), 2)}, "
+            f"doors = {{ {doors_str} }}, openSides = {{ {open_str} }} }},"
+        )
+    lines.append("}")
+    lines.append("")
+
+    # Courtyards
+    lines.append("CampusData.Courtyards = {")
+    for cy in interiors.get("courtyards", []):
+        c = cy.get("center", [0, 0])
+        sz = cy.get("size", [6, 6])
+        cx = round(c[0] * STUDS_PER_METER, 2)
+        cz = round(c[1] * STUDS_PER_METER, 2)
+        sw = round(sz[0] * STUDS_PER_METER, 2)
+        sd = round(sz[1] * STUDS_PER_METER, 2)
+        lines.append(
+            f"\t{{ id = {lua_str(cy['id'])}, buildingId = {lua_str(str(cy.get('building_id', '')))}, "
+            f"name = {lua_str(cy.get('name', ''))}, center = Vector3.new({cx}, 0.2, {cz}), "
+            f"size = Vector2.new({sw}, {sd}), rotDeg = {round(float(cy.get('rot_deg', 0.0)), 2)} }},"
         )
     lines.append("}")
     lines.append("")

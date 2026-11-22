@@ -194,7 +194,14 @@ local function applyLocalLighting(night: boolean)
 		if lightsFolder then
 			for _, desc in ipairs(lightsFolder:GetDescendants()) do
 				if desc:IsA("PointLight") then
-					desc.Enabled = night
+					local alwaysOn = desc:GetAttribute("AlwaysOn") == true
+					desc.Enabled = alwaysOn or night
+					if alwaysOn then
+						local targetB = if night then desc:GetAttribute("NightBrightness") else desc:GetAttribute("DayBrightness")
+						if typeof(targetB) == "number" then
+							desc.Brightness = targetB
+						end
+					end
 				end
 			end
 		end
