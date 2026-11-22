@@ -21,6 +21,12 @@ local COLOR_BUS_BLUE = Color3.fromRGB(22, 78, 155)
 
 local COLOR_CANOPY_ROOF = Color3.fromRGB(240, 233, 173)
 local COLOR_CANOPY_GREEN = Color3.fromRGB(46, 110, 54)
+local COLOR_WALKWAY_PAVEMENT = Color3.fromRGB(78, 82, 88)
+local COLOR_WALKWAY_JOINT = Color3.fromRGB(45, 48, 53)
+local COLOR_WALKWAY_LINE = Color3.fromRGB(194, 155, 34)
+local COLOR_WALKWAY_ARROW = Color3.fromRGB(234, 178, 8)
+local COLOR_CURB_LIGHT = Color3.fromRGB(140, 138, 132)
+local COLOR_CURB_DARK = Color3.fromRGB(125, 124, 118)
 
 export type FrameBasis = {
 	center: Vector3,
@@ -213,6 +219,27 @@ local function sanitizeBaseline(campus: Instance, buildings: Instance, props: In
 			local isOldWalkwayLight = inOldWalkwayNS and ls <= -14.6 and ly >= 10.2 and ly <= 11.2 and maxSz < 6
 				and ((r > 230 and g > 230 and b > 200) or (r >= 145 and r <= 170 and g >= 150 and g <= 175 and b >= 160 and b <= 185))
 
+			-- Piso, juntas, meios-fios, faixa central e setas invertidas da passarela antiga (N-S + setas L-O)
+			local isOldWalkwayPavement = le >= -4.0 and le <= 16.0 and ls >= -56.0 and ls <= -13.0 and ly >= 0.05 and ly <= 0.30
+				and r == 78 and g == 82 and b == 88 and maxSz < 50
+			local isOldWalkwayJoint = le >= -4.0 and le <= 16.0 and ls >= -62.0 and ls <= -13.0 and ly >= 0.15 and ly <= 0.30
+				and r == 45 and g == 48 and b == 53 and maxSz < 12
+			local isOldWalkwayCurb = le >= -4.0 and le <= 16.0 and ls >= -55.0 and ls <= -13.0 and ly >= 0.20 and ly <= 0.38
+				and ((r == 125 and g == 124 and b == 118) or (r == 140 and g == 138 and b == 132))
+			local isOldWalkwayLine = le >= -4.0 and le <= 16.0 and ls >= -56.0 and ls <= -13.0 and ly >= 0.15 and ly <= 0.30
+				and r == 194 and g == 155 and b == 34 and maxSz < 50
+			local isInvertedArrow = le >= -4.0 and le <= 120.0 and ls >= -65.0 and ls <= -13.0 and ly >= 0.15 and ly <= 0.30
+				and r == 234 and g == 178 and b == 8
+
+			-- Apara a viga verde sul da passarela L-O se estiver invadindo a curva de 90° (e < 6.9)
+			if g > r + 20 and g > b + 20 and ly >= 10.5 and ly <= 11.2 and ls >= -56.5 and ls <= -54.8 and maxSz > 100 then
+				local trimAmount = 2.62
+				if p.Size.Z > 110 then
+					p.Size = Vector3.new(p.Size.X, p.Size.Y, p.Size.Z - trimAmount)
+					p.CFrame = p.CFrame + basis.east * (trimAmount * 0.5)
+				end
+			end
+
 			local isFakeTotemWall = pos.X >= -231.5 and pos.X <= -227.0 and pos.Z >= -4.0 and pos.Z <= 20.5 and pos.Y > 3.5
 			local isGreenLollipop = pos.X >= -236.0 and pos.X <= -232.0 and pos.Z >= 34.0 and pos.Z <= 43.0 and pos.Y > 1.0 and pos.Y < 8.5
 			local isSolidVehicleGate = pos.X >= -224.0 and pos.X <= -214.0 and pos.Z >= 54.5 and pos.Z <= 90.0 and pos.Y > 1.5 and pos.Y < 6.0 and p.Size.X > 8
@@ -224,7 +251,7 @@ local function sanitizeBaseline(campus: Instance, buildings: Instance, props: In
 			local isGuaritaWestGreenBand = pos.X >= -226.5 and pos.X <= -223.5 and pos.Z >= 30.0 and pos.Z <= 54.0 and pos.Y > 10.5 and g > 120 and r < 80
 			local isGuaritaWestMullion = pos.X >= -227.0 and pos.X <= -222.5 and pos.Z >= 31.0 and pos.Z <= 53.0 and pos.Y >= 4.5 and pos.Y <= 9.0 and p.Size.Y > 4 and r < 60 and g < 60 and b < 60
 
-			if isOldWalkwayRoof or isOldWalkwayGreen or isOldWalkwayLight or isFakeTotemWall or isGreenLollipop or isSolidVehicleGate or isFrontYellowCurb or isDrivewayCrosswalk or isNorthWallGreenCap or isSouthWallGreenCap or isGuaritaWestGlass or isGuaritaWestGreenBand or isGuaritaWestMullion then
+			if isOldWalkwayRoof or isOldWalkwayGreen or isOldWalkwayLight or isOldWalkwayPavement or isOldWalkwayJoint or isOldWalkwayCurb or isOldWalkwayLine or isInvertedArrow or isFakeTotemWall or isGreenLollipop or isSolidVehicleGate or isFrontYellowCurb or isDrivewayCrosswalk or isNorthWallGreenCap or isSouthWallGreenCap or isGuaritaWestGlass or isGuaritaWestGreenBand or isGuaritaWestMullion then
 				table.insert(toDestroy, p)
 			elseif pos.X >= -226 and pos.X <= -205 and pos.Z >= 25 and pos.Z <= 57 then
 				-- Converte guarita e faixas N/S/L para o creme institucional da fachada
@@ -570,6 +597,95 @@ local function buildCoveredWalkwayL(folder: Folder, b: FrameBasis)
 		local lCF = CFrame.lookAt(lPos, lPos + b.south)
 		makePart(folder, "WalkwayLightBody", Vector3.new(0.32, 0.28, 4.4), lCF, Color3.fromRGB(244, 244, 240), Enum.Material.Metal, false)
 		makePart(folder, "WalkwayLightTube", Vector3.new(0.20, 0.10, 3.9), lCF * CFrame.new(0, -0.15, 0), Color3.fromRGB(255, 244, 214), Enum.Material.Neon, false)
+	end
+
+	-- === PISO, MEIOS-FIOS, FAIXA CENTRAL E SETAS DIRECIONAIS CORRIGIDAS ===
+	-- Pavimento escuro exatamente sob o telhado reto N-S e a curva de 90°
+	local pathLen = sStart - sEnd
+	local pathCenter = pt(b, walkECenter, 0.145, (sStart + sEnd) * 0.5)
+	makePart(
+		folder,
+		"WalkwayPavementNS",
+		Vector3.new(walkW, 0.13, pathLen),
+		CFrame.lookAt(pathCenter, pathCenter + b.south),
+		COLOR_WALKWAY_PAVEMENT,
+		Enum.Material.SmoothPlastic,
+		true
+	)
+
+	-- Juntas de dilatação transversais no piso N-S + junta na entrada do trecho L-O
+	for _, sJoint in ipairs({ -14.5, -24.5, -34.5, -44.5, -54.5 }) do
+		local jPos = pt(b, walkECenter, 0.225, sJoint)
+		makePart(folder, "WalkwayFloorJoint", Vector3.new(walkW - 0.12, 0.05, 0.15), CFrame.lookAt(jPos, jPos + b.south), COLOR_WALKWAY_JOINT, Enum.Material.SmoothPlastic, false)
+	end
+	local cornerJointPos = pt(b, walkE1, 0.225, -59.2)
+	makePart(folder, "WalkwayCornerJoint", Vector3.new(9.5, 0.05, 0.15), CFrame.lookAt(cornerJointPos, cornerJointPos + b.east), COLOR_WALKWAY_JOINT, Enum.Material.SmoothPlastic, false)
+
+	-- Meios-fios alternados seguindo as bordas externas e internas da curva de 90°
+	local function addCurbRun(namePrefix: string, p0: Vector3, p1: Vector3)
+		local delta = p1 - p0
+		local len = delta.Magnitude
+		if len < 0.5 then return end
+		local dir = delta.Unit
+		local segLen = 2.25
+		local count = math.max(1, math.floor(len / segLen + 0.5))
+		local step = len / count
+		for i = 0, count - 1 do
+			local cPos = p0 + dir * ((i + 0.5) * step)
+			local col = if i % 2 == 0 then COLOR_CURB_LIGHT else COLOR_CURB_DARK
+			makePart(folder, namePrefix, Vector3.new(0.55, 0.48, step - 0.08), CFrame.lookAt(cPos, cPos + dir), col, Enum.Material.SmoothPlastic, true)
+		end
+	end
+
+	-- Borda oeste (deixa a passagem de pedestres s=[-20.5..-14.1] livre sem degrau)
+	addCurbRun("WalkwayCurbW", pt(b, walkE0 - 0.28, 0.29, sEnd - 0.28), pt(b, walkE0 - 0.28, 0.29, -21.0))
+	-- Borda leste até a curva interna de 90°
+	addCurbRun("WalkwayCurbE", pt(b, walkE1 + 0.28, 0.29, -54.25), pt(b, walkE1 + 0.28, 0.29, -14.5))
+	-- Borda externa norte na curva de 90°
+	addCurbRun("WalkwayCurbCornerN", pt(b, walkE0 - 0.28, 0.29, sEnd - 0.28), pt(b, walkE1 + 0.28, 0.29, sEnd - 0.28))
+	-- Continuação da borda sul da curva interna até o primeiro meio-fio L-O existente (e = 14.0)
+	addCurbRun("WalkwayCurbCornerS", pt(b, walkE1 + 0.28, 0.29, -54.32), pt(b, 14.0, 0.29, -54.42))
+
+	-- Faixa amarela central contínua fazendo a curva de 90° (alinhada ao início da linha L-O em e=6.52, s=-57.99)
+	local sCornerMid = -57.99
+	local lineNSLen = (-15.5) - sCornerMid
+	local lineNSPos = pt(b, walkECenter, 0.225, (sCornerMid + (-15.5)) * 0.5)
+	makePart(folder, "WalkwayCenterLineNS", Vector3.new(0.15, 0.05, lineNSLen), CFrame.lookAt(lineNSPos, lineNSPos + b.south), COLOR_WALKWAY_LINE, Enum.Material.SmoothPlastic, false)
+
+	local lineCornerEndE = 6.65
+	local lineCornerLen = lineCornerEndE - walkECenter
+	local lineCornerPos = pt(b, (walkECenter + lineCornerEndE) * 0.5, 0.225, sCornerMid)
+	makePart(folder, "WalkwayCenterLineCorner", Vector3.new(0.15, 0.05, lineCornerLen), CFrame.lookAt(lineCornerPos, lineCornerPos + b.east), COLOR_WALKWAY_LINE, Enum.Material.SmoothPlastic, false)
+
+	-- Helper para seta direcional correta (ponta em ">" apontando no sentido de dir, sem inversão em "Y")
+	local function addDirectionalArrow(pos: Vector3, dir: Vector3)
+		local u = dir.Unit
+		local side = u:Cross(Vector3.yAxis).Unit
+		-- Haste central
+		makePart(folder, "WalkwayArrowShaft", Vector3.new(0.34, 0.05, 1.80), CFrame.lookAt(pos, pos + u), COLOR_WALKWAY_ARROW, Enum.Material.SmoothPlastic, false)
+		-- Ponta em V voltada para frente (wings partem da ponta e recuam para trás/lados)
+		local tip = pos + u * 0.92
+		for _, sign in ipairs({ -1, 1 }) do
+			local backEnd = tip - u * 0.78 + side * (sign * 0.66)
+			local wingDelta = tip - backEnd
+			local wingMid = (tip + backEnd) * 0.5
+			makePart(folder, "WalkwayArrowHead", Vector3.new(0.30, 0.05, wingDelta.Magnitude), CFrame.lookAt(wingMid, tip), COLOR_WALKWAY_ARROW, Enum.Material.SmoothPlastic, false)
+		end
+	end
+
+	-- Setas corretas no trecho reto N-S (mão inglesa/direita: leste entra para norte, oeste sai para sul)
+	for _, sArrow in ipairs({ -20.0, -30.0, -40.0, -50.0 }) do
+		addDirectionalArrow(pt(b, walkECenter + 2.15, 0.225, sArrow), b.north)
+		addDirectionalArrow(pt(b, walkECenter - 2.15, 0.225, sArrow), b.south)
+	end
+
+	-- Setas corrigidas ao longo de toda a passarela L-O existente (substituindo as antigas invertidas)
+	local ewDir = (b.east - b.south * 0.0205).Unit
+	for i = 0, 10 do
+		-- Faixa sul: sentido entrada (+Leste)
+		addDirectionalArrow(pt(b, 9.11 + i * 10.13, 0.225, -56.52 - i * 0.21), ewDir)
+		-- Faixa norte: sentido saída (-Leste / Oeste)
+		addDirectionalArrow(pt(b, 9.78 + i * 10.13, 0.225, -59.56 - i * 0.204), -ewDir)
 	end
 end
 
