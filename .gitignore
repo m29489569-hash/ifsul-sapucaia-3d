@@ -1,15 +1,14 @@
-# Godot 4+
-.godot/
-*.translation
-export_credentials.cfg
+# Roblox Studio
+*.rbxl.lock
+*.rbxlx.lock
 
-# Node.js & Testes Web
-node_modules/
-npm-debug.log*
-playwright-report/
-test-results/
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
 
-# Capturas temporárias de QA / Regressão Visual
+# Capturas temporárias
 shots/
 
 # Sistema Operacional & Editores
