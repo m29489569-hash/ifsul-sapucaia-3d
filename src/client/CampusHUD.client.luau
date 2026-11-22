@@ -1,13 +1,12 @@
 --!strict
 -- HUD institucional do IFSul — Câmpus Sapucaia do Sul (Roblox)
--- Exibe localização em tempo real (sala/setor), Buscador de Salas/POIs [G],
--- alternância Dia/Noite local [N], Sprint [Shift] e boas-vindas responsivas para PC e Mobile.
+-- Exibe contador de moedas, Buscador de Salas/POIs [G],
+-- alternância Dia/Noite local [N] e Sprint (Shift no PC / botão padrão no celular).
 
 local ContextActionService = game:GetService("ContextActionService")
 local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
@@ -35,60 +34,78 @@ screenGui.IgnoreGuiInset = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = playerGui
 
--- Container superior esquerdo (responsivo para Desktop e Mobile)
-local topContainer = Instance.new("Frame")
-topContainer.Name = "TopLeftContainer"
-topContainer.Size = UDim2.new(0.46, 0, 0, 52)
-topContainer.Position = UDim2.fromOffset(12, 10)
-topContainer.BackgroundTransparency = 1
-topContainer.Parent = screenGui
+-- Contador de moedas (canto superior esquerdo)
+local coinCounter = Instance.new("Frame")
+coinCounter.Name = "CoinCounter"
+coinCounter.AutomaticSize = Enum.AutomaticSize.X
+coinCounter.Size = UDim2.fromOffset(0, 44)
+coinCounter.Position = UDim2.fromOffset(12, 10)
+coinCounter.BackgroundColor3 = Config.Colors.PanelBg
+coinCounter.BackgroundTransparency = 0.14
+coinCounter.Parent = screenGui
 
-local topConstraint = Instance.new("UISizeConstraint")
-topConstraint.MinSize = Vector2.new(240, 52)
-topConstraint.MaxSize = Vector2.new(390, 56)
-topConstraint.Parent = topContainer
+local coinConstraint = Instance.new("UISizeConstraint")
+coinConstraint.MinSize = Vector2.new(96, 44)
+coinConstraint.Parent = coinCounter
 
--- Pílula de localização (título + sala atual)
-local topPill = Instance.new("Frame")
-topPill.Name = "LocationPill"
-topPill.Size = UDim2.new(1, 0, 0, 52)
-topPill.Position = UDim2.fromOffset(0, 0)
-topPill.BackgroundColor3 = Config.Colors.PanelBg
-topPill.BackgroundTransparency = 0.12
-topPill.Parent = topContainer
+local coinCorner = Instance.new("UICorner")
+coinCorner.CornerRadius = UDim.new(0, 22)
+coinCorner.Parent = coinCounter
 
-local pillCorner = Instance.new("UICorner")
-pillCorner.CornerRadius = UDim.new(0, 10)
-pillCorner.Parent = topPill
+local coinStroke = Instance.new("UIStroke")
+coinStroke.Color = Color3.fromRGB(224, 180, 64)
+coinStroke.Thickness = 1.5
+coinStroke.Parent = coinCounter
 
-local pillStroke = Instance.new("UIStroke")
-pillStroke.Color = Config.Colors.PanelBorder
-pillStroke.Thickness = 1.5
-pillStroke.Parent = topPill
+local coinPadding = Instance.new("UIPadding")
+coinPadding.PaddingLeft = UDim.new(0, 6)
+coinPadding.PaddingRight = UDim.new(0, 14)
+coinPadding.Parent = coinCounter
 
-local titleLbl = Instance.new("TextLabel")
-titleLbl.Size = UDim2.new(1, -20, 0, 20)
-titleLbl.Position = UDim2.fromOffset(10, 5)
-titleLbl.BackgroundTransparency = 1
-titleLbl.Font = Enum.Font.GothamBold
-titleLbl.TextSize = 13
-titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-titleLbl.TextTruncate = Enum.TextTruncate.AtEnd
-titleLbl.TextColor3 = Config.Colors.IFSulGreen
-titleLbl.Text = Config.CampusName
-titleLbl.Parent = topPill
+local coinLayout = Instance.new("UIListLayout")
+coinLayout.FillDirection = Enum.FillDirection.Horizontal
+coinLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+coinLayout.Padding = UDim.new(0, 8)
+coinLayout.SortOrder = Enum.SortOrder.LayoutOrder
+coinLayout.Parent = coinCounter
 
-local locLbl = Instance.new("TextLabel")
-locLbl.Size = UDim2.new(1, -20, 0, 20)
-locLbl.Position = UDim2.fromOffset(10, 26)
-locLbl.BackgroundTransparency = 1
-locLbl.Font = Enum.Font.Gotham
-locLbl.TextSize = 12
-locLbl.TextXAlignment = Enum.TextXAlignment.Left
-locLbl.TextTruncate = Enum.TextTruncate.AtEnd
-locLbl.TextColor3 = Config.Colors.TextPrimary
-locLbl.Text = "Área Externa do Câmpus"
-locLbl.Parent = topPill
+local coinIcon = Instance.new("ImageLabel")
+coinIcon.Name = "CoinIcon"
+coinIcon.LayoutOrder = 1
+coinIcon.Size = UDim2.fromOffset(32, 32)
+coinIcon.BackgroundTransparency = 1
+coinIcon.ScaleType = Enum.ScaleType.Fit
+coinIcon.Image = Config.CoinIconAssetId
+coinIcon.Parent = coinCounter
+
+local coinLbl = Instance.new("TextLabel")
+coinLbl.Name = "CoinAmount"
+coinLbl.LayoutOrder = 2
+coinLbl.AutomaticSize = Enum.AutomaticSize.X
+coinLbl.Size = UDim2.fromOffset(0, 32)
+coinLbl.BackgroundTransparency = 1
+coinLbl.Font = Enum.Font.GothamBold
+coinLbl.TextSize = 18
+coinLbl.TextXAlignment = Enum.TextXAlignment.Left
+coinLbl.TextColor3 = Config.Colors.TextPrimary
+coinLbl.Text = "0"
+coinLbl.Parent = coinCounter
+
+local function formatCoins(amount: number): string
+	local n = math.max(0, math.floor(amount))
+	local s = tostring(n)
+	local formatted = string.reverse(s):gsub("(%d%d%d)", "%1."):reverse()
+	return (formatted:gsub("^%.", ""))
+end
+
+local function updateCoinsDisplay()
+	local raw = player:GetAttribute("Coins")
+	local value = if typeof(raw) == "number" then raw else 0
+	coinLbl.Text = formatCoins(value)
+end
+
+updateCoinsDisplay()
+player:GetAttributeChangedSignal("Coins"):Connect(updateCoinsDisplay)
 
 -- Lógica de Sprint (Shift no PC e botão padrão de correr no celular)
 local isSprinting = false
@@ -389,82 +406,6 @@ modalBackdrop.MouseButton1Click:Connect(function()
 	setFinderVisible(false)
 end)
 
--- Card discreto de boas-vindas ao entrar no jogo
-local welcomeCard = Instance.new("Frame")
-welcomeCard.Name = "WelcomeCard"
-welcomeCard.AnchorPoint = Vector2.new(0.5, 1)
-welcomeCard.Position = UDim2.new(0.5, 0, 1, -18)
-welcomeCard.Size = UDim2.new(0.88, 0, 0, 114)
-welcomeCard.BackgroundColor3 = Config.Colors.PanelBg
-welcomeCard.BackgroundTransparency = 0.08
-welcomeCard.ZIndex = 8
-welcomeCard.Parent = screenGui
-
-local welcomeConstraint = Instance.new("UISizeConstraint")
-welcomeConstraint.MinSize = Vector2.new(260, 108)
-welcomeConstraint.MaxSize = Vector2.new(440, 124)
-welcomeConstraint.Parent = welcomeCard
-
-local wcCorner = Instance.new("UICorner")
-wcCorner.CornerRadius = UDim.new(0, 12)
-wcCorner.Parent = welcomeCard
-
-local wcStroke = Instance.new("UIStroke")
-wcStroke.Color = Config.Colors.IFSulGreen
-wcStroke.Thickness = 1.6
-wcStroke.Parent = welcomeCard
-
-local wcTitle = Instance.new("TextLabel")
-wcTitle.Size = UDim2.new(1, -24, 0, 22)
-wcTitle.Position = UDim2.fromOffset(12, 10)
-wcTitle.BackgroundTransparency = 1
-wcTitle.Font = Enum.Font.GothamBold
-wcTitle.TextSize = 14
-wcTitle.TextXAlignment = Enum.TextXAlignment.Left
-wcTitle.TextColor3 = Config.Colors.IFSulGreen
-wcTitle.Text = "Bem-vindo ao IFSul — Câmpus Sapucaia do Sul!"
-wcTitle.ZIndex = 9
-wcTitle.Parent = welcomeCard
-
-local wcBody = Instance.new("TextLabel")
-wcBody.Size = UDim2.new(1, -24, 0, 38)
-wcBody.Position = UDim2.fromOffset(12, 33)
-wcBody.BackgroundTransparency = 1
-wcBody.Font = Enum.Font.Gotham
-wcBody.TextSize = 12
-wcBody.TextWrapped = true
-wcBody.TextXAlignment = Enum.TextXAlignment.Left
-wcBody.TextYAlignment = Enum.TextYAlignment.Top
-wcBody.TextColor3 = Config.Colors.TextPrimary
-wcBody.Text = if isTouchOnly
-	then "Explore o câmpus em escala real 1:1 com 92 salas. Use o botão de correr para se deslocar mais rápido."
-	else "Explore o câmpus em escala real 1:1 com 92 salas. Segure Shift para correr, [G] para buscar salas ou [N] para alternar Dia/Noite."
-wcBody.ZIndex = 9
-wcBody.Parent = welcomeCard
-
-local wcBtn = Instance.new("TextButton")
-wcBtn.Size = UDim2.fromOffset(110, 28)
-wcBtn.Position = UDim2.new(1, -122, 1, -36)
-wcBtn.BackgroundColor3 = Config.Colors.IFSulGreen
-wcBtn.Font = Enum.Font.GothamBold
-wcBtn.TextSize = 12
-wcBtn.TextColor3 = Color3.new(1, 1, 1)
-wcBtn.Text = "Explorar"
-wcBtn.ZIndex = 9
-wcBtn.Parent = welcomeCard
-
-local wcBtnCorner = Instance.new("UICorner")
-wcBtnCorner.CornerRadius = UDim.new(0, 7)
-wcBtnCorner.Parent = wcBtn
-
-local function dismissWelcome()
-	if welcomeCard and welcomeCard.Parent then
-		welcomeCard:Destroy()
-	end
-end
-
-wcBtn.MouseButton1Click:Connect(dismissWelcome)
-
 -- Atalhos de teclado
 UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessed: boolean)
 	if input.KeyCode == Enum.KeyCode.Escape and modalBackdrop.Visible then
@@ -475,46 +416,8 @@ UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessed: 
 		return
 	end
 	if input.KeyCode == Enum.KeyCode.G then
-		dismissWelcome()
 		setFinderVisible(not modalBackdrop.Visible)
 	elseif input.KeyCode == Enum.KeyCode.N then
 		applyLocalLighting(not isNight)
 	end
-end)
-
--- Detecta em tempo real em qual sala o jogador está
-local accum = 0
-RunService.Heartbeat:Connect(function(dt: number)
-	accum += dt
-	if accum < 0.35 then
-		return
-	end
-	accum = 0
-	local char = player.Character
-	if not char then
-		return
-	end
-	local hrp = char:FindFirstChild("HumanoidRootPart") :: BasePart?
-	if not hrp then
-		return
-	end
-	local pos = hrp.Position
-	local foundText = "Área Externa do Câmpus"
-	for _, room in ipairs(CampusData.Rooms) do
-		local dx = pos.X - room.center.X
-		local dz = pos.Z - room.center.Z
-		local halfW = room.size.X * 0.5
-		local halfD = room.size.Y * 0.5
-		if math.abs(dx) <= halfW + 1 and math.abs(dz) <= halfD + 1 then
-			local rad = math.rad(-room.rotDeg)
-			local c, s = math.cos(rad), math.sin(rad)
-			local lx = dx * c - dz * s
-			local lz = dx * s + dz * c
-			if math.abs(lx) <= halfW and math.abs(lz) <= halfD then
-				foundText = if room.code ~= "" then ("Sala " .. room.code .. " — " .. room.name) else room.name
-				break
-			end
-		end
-	end
-	locLbl.Text = foundText
 end)

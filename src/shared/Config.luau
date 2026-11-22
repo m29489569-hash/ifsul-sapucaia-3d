@@ -30,6 +30,9 @@ Config.WalkSpeed = 16
 Config.SprintSpeed = 28
 Config.TeleportCooldown = 1.0
 
+-- Assets de UI
+Config.CoinIconAssetId = "rbxassetid://135668915528258"
+
 -- Iluminação Dia / Noite
 Config.Lighting = {
 	Day = {
