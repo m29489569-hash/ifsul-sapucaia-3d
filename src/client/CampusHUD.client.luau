@@ -3,6 +3,7 @@
 -- Exibe localização em tempo real (sala/setor), Buscador de Salas/POIs [G],
 -- alternância Dia/Noite local [N], Sprint [Shift] e boas-vindas responsivas para PC e Mobile.
 
+local ContextActionService = game:GetService("ContextActionService")
 local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -37,14 +38,14 @@ screenGui.Parent = playerGui
 -- Container superior esquerdo (responsivo para Desktop e Mobile)
 local topContainer = Instance.new("Frame")
 topContainer.Name = "TopLeftContainer"
-topContainer.Size = UDim2.new(0.46, 0, 0, 96)
+topContainer.Size = UDim2.new(0.46, 0, 0, 52)
 topContainer.Position = UDim2.fromOffset(12, 10)
 topContainer.BackgroundTransparency = 1
 topContainer.Parent = screenGui
 
 local topConstraint = Instance.new("UISizeConstraint")
-topConstraint.MinSize = Vector2.new(240, 92)
-topConstraint.MaxSize = Vector2.new(390, 100)
+topConstraint.MinSize = Vector2.new(240, 52)
+topConstraint.MaxSize = Vector2.new(390, 56)
 topConstraint.Parent = topContainer
 
 -- Pílula de localização (título + sala atual)
@@ -89,49 +90,7 @@ locLbl.TextColor3 = Config.Colors.TextPrimary
 locLbl.Text = "Área Externa do Câmpus"
 locLbl.Parent = topPill
 
--- Barra de botões de ação abaixo da pílula
-local btnBar = Instance.new("Frame")
-btnBar.Name = "ActionButtons"
-btnBar.Size = UDim2.new(1, 0, 0, 34)
-btnBar.Position = UDim2.fromOffset(0, 58)
-btnBar.BackgroundTransparency = 1
-btnBar.Parent = topContainer
-
-local btnLayout = Instance.new("UIListLayout")
-btnLayout.FillDirection = Enum.FillDirection.Horizontal
-btnLayout.Padding = UDim.new(0, 6)
-btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-btnLayout.Parent = btnBar
-
-local function makeActionBtn(text: string, widthScale: number): TextButton
-	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(widthScale, -4, 1, 0)
-	btn.BackgroundColor3 = Config.Colors.PanelBg
-	btn.BackgroundTransparency = 0.12
-	btn.Font = Enum.Font.GothamSemibold
-	btn.TextSize = 12
-	btn.TextColor3 = Config.Colors.TextPrimary
-	btn.TextTruncate = Enum.TextTruncate.AtEnd
-	btn.Text = text
-	btn.AutoButtonColor = true
-	btn.Parent = btnBar
-
-	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0, 8)
-	c.Parent = btn
-
-	local s = Instance.new("UIStroke")
-	s.Color = Config.Colors.PanelBorder
-	s.Thickness = 1.2
-	s.Parent = btn
-	return btn
-end
-
-local finderBtn = makeActionBtn(if isTouchOnly then "Salas & POIs" else "Salas [G]", 0.38)
-local dayNightBtn = makeActionBtn(if isTouchOnly then "Modo Dia" else "Dia [N]", 0.32)
-local sprintBtn = makeActionBtn(if isTouchOnly then "Correr" else "Correr [Shift]", 0.30)
-
--- Lógica de Sprint (local, reaplicado ao renascer)
+-- Lógica de Sprint (Shift no PC e botão padrão de correr no celular)
 local isSprinting = false
 
 local function applySprintToCharacter(char: Model?)
@@ -144,20 +103,9 @@ local function applySprintToCharacter(char: Model?)
 	end
 end
 
-local function updateSprintButton()
-	if isSprinting then
-		sprintBtn.BackgroundColor3 = Config.Colors.IFSulGreen
-		sprintBtn.Text = if isTouchOnly then "Correndo" else "Correndo [Shift]"
-	else
-		sprintBtn.BackgroundColor3 = Config.Colors.PanelBg
-		sprintBtn.Text = if isTouchOnly then "Correr" else "Correr [Shift]"
-	end
-end
-
 local function setSprinting(active: boolean)
 	isSprinting = active
 	applySprintToCharacter(player.Character)
-	updateSprintButton()
 end
 
 player.CharacterAdded:Connect(function(char: Model)
@@ -165,9 +113,23 @@ player.CharacterAdded:Connect(function(char: Model)
 	applySprintToCharacter(char)
 end)
 
-sprintBtn.MouseButton1Click:Connect(function()
-	setSprinting(not isSprinting)
-end)
+local function handleSprintAction(_actionName: string, inputState: Enum.UserInputState, _inputObject: InputObject)
+	if inputState == Enum.UserInputState.Begin then
+		setSprinting(true)
+	elseif inputState == Enum.UserInputState.End or inputState == Enum.UserInputState.Cancel then
+		setSprinting(false)
+	end
+	return Enum.ContextActionResult.Pass
+end
+
+ContextActionService:BindAction(
+	"IFSulSprint",
+	handleSprintAction,
+	true,
+	Enum.KeyCode.LeftShift,
+	Enum.KeyCode.RightShift
+)
+ContextActionService:SetTitle("IFSulSprint", "Correr")
 
 -- Lógica de Dia / Noite LOCAL (cada jogador escolhe seu horário sem afetar outros jogadores)
 local isNight = false
@@ -206,17 +168,7 @@ local function applyLocalLighting(night: boolean)
 			end
 		end
 	end
-
-	if night then
-		dayNightBtn.Text = if isTouchOnly then "Modo Noite" else "Noite [N]"
-	else
-		dayNightBtn.Text = if isTouchOnly then "Modo Dia" else "Dia [N]"
-	end
 end
-
-dayNightBtn.MouseButton1Click:Connect(function()
-	applyLocalLighting(not isNight)
-end)
 
 -- Backdrop clicável para fechar o modal no celular ou PC
 local modalBackdrop = Instance.new("TextButton")
@@ -430,9 +382,6 @@ searchBox:GetPropertyChangedSignal("Text"):Connect(function()
 	rebuildList(searchBox.Text)
 end)
 
-finderBtn.MouseButton1Click:Connect(function()
-	setFinderVisible(not modalBackdrop.Visible)
-end)
 closeBtn.MouseButton1Click:Connect(function()
 	setFinderVisible(false)
 end)
@@ -487,7 +436,9 @@ wcBody.TextWrapped = true
 wcBody.TextXAlignment = Enum.TextXAlignment.Left
 wcBody.TextYAlignment = Enum.TextYAlignment.Top
 wcBody.TextColor3 = Config.Colors.TextPrimary
-wcBody.Text = "Explore o câmpus em escala real 1:1 com 92 salas. Use 'Salas' para teleportar, 'Dia/Noite' para mudar o clima e 'Correr' para se deslocar mais rápido."
+wcBody.Text = if isTouchOnly
+	then "Explore o câmpus em escala real 1:1 com 92 salas. Use o botão de correr para se deslocar mais rápido."
+	else "Explore o câmpus em escala real 1:1 com 92 salas. Segure Shift para correr, [G] para buscar salas ou [N] para alternar Dia/Noite."
 wcBody.ZIndex = 9
 wcBody.Parent = welcomeCard
 
@@ -528,14 +479,6 @@ UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessed: 
 		setFinderVisible(not modalBackdrop.Visible)
 	elseif input.KeyCode == Enum.KeyCode.N then
 		applyLocalLighting(not isNight)
-	elseif input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
-		setSprinting(true)
-	end
-end)
-
-UserInputService.InputEnded:Connect(function(input: InputObject)
-	if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
-		setSprinting(false)
 	end
 end)
 
