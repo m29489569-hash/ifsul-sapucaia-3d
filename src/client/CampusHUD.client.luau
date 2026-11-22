@@ -4,9 +4,11 @@
 -- alternância Dia/Noite local [N] e Sprint (Shift no PC / botão padrão no celular).
 
 local ContextActionService = game:GetService("ContextActionService")
+local GuiService = game:GetService("GuiService")
 local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
@@ -30,36 +32,44 @@ end
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "IFSulHUD"
 screenGui.ResetOnSpawn = false
-screenGui.IgnoreGuiInset = false
+screenGui.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = playerGui
 
--- Contador de moedas (canto superior esquerdo)
+-- Contador de moedas responsivo (Phone, Tablet, Desktop e Console/TV)
+-- Usa CoreUISafeInsets para respeitar Topbar, notches/bordas arredondadas e overscan de TV.
 local coinCounter = Instance.new("Frame")
 coinCounter.Name = "CoinCounter"
+coinCounter.AnchorPoint = Vector2.new(0, 0)
 coinCounter.AutomaticSize = Enum.AutomaticSize.X
-coinCounter.Size = UDim2.fromOffset(0, 44)
-coinCounter.Position = UDim2.fromOffset(12, 10)
+coinCounter.Size = UDim2.fromOffset(0, 46)
+coinCounter.Position = UDim2.fromOffset(16, 12)
 coinCounter.BackgroundColor3 = Config.Colors.PanelBg
-coinCounter.BackgroundTransparency = 0.14
+coinCounter.BackgroundTransparency = 0.22
 coinCounter.Parent = screenGui
 
+local coinScale = Instance.new("UIScale")
+coinScale.Scale = 1
+coinScale.Parent = coinCounter
+
 local coinConstraint = Instance.new("UISizeConstraint")
-coinConstraint.MinSize = Vector2.new(96, 44)
+coinConstraint.MinSize = Vector2.new(124, 46)
+coinConstraint.MaxSize = Vector2.new(320, 64)
 coinConstraint.Parent = coinCounter
 
 local coinCorner = Instance.new("UICorner")
-coinCorner.CornerRadius = UDim.new(0, 22)
+coinCorner.CornerRadius = UDim.new(1, 0) -- Cápsula/pílula completa
 coinCorner.Parent = coinCounter
 
 local coinStroke = Instance.new("UIStroke")
 coinStroke.Color = Color3.fromRGB(224, 180, 64)
-coinStroke.Thickness = 1.5
+coinStroke.Thickness = 1.6
+coinStroke.Transparency = 0.1
 coinStroke.Parent = coinCounter
 
 local coinPadding = Instance.new("UIPadding")
-coinPadding.PaddingLeft = UDim.new(0, 6)
-coinPadding.PaddingRight = UDim.new(0, 14)
+coinPadding.PaddingLeft = UDim.new(0, 7)
+coinPadding.PaddingRight = UDim.new(0, 16)
 coinPadding.Parent = coinCounter
 
 local coinLayout = Instance.new("UIListLayout")
@@ -72,36 +82,176 @@ coinLayout.Parent = coinCounter
 local coinIcon = Instance.new("ImageLabel")
 coinIcon.Name = "CoinIcon"
 coinIcon.LayoutOrder = 1
-coinIcon.Size = UDim2.fromOffset(32, 32)
+coinIcon.Size = UDim2.fromOffset(34, 34)
 coinIcon.BackgroundTransparency = 1
 coinIcon.ScaleType = Enum.ScaleType.Fit
 coinIcon.Image = Config.CoinIconAssetId
 coinIcon.Parent = coinCounter
 
+local coinIconAspect = Instance.new("UIAspectRatioConstraint")
+coinIconAspect.AspectRatio = 1
+coinIconAspect.Parent = coinIcon
+
 local coinLbl = Instance.new("TextLabel")
 coinLbl.Name = "CoinAmount"
 coinLbl.LayoutOrder = 2
 coinLbl.AutomaticSize = Enum.AutomaticSize.X
-coinLbl.Size = UDim2.fromOffset(0, 32)
+coinLbl.Size = UDim2.fromOffset(0, 34)
 coinLbl.BackgroundTransparency = 1
 coinLbl.Font = Enum.Font.GothamBold
-coinLbl.TextSize = 18
+coinLbl.TextSize = 20
 coinLbl.TextXAlignment = Enum.TextXAlignment.Left
 coinLbl.TextColor3 = Config.Colors.TextPrimary
+coinLbl.TextStrokeColor3 = Color3.fromRGB(10, 14, 18)
+coinLbl.TextStrokeTransparency = 0.65
 coinLbl.Text = "0"
 coinLbl.Parent = coinCounter
 
+type CoinProfile = {
+	height: number,
+	minWidth: number,
+	iconSize: number,
+	textSize: number,
+	padLeft: number,
+	padRight: number,
+	gap: number,
+	posX: number,
+	posY: number,
+	strokeThickness: number,
+}
+
+local COIN_PROFILES: { [string]: CoinProfile } = {
+	Phone = {
+		height = 36,
+		minWidth = 92,
+		iconSize = 26,
+		textSize = 15,
+		padLeft = 5,
+		padRight = 12,
+		gap = 6,
+		posX = 12,
+		posY = 8,
+		strokeThickness = 1.4,
+	},
+	Tablet = {
+		height = 42,
+		minWidth = 112,
+		iconSize = 30,
+		textSize = 18,
+		padLeft = 6,
+		padRight = 14,
+		gap = 8,
+		posX = 16,
+		posY = 12,
+		strokeThickness = 1.5,
+	},
+	Desktop = {
+		height = 46,
+		minWidth = 124,
+		iconSize = 34,
+		textSize = 20,
+		padLeft = 7,
+		padRight = 16,
+		gap = 8,
+		posX = 16,
+		posY = 12,
+		strokeThickness = 1.6,
+	},
+	Console = {
+		height = 58,
+		minWidth = 156,
+		iconSize = 42,
+		textSize = 26,
+		padLeft = 9,
+		padRight = 20,
+		gap = 10,
+		posX = 32,
+		posY = 24,
+		strokeThickness = 2.0,
+	},
+}
+
+local function detectDeviceProfile(): string
+	if GuiService:IsTenFootInterface() then
+		return "Console"
+	end
+	local cam = Workspace.CurrentCamera
+	local vp = if cam then cam.ViewportSize else Vector2.new(1280, 720)
+	local minSide = math.min(vp.X, vp.Y)
+	if UserInputService.TouchEnabled and not UserInputService.MouseEnabled then
+		if minSide < 550 then
+			return "Phone"
+		end
+		return "Tablet"
+	end
+	if minSide < 520 then
+		return "Phone"
+	elseif vp.X < 1050 then
+		return "Tablet"
+	end
+	return "Desktop"
+end
+
+local function applyCoinResponsiveLayout()
+	local profileName = detectDeviceProfile()
+	local p = COIN_PROFILES[profileName] or COIN_PROFILES.Desktop
+	coinCounter.Size = UDim2.fromOffset(0, p.height)
+	coinCounter.Position = UDim2.fromOffset(p.posX, p.posY)
+	coinConstraint.MinSize = Vector2.new(p.minWidth, p.height)
+	coinConstraint.MaxSize = Vector2.new(340, p.height)
+	coinStroke.Thickness = p.strokeThickness
+	coinPadding.PaddingLeft = UDim.new(0, p.padLeft)
+	coinPadding.PaddingRight = UDim.new(0, p.padRight)
+	coinLayout.Padding = UDim.new(0, p.gap)
+	coinIcon.Size = UDim2.fromOffset(p.iconSize, p.iconSize)
+	coinLbl.Size = UDim2.fromOffset(0, p.iconSize)
+	coinLbl.TextSize = p.textSize
+end
+
+local function bindViewportResize(cam: Camera?)
+	if not cam then
+		return
+	end
+	cam:GetPropertyChangedSignal("ViewportSize"):Connect(applyCoinResponsiveLayout)
+end
+
+applyCoinResponsiveLayout()
+bindViewportResize(Workspace.CurrentCamera)
+Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+	bindViewportResize(Workspace.CurrentCamera)
+	applyCoinResponsiveLayout()
+end)
+
 local function formatCoins(amount: number): string
 	local n = math.max(0, math.floor(amount))
+	if n >= 1_000_000_000 then
+		return (string.format("%.1fB", n / 1_000_000_000):gsub("%.0B$", "B"))
+	elseif n >= 1_000_000 then
+		return (string.format("%.1fM", n / 1_000_000):gsub("%.0M$", "M"))
+	elseif n >= 10_000 then
+		return (string.format("%.1fK", n / 1_000):gsub("%.0K$", "K"))
+	end
 	local s = tostring(n)
 	local formatted = string.reverse(s):gsub("(%d%d%d)", "%1."):reverse()
 	return (formatted:gsub("^%.", ""))
 end
 
+local lastCoins = 0
+local popInInfo = TweenInfo.new(0.09, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local popOutInfo = TweenInfo.new(0.14, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
 local function updateCoinsDisplay()
 	local raw = player:GetAttribute("Coins")
 	local value = if typeof(raw) == "number" then raw else 0
 	coinLbl.Text = formatCoins(value)
+	if value > lastCoins then
+		local tIn = TweenService:Create(coinScale, popInInfo, { Scale = 1.12 })
+		tIn:Play()
+		tIn.Completed:Connect(function()
+			TweenService:Create(coinScale, popOutInfo, { Scale = 1 }):Play()
+		end)
+	end
+	lastCoins = value
 end
 
 updateCoinsDisplay()
