@@ -11,8 +11,8 @@ Config.CampusName = "IFSul — Câmpus Sapucaia do Sul"
 Config.Address = "Av. Copacabana, 100 — Piratini, Sapucaia do Sul/RS"
 Config.GeographicLatitude = -29.8
 
--- Spawn na entrada principal (convertido de data/campus.json)
-Config.SpawnPosition = Vector3.new(-55.0 * Config.STUDS_PER_METER, 1.5, 12.0 * Config.STUDS_PER_METER)
+-- Spawn na praça da entrada principal (livre do bicicletário)
+Config.SpawnPosition = Vector3.new(-51.1 * Config.STUDS_PER_METER, 1.5, 11.55 * Config.STUDS_PER_METER)
 Config.SpawnLookAt = Vector3.new(-20.0 * Config.STUDS_PER_METER, 1.5, 8.0 * Config.STUDS_PER_METER)
 
 -- Paleta institucional oficial da Rede Federal / IFSul
