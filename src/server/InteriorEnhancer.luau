@@ -9,6 +9,7 @@
 
 local CampusData = require(game:GetService("ReplicatedStorage"):WaitForChild("IFSul"):WaitForChild("CampusData"))
 local Helpers = require(script.Parent.InteriorHelpers)
+local Landmarks = require(script.Parent.InteriorLandmarks)
 
 local InteriorEnhancer = {}
 
@@ -60,8 +61,8 @@ local function sanitizeBaseline(campusRoot: Instance, interiors: Instance, light
 		end
 	end
 
-	-- Restaura peças originalmente ocultadas por relocação de portas para manter idempotência
-	for _, container in ipairs({ interiors, campusRoot:FindFirstChild("Signage") }) do
+	-- Restaura peças originalmente ocultadas por relocação de portas/mobiliário para manter idempotência
+	for _, container in ipairs({ interiors, campusRoot:FindFirstChild("Signage"), campusRoot:FindFirstChild("Props") }) do
 		if container then
 			for _, d in ipairs(container:GetDescendants()) do
 				if d:GetAttribute("RelocatedHidden") then
@@ -1177,6 +1178,8 @@ function InteriorEnhancer.Apply(campusRoot: Instance): Folder
 	runChunk("CorridorProps", function(f)
 		buildCorridorPropsAndSigns(interiors, f, counter)
 	end)
+
+	Landmarks.Apply(campusRoot, geomFolder, lightsSub, counter)
 
 	-- Mantém referência tipada ao CampusData carregado para uso direto nas Partes 2 e 3
 	geomFolder:SetAttribute("RoomsCataloged", #CampusData.Rooms)
