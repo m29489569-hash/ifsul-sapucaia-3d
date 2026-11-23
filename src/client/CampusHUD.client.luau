@@ -25,6 +25,21 @@ local shopGetStateRF = remotes:WaitForChild("ShopGetState") :: RemoteFunction
 local shopBuyCoinsRF = remotes:WaitForChild("ShopBuyCoins") :: RemoteFunction
 local shopBuyRobuxRF = remotes:WaitForChild("ShopBuyRobux") :: RemoteFunction
 local shopOwnedUpdatedRE = remotes:WaitForChild("ShopOwnedUpdated") :: RemoteEvent
+local posterObservedRE = remotes:WaitForChild("PosterObserved") :: RemoteEvent
+
+-- Desativa o prompt localmente apenas para este jogador após observar um cartaz (o cartaz continua na parede)
+posterObservedRE.OnClientEvent:Connect(function(posterName: unknown)
+	if typeof(posterName) ~= "string" then
+		return
+	end
+	local campus = Workspace:FindFirstChild("IFSul_Campus")
+	local folder = campus and campus:FindFirstChild("CollectiblePosters")
+	local poster = folder and folder:FindFirstChild(posterName)
+	local prompt = poster and poster:FindFirstChild("CollectPrompt", true)
+	if prompt and prompt:IsA("ProximityPrompt") then
+		prompt.Enabled = false
+	end
+end)
 
 local isTouchOnly = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
@@ -777,7 +792,7 @@ shopToast.BackgroundColor3 = Color3.fromRGB(24, 32, 42)
 shopToast.Font = Enum.Font.GothamSemibold
 shopToast.TextSize = 12
 shopToast.TextColor3 = Config.Colors.TextMuted
-shopToast.Text = "Colete cartazes pelos corredores para ganhar moedas ou compre com Robux!"
+shopToast.Text = "Observe cartazes pelos corredores para ganhar moedas ou compre com Robux!"
 shopToast.ZIndex = 22
 shopToast.Parent = shopModal
 

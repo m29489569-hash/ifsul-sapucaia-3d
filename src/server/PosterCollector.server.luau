@@ -10,6 +10,21 @@ local Workspace = game:GetService("Workspace")
 local IFSulFolder = ReplicatedStorage:WaitForChild("IFSul")
 local CampusData = require(IFSulFolder:WaitForChild("CampusData"))
 
+local remotes = IFSulFolder:FindFirstChild("Remotes") :: Folder?
+if not remotes then
+	remotes = Instance.new("Folder")
+	remotes.Name = "Remotes"
+	remotes.Parent = IFSulFolder
+end
+
+local posterObservedRE = remotes:FindFirstChild("PosterObserved") :: RemoteEvent?
+if not posterObservedRE then
+	local re = Instance.new("RemoteEvent")
+	re.Name = "PosterObserved"
+	re.Parent = remotes
+	posterObservedRE = re
+end
+
 type PosterDef = {
 	phrase: string,
 	rarity: "Comum" | "Incomum" | "Raro",
@@ -162,19 +177,25 @@ local POSTER_HEIGHT = 3.6
 local POSTER_THICKNESS = 0.12
 local POSTER_Y = 6.3
 local MIN_SPOT_SPACING = 26
-local RESPAWN_SECONDS = 45
-local MAX_COLLECT_DISTANCE = 18
+local MAX_OBSERVE_DISTANCE = 18
 
 local rng = Random.new()
+
+-- Rastreia quais cartazes cada jogador já observou (impede ganhar moedas 2x no mesmo cartaz)
+local observedByPlayer: { [Player]: { [number]: boolean } } = {}
 
 -- Inicializa atributo de moedas ao entrar
 local function ensureCoinsAttribute(player: Player)
 	if player:GetAttribute("Coins") == nil then
 		player:SetAttribute("Coins", 0)
 	end
+	observedByPlayer[player] = observedByPlayer[player] or {}
 end
 
 Players.PlayerAdded:Connect(ensureCoinsAttribute)
+Players.PlayerRemoving:Connect(function(player: Player)
+	observedByPlayer[player] = nil
+end)
 for _, p in ipairs(Players:GetPlayers()) do
 	ensureCoinsAttribute(p)
 end
@@ -479,7 +500,6 @@ local function spawnPosters()
 	for order, spotIdx in ipairs(indices) do
 		local spot = spots[spotIdx]
 		local currentDef = rollPosterDef(order <= guaranteedRare)
-		local collected = false
 
 		local part = Instance.new("Part")
 		part.Name = "CollectiblePoster_" .. tostring(order)
@@ -494,7 +514,7 @@ local function spawnPosters()
 		buildPosterVisual(part, currentDef)
 
 		local sound = Instance.new("Sound")
-		sound.Name = "CollectSound"
+		sound.Name = "ObserveSound"
 		sound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
 		sound.Volume = 0.55
 		sound.Parent = part
@@ -508,7 +528,7 @@ local function spawnPosters()
 
 		local prompt = Instance.new("ProximityPrompt")
 		prompt.Name = "CollectPrompt"
-		prompt.ActionText = "Coletar"
+		prompt.ActionText = "Observar"
 		prompt.ObjectText = if currentDef.rarity == "Raro"
 			then ("+" .. tostring(currentDef.reward) .. " • Raro")
 			else ("+" .. tostring(currentDef.reward) .. " moedas")
@@ -520,55 +540,30 @@ local function spawnPosters()
 		prompt.Parent = promptAnchor
 
 		prompt.Triggered:Connect(function(player: Player)
-			if collected then
+			observedByPlayer[player] = observedByPlayer[player] or {}
+			if observedByPlayer[player][order] then
 				return
 			end
 			local char = player.Character
 			local hrp = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
-			if not hrp or (hrp.Position - part.Position).Magnitude > MAX_COLLECT_DISTANCE then
+			if not hrp or (hrp.Position - part.Position).Magnitude > MAX_OBSERVE_DISTANCE then
 				return
 			end
 
-			collected = true
-			prompt.Enabled = false
+			observedByPlayer[player][order] = true
 
-			-- Recompensa em moedas (o HUD escuta o atributo Coins automaticamente)
+			-- Recompensa em moedas (o cartaz permanece visível na parede, mas só dá moedas 1x por jogador)
 			local prev = player:GetAttribute("Coins")
 			local currentCoins = if typeof(prev) == "number" then prev else 0
 			player:SetAttribute("Coins", currentCoins + currentDef.reward)
 
-			-- Feedback sonoro e ocultação temporária
 			sound.PlaybackSpeed = if currentDef.rarity == "Raro" then 1.35 else 1.05
 			sound:Play()
 
-			part.Transparency = 1
-			local gui = part:FindFirstChild("PosterGui")
-			if gui and gui:IsA("SurfaceGui") then
-				gui.Enabled = false
+			-- Desativa o prompt localmente apenas para este jogador
+			if posterObservedRE then
+				posterObservedRE:FireClient(player, part.Name)
 			end
-			local glow = part:FindFirstChildOfClass("PointLight")
-			if glow then
-				glow.Enabled = false
-			end
-			local sparkles = part:FindFirstChildOfClass("Sparkles")
-			if sparkles then
-				sparkles.Enabled = false
-			end
-
-			-- Respawn com nova rolagem de raridade após o intervalo
-			task.delay(RESPAWN_SECONDS, function()
-				if not part.Parent then
-					return
-				end
-				currentDef = rollPosterDef(false)
-				buildPosterVisual(part, currentDef)
-				part.Transparency = 0
-				prompt.ObjectText = if currentDef.rarity == "Raro"
-					then ("+" .. tostring(currentDef.reward) .. " • Raro")
-					else ("+" .. tostring(currentDef.reward) .. " moedas")
-				prompt.Enabled = true
-				collected = false
-			end)
 		end)
 	end
 end
