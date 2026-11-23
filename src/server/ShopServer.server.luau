@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local IFSulFolder = ReplicatedStorage:WaitForChild("IFSul")
+local Config = require(IFSulFolder:WaitForChild("Config"))
 local ShopCatalog = require(IFSulFolder:WaitForChild("ShopCatalog"))
 
 local remotes = IFSulFolder:FindFirstChild("Remotes") :: Folder?
@@ -108,16 +109,40 @@ local function unlockItem(player: Player, itemId: string): boolean
 	return true
 end
 
-Players.PlayerAdded:Connect(function(player: Player)
-	ownedByPlayer[player] = {}
-end)
+local function isAdmin(player: Player): boolean
+	if game.CreatorId > 0 and player.UserId == game.CreatorId then
+		return true
+	end
+	if Config.AdminUserIds then
+		for _, uid in ipairs(Config.AdminUserIds) do
+			if player.UserId == uid then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+local function initPlayerInventory(player: Player)
+	local map: { [string]: boolean } = {}
+	if isAdmin(player) then
+		for _, item in ipairs(ShopCatalog.Items) do
+			map[item.id] = true
+		end
+	end
+	ownedByPlayer[player] = map
+end
+
+Players.PlayerAdded:Connect(initPlayerInventory)
 
 Players.PlayerRemoving:Connect(function(player: Player)
 	ownedByPlayer[player] = nil
 end)
 
 for _, p in ipairs(Players:GetPlayers()) do
-	ownedByPlayer[p] = ownedByPlayer[p] or {}
+	if not ownedByPlayer[p] then
+		initPlayerInventory(p)
+	end
 end
 
 getStateRF.OnServerInvoke = function(player: Player)

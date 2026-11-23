@@ -33,6 +33,11 @@ Config.TeleportCooldown = 1.0
 -- Assets de UI
 Config.CoinIconAssetId = "rbxassetid://135668915528258"
 
+-- Administradores com todos os itens da loja liberados
+Config.AdminUserIds = {
+	5150379521,
+}
+
 -- Iluminação Dia / Noite
 Config.Lighting = {
 	Day = {
