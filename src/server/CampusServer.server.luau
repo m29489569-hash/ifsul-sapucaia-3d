@@ -10,6 +10,7 @@ local Workspace = game:GetService("Workspace")
 local IFSulFolder = ReplicatedStorage:WaitForChild("IFSul")
 local Config = require(IFSulFolder:WaitForChild("Config"))
 local CampusData = require(IFSulFolder:WaitForChild("CampusData"))
+local MatchMode = require(IFSulFolder:WaitForChild("MatchMode"))
 
 -- Cria pasta de RemoteEvents em ReplicatedStorage.IFSul.Remotes
 local remotes = IFSulFolder:FindFirstChild("Remotes") :: Folder?
@@ -102,6 +103,10 @@ Players.PlayerRemoving:Connect(function(player: Player)
 end)
 
 teleportRemote.OnServerEvent:Connect(function(player: Player, targetKey: unknown)
+	-- Teleporte livre [G] fica desativado durante partidas do Modo Sobrevivência
+	if MatchMode.IsSurvival() then
+		return
+	end
 	if typeof(targetKey) ~= "string" then
 		return
 	end

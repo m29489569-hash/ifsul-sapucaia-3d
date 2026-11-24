@@ -25,6 +25,7 @@ O projeto reproduz os **38.600 m²** do terreno (~16.000 m² construídos) a par
 - 🏛️ **16 edificações reais** em escala 1:1 (portas de `2,1 m = 7,5 studs`, pé-direito de `4,8 m = 17,14 studs`), logo 3D institucional, caixa d'água, ginásio coberto, quadras esportivas, lago dos patos, estacionamentos e Av. Copacabana.
 - 🚪 **92 salas e ambientes internos mobiliados** e navegáveis a pé por todos os setores (`Setores 100–500`, `Bloco 800`, `Biblioteca`, `Sede Social` e `Educação Física`).
 - 🧭 **HUD Institucional em Luau:** detecção em tempo real da sala onde o jogador está, **Buscador de Salas e POIs (`[G]`)** com teleporte validado no servidor e alternância **Dia / Noite (`[N]`)**.
+- 🧟 **Modo Sobrevivência em Ondas (1 a 6 Jogadores):** portal cooperativo na Portaria Principal (`ReserveServer`), hordas R15 invadindo pelas 4 ruas externas, sorteio *roguelite* de **3 Cartas de Habilidade** por onda, **Nova Loja de Upgrades na tela** (com armas oficiais evolutivas em 3 níveis e torretas) e **Missões Bônus** nos setores reais do câmpus.
 - 🤖 **Arquitetura preparada para agentes de IA:** manifesto padrão `default.project.json` (compatível com Rojo), dados desacoplados em `data/*.json`, script de sincronização automática `tools/sync_campus_data.py` e manual operacional completo em [`AGENTS.md`](AGENTS.md).
 
 ---

@@ -9,6 +9,7 @@ local Workspace = game:GetService("Workspace")
 
 local IFSulFolder = ReplicatedStorage:WaitForChild("IFSul")
 local CampusData = require(IFSulFolder:WaitForChild("CampusData"))
+local MatchMode = require(IFSulFolder:WaitForChild("MatchMode"))
 
 local remotes = IFSulFolder:FindFirstChild("Remotes") :: Folder?
 if not remotes then
@@ -540,6 +541,9 @@ local function spawnPosters()
 		prompt.Parent = promptAnchor
 
 		prompt.Triggered:Connect(function(player: Player)
+			if MatchMode.IsSurvival() then
+				return
+			end
 			observedByPlayer[player] = observedByPlayer[player] or {}
 			if observedByPlayer[player][order] then
 				return
@@ -568,4 +572,20 @@ local function spawnPosters()
 	end
 end
 
-spawnPosters()
+if not MatchMode.IsSurvival() then
+	spawnPosters()
+end
+
+MatchMode.OnChanged(function(isSurvival: boolean)
+	local campus = Workspace:FindFirstChild("IFSul_Campus")
+	local folder = campus and campus:FindFirstChild("CollectiblePosters")
+	if isSurvival then
+		if folder then
+			folder:Destroy()
+		end
+	else
+		if not folder then
+			spawnPosters()
+		end
+	end
+end)

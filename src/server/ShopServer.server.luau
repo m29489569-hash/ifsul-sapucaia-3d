@@ -11,6 +11,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local IFSulFolder = ReplicatedStorage:WaitForChild("IFSul")
 local Config = require(IFSulFolder:WaitForChild("Config"))
 local ShopCatalog = require(IFSulFolder:WaitForChild("ShopCatalog"))
+local MatchMode = require(IFSulFolder:WaitForChild("MatchMode"))
 
 local remotes = IFSulFolder:FindFirstChild("Remotes") :: Folder?
 if not remotes then
@@ -65,6 +66,9 @@ local function getOwnedList(player: Player): { string }
 end
 
 local function grantToolToPlayer(player: Player, itemId: string, displayName: string): boolean
+	if MatchMode.IsSurvival() then
+		return false
+	end
 	if not toolsFolder then
 		warn("[ShopServer] ServerStorage.IFSul_ShopTools não encontrado.")
 		return false

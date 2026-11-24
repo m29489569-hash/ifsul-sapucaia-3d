@@ -19,6 +19,7 @@ local IFSulFolder = ReplicatedStorage:WaitForChild("IFSul")
 local Config = require(IFSulFolder:WaitForChild("Config"))
 local CampusData = require(IFSulFolder:WaitForChild("CampusData"))
 local ShopCatalog = require(IFSulFolder:WaitForChild("ShopCatalog"))
+local MatchMode = require(IFSulFolder:WaitForChild("MatchMode"))
 local remotes = IFSulFolder:WaitForChild("Remotes")
 local teleportRemote = remotes:WaitForChild("TeleportToLocation") :: RemoteEvent
 local shopGetStateRF = remotes:WaitForChild("ShopGetState") :: RemoteFunction
@@ -335,11 +336,21 @@ local function applySprintToCharacter(char: Model?)
 	if not char then
 		return
 	end
+	if char:GetAttribute("Downed") == true then
+		return
+	end
 	local hum = char:FindFirstChildOfClass("Humanoid")
 	if hum then
-		hum.WalkSpeed = if isSprinting then Config.SprintSpeed else Config.WalkSpeed
+		local multRaw = player:GetAttribute("MoveSpeedMult")
+		local mult = if typeof(multRaw) == "number" and multRaw > 0 then multRaw else 1
+		local base = if isSprinting then Config.SprintSpeed else Config.WalkSpeed
+		hum.WalkSpeed = base * mult
 	end
 end
+
+player:GetAttributeChangedSignal("MoveSpeedMult"):Connect(function()
+	applySprintToCharacter(player.Character)
+end)
 
 local function setSprinting(active: boolean)
 	isSprinting = active
@@ -1130,8 +1141,22 @@ task.spawn(function()
 	end
 end)
 
+local function syncLobbyHudVisibility(isSurvival: boolean)
+	screenGui.Enabled = not isSurvival
+	if isSurvival then
+		setShopVisible(false)
+		setFinderVisible(false)
+	end
+end
+
+syncLobbyHudVisibility(MatchMode.IsSurvival())
+MatchMode.OnChanged(syncLobbyHudVisibility)
+
 -- Atalhos de teclado
 UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessed: boolean)
+	if MatchMode.IsSurvival() then
+		return
+	end
 	if input.KeyCode == Enum.KeyCode.Escape then
 		if shopBackdrop.Visible then
 			setShopVisible(false)
