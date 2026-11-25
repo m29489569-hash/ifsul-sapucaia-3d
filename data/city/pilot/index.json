@@ -1,0 +1,225 @@
+{
+  "city": "pilot",
+  "tile_size_m": 500.0,
+  "tile_size_studs": 1785.7143,
+  "total_parts": 22380,
+  "total_tiles": 20,
+  "total_b64_bytes": 310440,
+  "calibration": {
+    "dx_m": -0.473,
+    "dz_m": -0.007,
+    "dtheta_deg": -0.0965,
+    "rms_residual_m": 0.682,
+    "matched_samples": 288,
+    "matched_streets": [
+      "acacio vitorino machado",
+      "copacabana",
+      "cristovao colombo",
+      "jeronimo pires de almeida",
+      "joao rodrigues",
+      "palestina",
+      "tercilio joao alves",
+      "waldemar boa vista"
+    ]
+  },
+  "counts": {
+    "raw_roads": 1139,
+    "dropped_tunnel_or_foot": 62,
+    "dropped_duplicate_anchor": 32,
+    "snapped_to_anchor": 32,
+    "segments": 1131,
+    "junction_nodes": 721,
+    "sidewalk_parts": 1811,
+    "lane_stripes": 2683,
+    "raw_buildings": 10177,
+    "dropped_small": 427,
+    "dropped_campus_or_road": 751,
+    "kept_buildings": 5382,
+    "building_parts": 15958,
+    "area_km2": 3.14,
+    "parts_per_km2": 7127,
+    "sapucaia_extrapolated_max_parts": 417642
+  },
+  "tiles": [
+    {
+      "key": "-2_-2",
+      "tx": -2,
+      "tz": -2,
+      "center_x_studs": -2678.57,
+      "center_z_studs": -2678.57,
+      "parts": 427,
+      "bytes_b64": 5620
+    },
+    {
+      "key": "-2_-1",
+      "tx": -2,
+      "tz": -1,
+      "center_x_studs": -2678.57,
+      "center_z_studs": -892.86,
+      "parts": 909,
+      "bytes_b64": 12008
+    },
+    {
+      "key": "-2_0",
+      "tx": -2,
+      "tz": 0,
+      "center_x_studs": -2678.57,
+      "center_z_studs": 892.86,
+      "parts": 1023,
+      "bytes_b64": 12936
+    },
+    {
+      "key": "-2_1",
+      "tx": -2,
+      "tz": 1,
+      "center_x_studs": -2678.57,
+      "center_z_studs": 2678.57,
+      "parts": 651,
+      "bytes_b64": 9484
+    },
+    {
+      "key": "-1_-2",
+      "tx": -1,
+      "tz": -2,
+      "center_x_studs": -892.86,
+      "center_z_studs": -2678.57,
+      "parts": 988,
+      "bytes_b64": 15040
+    },
+    {
+      "key": "-1_-1",
+      "tx": -1,
+      "tz": -1,
+      "center_x_studs": -892.86,
+      "center_z_studs": -892.86,
+      "parts": 1928,
+      "bytes_b64": 26836
+    },
+    {
+      "key": "-1_0",
+      "tx": -1,
+      "tz": 0,
+      "center_x_studs": -892.86,
+      "center_z_studs": 892.86,
+      "parts": 1918,
+      "bytes_b64": 26876
+    },
+    {
+      "key": "-1_1",
+      "tx": -1,
+      "tz": 1,
+      "center_x_studs": -892.86,
+      "center_z_studs": 2678.57,
+      "parts": 2303,
+      "bytes_b64": 30548
+    },
+    {
+      "key": "-1_2",
+      "tx": -1,
+      "tz": 2,
+      "center_x_studs": -892.86,
+      "center_z_studs": 4464.29,
+      "parts": 4,
+      "bytes_b64": 112
+    },
+    {
+      "key": "0_-2",
+      "tx": 0,
+      "tz": -2,
+      "center_x_studs": 892.86,
+      "center_z_studs": -2678.57,
+      "parts": 642,
+      "bytes_b64": 9780
+    },
+    {
+      "key": "0_-1",
+      "tx": 0,
+      "tz": -1,
+      "center_x_studs": 892.86,
+      "center_z_studs": -892.86,
+      "parts": 1657,
+      "bytes_b64": 23612
+    },
+    {
+      "key": "0_0",
+      "tx": 0,
+      "tz": 0,
+      "center_x_studs": 892.86,
+      "center_z_studs": 892.86,
+      "parts": 2075,
+      "bytes_b64": 29288
+    },
+    {
+      "key": "0_1",
+      "tx": 0,
+      "tz": 1,
+      "center_x_studs": 892.86,
+      "center_z_studs": 2678.57,
+      "parts": 2205,
+      "bytes_b64": 31024
+    },
+    {
+      "key": "0_2",
+      "tx": 0,
+      "tz": 2,
+      "center_x_studs": 892.86,
+      "center_z_studs": 4464.29,
+      "parts": 4,
+      "bytes_b64": 112
+    },
+    {
+      "key": "1_-2",
+      "tx": 1,
+      "tz": -2,
+      "center_x_studs": 2678.57,
+      "center_z_studs": -2678.57,
+      "parts": 486,
+      "bytes_b64": 7548
+    },
+    {
+      "key": "1_-1",
+      "tx": 1,
+      "tz": -1,
+      "center_x_studs": 2678.57,
+      "center_z_studs": -892.86,
+      "parts": 1958,
+      "bytes_b64": 26764
+    },
+    {
+      "key": "1_0",
+      "tx": 1,
+      "tz": 0,
+      "center_x_studs": 2678.57,
+      "center_z_studs": 892.86,
+      "parts": 2416,
+      "bytes_b64": 32012
+    },
+    {
+      "key": "1_1",
+      "tx": 1,
+      "tz": 1,
+      "center_x_studs": 2678.57,
+      "center_z_studs": 2678.57,
+      "parts": 778,
+      "bytes_b64": 10616
+    },
+    {
+      "key": "2_-1",
+      "tx": 2,
+      "tz": -1,
+      "center_x_studs": 4464.29,
+      "center_z_studs": -892.86,
+      "parts": 4,
+      "bytes_b64": 112
+    },
+    {
+      "key": "2_0",
+      "tx": 2,
+      "tz": 0,
+      "center_x_studs": 4464.29,
+      "center_z_studs": 892.86,
+      "parts": 4,
+      "bytes_b64": 112
+    }
+  ]
+}

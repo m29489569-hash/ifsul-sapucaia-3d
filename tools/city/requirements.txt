@@ -1,0 +1,8 @@
+overturemaps
+duckdb
+shapely
+pyproj
+pillow
+pytest
+numpy
+requests

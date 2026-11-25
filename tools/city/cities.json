@@ -1,0 +1,27 @@
+{
+  "origin": {
+    "lat": -29.8151,
+    "lon": -51.156
+  },
+  "tile_size_m": 500,
+  "campus_grass_box_m": [-280.0, -370.0, 280.0, 370.0],
+  "cities": {
+    "pilot": {
+      "center": [-29.8151, -51.156],
+      "radius_m": 1000
+    },
+    "sapucaia": {
+      "ibge_code": "4320008"
+    },
+    "sao_leopoldo": {
+      "ibge_code": "4318705"
+    },
+    "portao": {
+      "ibge_code": "4314803"
+    }
+  },
+  "overrides": {
+    "heights_m": {},
+    "exclude_ids": []
+  }
+}

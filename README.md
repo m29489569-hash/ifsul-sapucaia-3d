@@ -59,19 +59,24 @@ ifsul-sapucaia-3d/
 │   ├── campus.json                 # Polígonos georreferenciados (OSM), 16 blocos, quadras e 8 POIs
 │   ├── interiors.json              # Catálogo espacial das 92 salas, 10 setores e sinalização
 │   ├── shots.json                  # Câmeras padronizadas para verificação visual
-│   └── campus_geometry.zst.b64     # Snapshot binário Zstd+Base64 (10.565 Parts, 112 Signs, 34 Lights)
+│   ├── campus_geometry.zst.b64     # Snapshot binário Zstd+Base64 (10.565 Parts, 112 Signs, 34 Lights)
+│   └── city/<cidade>/              # Tiles binários IFC2 (500 m) e index.json da malha urbana externa
 ├── src/
 │   ├── shared/                     # ReplicatedStorage.IFSul
 │   │   ├── Config.luau             # Escala métrica, paleta IFSul e presets de iluminação
+│   │   ├── CityStyle.luau          # Constantes de streaming e materiais da expansão urbana
 │   │   └── CampusData.luau         # Catálogo tipado (gerado por tools/sync_campus_data.py)
 │   ├── server/                     # ServerScriptService.IFSul
 │   │   ├── CampusBuilder.luau      # Construtor do mapa a partir do snapshot binário Zstd
+│   │   ├── CityTileCodec.luau      # Decodificador de tiles urbanos IFC2 em lotes
+│   │   ├── CityLoader.server.luau  # Carregamento por raio dos tiles em Workspace.IFSul_City
 │   │   └── CampusServer.server.luau# Controle de Dia/Noite e teleporte validado no servidor
 │   └── client/                     # StarterPlayerScripts.IFSul
 │       └── CampusHUD.client.luau   # HUD, detector de sala atual e buscador [G]
 ├── tools/
 │   ├── sync_campus_data.py         # Gera src/shared/CampusData.luau a partir de data/*.json
-│   └── generate_planta_baixa.py    # Gera planta-baixa técnica cotada em SVG/PNG
+│   ├── generate_planta_baixa.py    # Gera planta-baixa técnica cotada em SVG/PNG
+│   └── city/                       # Pipeline Overture Maps -> tiles IFC2 (build_city.py)
 ├── assets/ref/                     # Plantas oficiais (DEPEN), ortofoto e OSM (referência)
 └── docs/                           # Screenshots do Roblox Studio, backlog, créditos e referências
 ```
@@ -94,6 +99,12 @@ Conecte o plugin **Rojo** no Roblox Studio para sincronizar automaticamente `src
 Sempre que editar `data/campus.json` ou `data/interiors.json`, regere o módulo Luau tipado:
 ```bash
 python tools/sync_campus_data.py
+```
+
+### Gerando Malha Viária e Edifícios da Cidade
+Para gerar tiles binários (`IFC2`) de ruas e fachadas em escala 1:1 a partir do Overture Maps:
+```bash
+python -m tools.city.build_city --city pilot --summary
 ```
 
 ---

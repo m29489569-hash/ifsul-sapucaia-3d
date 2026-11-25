@@ -15,19 +15,24 @@ ifsul-sapucaia-3d/
 │   ├── campus.json                 # Polígonos georreferenciados (OSM), 16 blocos, quadras, 8 POIs
 │   ├── interiors.json              # 92 salas/ambientes, 10 setores, pátios e placas
 │   ├── shots.json                  # Câmeras padronizadas para regressão visual (metros)
-│   └── campus_geometry.zst.b64     # Snapshot binário SoA+Zstd+Base64 (10.565 Parts, 112 Signs, 34 Lights)
+│   ├── campus_geometry.zst.b64     # Snapshot binário SoA+Zstd+Base64 (10.565 Parts, 112 Signs, 34 Lights)
+│   └── city/<cidade>/              # Tiles binários IFC2 (500 m, Zstd+Base64) e index.json da região
 ├── src/                            # Código-fonte Luau (strict)
 │   ├── shared/                     # -> ReplicatedStorage.IFSul
 │   │   ├── Config.luau             # Constantes métricas, cores institucionais, iluminação
+│   │   ├── CityStyle.luau          # Raios de streaming, materiais e categorias da malha urbana
 │   │   └── CampusData.luau         # GERADO por tools/sync_campus_data.py (não editar à mão)
 │   ├── server/                     # -> ServerScriptService.IFSul
 │   │   ├── CampusBuilder.luau      # Decodificador/construtor do mapa a partir de campus_geometry.zst.b64
+│   │   ├── CityTileCodec.luau      # Decodificador IFC2 por tile de 500 m em lotes sem travar o Studio
+│   │   ├── CityLoader.server.luau  # Carrega/descarrega tiles por raio a partir de ServerStorage.IFSulCity
 │   │   └── CampusServer.server.luau# Dia/Noite e teleporte validado no servidor
 │   └── client/                     # -> StarterPlayer.StarterPlayerScripts.IFSul
 │       └── CampusHUD.client.luau   # HUD institucional, sala atual, Buscador [G] e Dia/Noite [N]
 ├── tools/                          # Utilitários Python de manutenção
 │   ├── sync_campus_data.py         # Sincroniza data/*.json -> src/shared/CampusData.luau
-│   └── generate_planta_baixa.py    # Gera planta-baixa técnica cotada (SVG/PNG)
+│   ├── generate_planta_baixa.py    # Gera planta-baixa técnica cotada (SVG/PNG)
+│   └── city/                       # Pipeline Overture Maps -> tiles IFC2 (build_city.py, cities.json)
 ├── assets/ref/                     # Referências oficiais (somente consulta)
 │   ├── fotos_atuais/               # 7 fotos presenciais mais atuais do câmpus (19/11/2026)
 │   ├── plantas_e_mapas/            # Mapa oficial das salas (DEPEN), ortofoto e OSM
@@ -50,6 +55,9 @@ ifsul-sapucaia-3d/
   - `Signage` — placas `SurfaceGui` (`CanCollide = false`)
   - `Lights` — iluminação `PointLight` (ativada no modo noturno)
   - `CampusSpawn` — `SpawnLocation` na portaria principal
+- **Hierarquia da expansão urbana em `Workspace.IFSul_City` e `ServerStorage.IFSulCity`:**
+  - `ServerStorage.IFSulCity.<cidade>` — `Index` (`StringValue` com `index.json`) e `Tiles` (`Folder` de `StringValue`s `.b64` no formato `IFC2`)
+  - `Workspace.IFSul_City.<cidade>.<tx_tz>` — `Model` atômico por tile de 500 m com `Ground`, `Roads`, `Sidewalks` e `Buildings` gerenciados por `CityLoader.server.luau`
 
 ---
 
@@ -76,6 +84,10 @@ ifsul-sapucaia-3d/
   python tools/sync_campus_data.py
   ```
 - Nunca edite `src/shared/CampusData.luau` manualmente — ele é sempre regerado pelo script acima.
+- Para gerar ou atualizar ruas e edifícios de uma cidade/região a partir do Overture Maps (em cache em `data/cache/`), execute:
+  ```bash
+  python -m tools.city.build_city --city pilot --summary
+  ```
 
 ---
 

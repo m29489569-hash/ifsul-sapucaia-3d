@@ -10,6 +10,7 @@ venv/
 
 # Capturas temporárias
 shots/
+data/cache/
 
 # Sistema Operacional & Editores
 .DS_Store
