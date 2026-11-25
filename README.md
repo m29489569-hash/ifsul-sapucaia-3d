@@ -101,10 +101,12 @@ Sempre que editar `data/campus.json` ou `data/interiors.json`, regere o módulo 
 python tools/sync_campus_data.py
 ```
 
-### Gerando Malha Viária e Edifícios da Cidade
-Para gerar tiles binários (`IFC2`) de ruas e fachadas em escala 1:1 a partir do Overture Maps:
+### Gerando Malha Viária e Edifícios das Cidades
+Para gerar tiles binários (`IFC2`) de ruas e fachadas em escala 1:1 para **Sapucaia do Sul**, **São Leopoldo** e **Portão** a partir do Overture Maps:
 ```bash
 python -m tools.city.build_city --city sapucaia --summary
+python -m tools.city.build_city --city sao_leopoldo --skip-grass-cities sapucaia --summary
+python -m tools.city.build_city --city portao --skip-grass-cities sapucaia,sao_leopoldo --summary
 ```
 
 ---

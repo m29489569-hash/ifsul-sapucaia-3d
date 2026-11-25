@@ -28,7 +28,7 @@ from .codec import (
     encode_tile_b64,
 )
 from .fetch import fetch_city_data
-from .project import calibrate_to_campus
+from .project import CalibrationResult, calibrate_to_campus
 from .roads import build_roads
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -55,7 +55,30 @@ def _make_tile_grass_parts(
     if free.is_empty:
         return []
 
-    # Decompoe em sub-retangulos de grade 125m para manter dimensoes compactas e precisas
+    if not tile_poly.intersects(campus_grass_box):
+        cx = x0 + tile_size_m * 0.5
+        cz = z0 + tile_size_m * 0.5
+        s_studs = tile_size_m * STUDS_PER_METER
+        return [
+            TilePart(
+                part_type=PART_BLOCK,
+                material=MAT_GRASS,
+                category=CAT_GROUND,
+                flags=FLAG_COLLIDE | FLAG_CAN_QUERY,
+                r=85,
+                g=140,
+                b=47,
+                px_studs=cx * STUDS_PER_METER,
+                py_studs=-2.0,
+                pz_studs=cz * STUDS_PER_METER,
+                sx_studs=s_studs,
+                sy_studs=4.0,
+                sz_studs=s_studs,
+                yaw_rad=0.0,
+            )
+        ]
+
+    # Decompoe em sub-retangulos ao redor do retangulo de grama do campus
     sub = tile_size_m * 0.5
     parts: list[TilePart] = []
     for ix in range(2):
@@ -190,7 +213,22 @@ def _enforce_tile_budget(t_parts: list[TilePart], max_parts: int = 6000) -> list
     return out
 
 
-def run_build(city_id: str) -> dict[str, Any]:
+def _load_skip_tile_keys(skip_cities: list[str]) -> set[tuple[int, int]]:
+    skip: set[tuple[int, int]] = set()
+    for cid in skip_cities:
+        idx_file = REPO_ROOT / "data" / "city" / cid / "index.json"
+        if idx_file.exists():
+            data = json.loads(idx_file.read_text(encoding="utf-8"))
+            for t in data.get("tiles", []):
+                skip.add((int(t["tx"]), int(t["tz"])))
+    return skip
+
+
+def run_build(
+    city_id: str,
+    skip_grass_cities: list[str] | None = None,
+    recalibrate: bool = False,
+) -> dict[str, Any]:
     t0 = time.perf_counter()
     cfg = json.loads(CITIES_CFG_PATH.read_text(encoding="utf-8"))
     if city_id not in cfg["cities"]:
@@ -211,19 +249,30 @@ def run_build(city_id: str) -> dict[str, Any]:
         cache_root=REPO_ROOT / "data" / "cache",
     )
 
-    calib = calibrate_to_campus(
-        road_records,
-        campus_data["streets"],
-        fallback_calibration=cfg.get("calibrated_transform"),
-    )
-    if calib.matched_samples > 0:
-        cfg["calibrated_transform"] = {
-            "dx_m": round(calib.dx_m, 4),
-            "dz_m": round(calib.dz_m, 4),
-            "dtheta_deg": round(calib.dtheta_deg, 5),
-            "rms_residual_m": round(calib.rms_residual_m, 4),
-        }
-        CITIES_CFG_PATH.write_text(json.dumps(cfg, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    saved_cal = cfg.get("calibrated_transform")
+    if saved_cal and not recalibrate:
+        calib = CalibrationResult(
+            dx_m=float(saved_cal["dx_m"]),
+            dz_m=float(saved_cal["dz_m"]),
+            dtheta_deg=float(saved_cal["dtheta_deg"]),
+            rms_residual_m=float(saved_cal.get("rms_residual_m", 0.0)),
+            matched_samples=0,
+            matched_streets=[],
+        )
+    else:
+        calib = calibrate_to_campus(
+            road_records,
+            campus_data["streets"],
+            fallback_calibration=saved_cal,
+        )
+        if calib.matched_samples > 0:
+            cfg["calibrated_transform"] = {
+                "dx_m": round(calib.dx_m, 4),
+                "dz_m": round(calib.dz_m, 4),
+                "dtheta_deg": round(calib.dtheta_deg, 5),
+                "rms_residual_m": round(calib.rms_residual_m, 4),
+            }
+            CITIES_CFG_PATH.write_text(json.dumps(cfg, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     for rec in road_records:
         rec["geom"] = calib.apply(rec["geom"])
@@ -250,10 +299,13 @@ def run_build(city_id: str) -> dict[str, Any]:
         key = (_tile_index(px_m, tile_size_m), _tile_index(pz_m, tile_size_m))
         buckets.setdefault(key, []).append(p)
 
-    # Garante tiles de grama cobrindo todo o limite da cidade
+    # Garante tiles de grama cobrindo todo o limite da cidade (pulando tiles cuja grama ja veio de cidades vizinhas)
+    skip_grass_keys = _load_skip_tile_keys(skip_grass_cities or [])
     b_minx, b_minz, b_maxx, b_maxz = boundary_xz.bounds
     for tx in range(_tile_index(b_minx, tile_size_m), _tile_index(b_maxx, tile_size_m) + 1):
         for tz in range(_tile_index(b_minz, tile_size_m), _tile_index(b_maxz, tile_size_m) + 1):
+            if (tx, tz) in skip_grass_keys:
+                continue
             grass_parts = _make_tile_grass_parts(tx, tz, tile_size_m, campus_grass_box, boundary_xz)
             if grass_parts:
                 buckets.setdefault((tx, tz), []).extend(grass_parts)
@@ -336,10 +388,13 @@ def run_build(city_id: str) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Gera tiles IFC2 para uma cidade")
     parser.add_argument("--city", required=True, help="ID da cidade em cities.json")
+    parser.add_argument("--skip-grass-cities", default="", help="Cidades vizinhas cuja grama de tile compartilhado nao deve ser duplicada (sep. por virgula)")
+    parser.add_argument("--recalibrate", action="store_true", help="Forca recalibracao pelas ruas-ancora")
     parser.add_argument("--summary", action="store_true", help="Imprime resumo curto (<=15 linhas)")
     args = parser.parse_args()
 
-    res = run_build(args.city)
+    skip_list = [c.strip() for c in args.skip_grass_cities.split(",") if c.strip()]
+    res = run_build(args.city, skip_grass_cities=skip_list, recalibrate=args.recalibrate)
     idx = res["index"]
     cal = idx["calibration"]
     cnt = idx["counts"]

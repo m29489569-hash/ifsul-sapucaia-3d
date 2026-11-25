@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import math
 from typing import Any
 
+import shapely
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import nearest_points, unary_union
@@ -440,12 +441,15 @@ def build_roads(
                     )
                     stats["sidewalk_parts"] += 1
 
-    # Passo 4: discos de juncao nos cruzamentos e dobras (py=0.09 evita z-fighting)
+    # Passo 4: discos de juncao nos cruzamentos, dobras e divisas municipais (py=0.09 evita z-fighting)
+    boundary_guard = boundary_xz.boundary.buffer(1.2)
+    shapely.prepare(boundary_guard)
     for key, incident in node_widths.items():
-        if len(incident) < 2:
-            continue
         nx, nz = snapped_pos[key]
-        if protected_campus.contains(Point(nx, nz)):
+        pt_node = Point(nx, nz)
+        if len(incident) < 2 and not (len(incident) == 1 and boundary_guard.intersects(pt_node)):
+            continue
+        if protected_campus.contains(pt_node):
             continue
         max_w = max(w for w, _ in incident)
         all_unpaved = all(u for _, u in incident)

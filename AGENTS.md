@@ -87,6 +87,8 @@ ifsul-sapucaia-3d/
 - Para gerar ou atualizar ruas e edifícios de uma cidade/região a partir do Overture Maps (em cache em `data/cache/`), execute:
   ```bash
   python -m tools.city.build_city --city sapucaia --summary
+  python -m tools.city.build_city --city sao_leopoldo --skip-grass-cities sapucaia --summary
+  python -m tools.city.build_city --city portao --skip-grass-cities sapucaia,sao_leopoldo --summary
   ```
 
 ---
