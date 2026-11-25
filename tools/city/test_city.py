@@ -130,5 +130,71 @@ def test_buildings_obb_and_l_shape():
     parts, polys, stats = build_buildings(recs, boundary, campus_poly, road_clear, {})
     assert stats["kept_buildings"] == 2
     assert stats["dropped_small"] == 1
-    assert len(polys) == 2
+    assert len(polys) >= 2
     assert len(parts) >= 5
+
+
+def test_u_shaped_and_oblique_buildings_never_overlap_road_or_sidewalk():
+    from shapely import affinity
+
+    campus_data = {
+        "perimeter": [[-20.0, -20.0], [20.0, -20.0], [20.0, 20.0], [-20.0, 20.0]],
+        "streets": [],
+        "driveways": [],
+    }
+    boundary = box(-300, -300, 300, 300)
+    roads = [
+        {
+            "id": "r_culdesac",
+            "class": "residential",
+            "name": "Rua Sem Saida",
+            "is_tunnel": False,
+            "width": None,
+            "surface": "asphalt",
+            "geom": LineString([(60.0, 0.0), (110.0, 0.0)]),
+        },
+        {
+            "id": "r_diag",
+            "class": "tertiary",
+            "name": "Rua Obliqua",
+            "is_tunnel": False,
+            "width": None,
+            "surface": "asphalt",
+            "geom": LineString([(-140.0, 120.0), (-80.0, 60.0)]),
+        },
+    ]
+    rout = build_roads(roads, boundary, campus_data)
+
+    # Edificio em U de ~160 m2 abracando a ponta da rua sem saida (110, 0)
+    u_poly = Polygon([
+        (95, -12), (122, -12), (122, 12), (95, 12),
+        (95, 6), (116, 6), (116, -6), (95, -6),
+    ])
+    # Casa obliqua de ~190 m2 colada na rua diagonal
+    oblique_poly = affinity.rotate(box(-118, 86, -100, 96), -45, origin=(-109, 91))
+
+    recs = [
+        {"id": "u_bld", "class": "residential", "subtype": "residential", "height": None, "num_floors": None, "geom": u_poly},
+        {"id": "ob_bld", "class": "residential", "subtype": "residential", "height": None, "num_floors": None, "geom": oblique_poly},
+    ]
+    bparts, _, _ = build_buildings(
+        recs,
+        boundary,
+        Polygon(campus_data["perimeter"]),
+        rout.road_clearance_geoms,
+        {},
+        extra_road_parts=rout.parts,
+        anchor_streets=campus_data["streets"],
+    )
+
+    def to_poly(p):
+        if p.part_type == PART_CYLINDER:
+            from shapely.geometry import Point
+            return Point(p.px_studs, p.pz_studs).buffer(max(p.sx_studs, p.sz_studs) * 0.5)
+        b = box(-p.sx_studs * 0.5, -p.sz_studs * 0.5, p.sx_studs * 0.5, p.sz_studs * 0.5)
+        return affinity.translate(affinity.rotate(b, -math.degrees(p.yaw_rad), origin=(0, 0)), xoff=p.px_studs, yoff=p.pz_studs)
+
+    road_polys = [to_poly(p) for p in rout.parts if p.category in (CAT_ROADS, CAT_SIDEWALKS) and p.flags != 0]
+    for bp in bparts:
+        bpoly = to_poly(bp)
+        assert not any(rp.intersects(bpoly) for rp in road_polys)

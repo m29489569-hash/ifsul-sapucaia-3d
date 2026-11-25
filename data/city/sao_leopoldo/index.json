@@ -2,9 +2,9 @@
   "city": "sao_leopoldo",
   "tile_size_m": 500.0,
   "tile_size_studs": 1785.7143,
-  "total_parts": 332259,
+  "total_parts": 372691,
   "total_tiles": 469,
-  "total_b64_bytes": 4704108,
+  "total_b64_bytes": 5250476,
   "calibration": {
     "dx_m": -0.467,
     "dz_m": 0.072,
@@ -23,13 +23,14 @@
     "sidewalk_parts": 29356,
     "lane_stripes": 23894,
     "raw_buildings": 195802,
-    "dropped_small": 8592,
-    "dropped_campus_or_road": 10635,
-    "kept_buildings": 81617,
-    "building_parts": 240850,
+    "dropped_small": 8751,
+    "dropped_campus_or_road": 1245,
+    "post_filter_dropped": 6515,
+    "kept_buildings": 85546,
+    "building_parts": 281282,
     "area_km2": 103.02,
-    "parts_per_km2": 3225,
-    "sapucaia_extrapolated_max_parts": 188985
+    "parts_per_km2": 3618,
+    "sapucaia_extrapolated_max_parts": 212015
   },
   "tiles": [
     {
@@ -47,8 +48,8 @@
       "tz": -19,
       "center_x_studs": -18750.0,
       "center_z_studs": -33035.71,
-      "parts": 23,
-      "bytes_b64": 592
+      "parts": 29,
+      "bytes_b64": 672
     },
     {
       "key": "-11_-18",
@@ -173,8 +174,8 @@
       "tz": -21,
       "center_x_studs": -15178.57,
       "center_z_studs": -36607.14,
-      "parts": 224,
-      "bytes_b64": 3072
+      "parts": 227,
+      "bytes_b64": 3116
     },
     {
       "key": "-9_-20",
@@ -290,8 +291,8 @@
       "tz": -27,
       "center_x_studs": -13392.86,
       "center_z_studs": -47321.43,
-      "parts": 284,
-      "bytes_b64": 4732
+      "parts": 318,
+      "bytes_b64": 5224
     },
     {
       "key": "-8_-26",
@@ -299,8 +300,8 @@
       "tz": -26,
       "center_x_studs": -13392.86,
       "center_z_studs": -45535.71,
-      "parts": 1234,
-      "bytes_b64": 18308
+      "parts": 1346,
+      "bytes_b64": 19824
     },
     {
       "key": "-8_-25",
@@ -308,8 +309,8 @@
       "tz": -25,
       "center_x_studs": -13392.86,
       "center_z_studs": -43750.0,
-      "parts": 1013,
-      "bytes_b64": 14388
+      "parts": 1094,
+      "bytes_b64": 15412
     },
     {
       "key": "-8_-24",
@@ -317,8 +318,8 @@
       "tz": -24,
       "center_x_studs": -13392.86,
       "center_z_studs": -41964.29,
-      "parts": 1427,
-      "bytes_b64": 20624
+      "parts": 1532,
+      "bytes_b64": 22032
     },
     {
       "key": "-8_-23",
@@ -326,8 +327,8 @@
       "tz": -23,
       "center_x_studs": -13392.86,
       "center_z_studs": -40178.57,
-      "parts": 625,
-      "bytes_b64": 9588
+      "parts": 637,
+      "bytes_b64": 9756
     },
     {
       "key": "-8_-22",
@@ -335,8 +336,8 @@
       "tz": -22,
       "center_x_studs": -13392.86,
       "center_z_studs": -38392.86,
-      "parts": 353,
-      "bytes_b64": 5332
+      "parts": 378,
+      "bytes_b64": 5748
     },
     {
       "key": "-8_-21",
@@ -344,8 +345,8 @@
       "tz": -21,
       "center_x_studs": -13392.86,
       "center_z_studs": -36607.14,
-      "parts": 564,
-      "bytes_b64": 8348
+      "parts": 636,
+      "bytes_b64": 9420
     },
     {
       "key": "-8_-20",
@@ -353,8 +354,8 @@
       "tz": -20,
       "center_x_studs": -13392.86,
       "center_z_studs": -34821.43,
-      "parts": 428,
-      "bytes_b64": 5720
+      "parts": 491,
+      "bytes_b64": 6640
     },
     {
       "key": "-8_-19",
@@ -362,8 +363,8 @@
       "tz": -19,
       "center_x_studs": -13392.86,
       "center_z_studs": -33035.71,
-      "parts": 440,
-      "bytes_b64": 6484
+      "parts": 470,
+      "bytes_b64": 6880
     },
     {
       "key": "-8_-18",
@@ -371,8 +372,8 @@
       "tz": -18,
       "center_x_studs": -13392.86,
       "center_z_studs": -31250.0,
-      "parts": 55,
-      "bytes_b64": 1024
+      "parts": 58,
+      "bytes_b64": 1068
     },
     {
       "key": "-8_-17",
@@ -479,8 +480,8 @@
       "tz": -27,
       "center_x_studs": -11607.14,
       "center_z_studs": -47321.43,
-      "parts": 1212,
-      "bytes_b64": 17708
+      "parts": 1255,
+      "bytes_b64": 18328
     },
     {
       "key": "-7_-26",
@@ -488,8 +489,8 @@
       "tz": -26,
       "center_x_studs": -11607.14,
       "center_z_studs": -45535.71,
-      "parts": 1030,
-      "bytes_b64": 15092
+      "parts": 1134,
+      "bytes_b64": 16452
     },
     {
       "key": "-7_-25",
@@ -497,8 +498,8 @@
       "tz": -25,
       "center_x_studs": -11607.14,
       "center_z_studs": -43750.0,
-      "parts": 687,
-      "bytes_b64": 9608
+      "parts": 742,
+      "bytes_b64": 10404
     },
     {
       "key": "-7_-24",
@@ -506,8 +507,8 @@
       "tz": -24,
       "center_x_studs": -11607.14,
       "center_z_studs": -41964.29,
-      "parts": 904,
-      "bytes_b64": 13388
+      "parts": 962,
+      "bytes_b64": 14148
     },
     {
       "key": "-7_-23",
@@ -515,8 +516,8 @@
       "tz": -23,
       "center_x_studs": -11607.14,
       "center_z_studs": -40178.57,
-      "parts": 1381,
-      "bytes_b64": 19320
+      "parts": 1505,
+      "bytes_b64": 21072
     },
     {
       "key": "-7_-22",
@@ -524,8 +525,8 @@
       "tz": -22,
       "center_x_studs": -11607.14,
       "center_z_studs": -38392.86,
-      "parts": 1384,
-      "bytes_b64": 19576
+      "parts": 1522,
+      "bytes_b64": 21448
     },
     {
       "key": "-7_-21",
@@ -533,8 +534,8 @@
       "tz": -21,
       "center_x_studs": -11607.14,
       "center_z_studs": -36607.14,
-      "parts": 1685,
-      "bytes_b64": 23396
+      "parts": 1848,
+      "bytes_b64": 25628
     },
     {
       "key": "-7_-20",
@@ -542,8 +543,8 @@
       "tz": -20,
       "center_x_studs": -11607.14,
       "center_z_studs": -34821.43,
-      "parts": 2122,
-      "bytes_b64": 29200
+      "parts": 2451,
+      "bytes_b64": 33732
     },
     {
       "key": "-7_-19",
@@ -551,8 +552,8 @@
       "tz": -19,
       "center_x_studs": -11607.14,
       "center_z_studs": -33035.71,
-      "parts": 1120,
-      "bytes_b64": 16252
+      "parts": 1242,
+      "bytes_b64": 18112
     },
     {
       "key": "-7_-18",
@@ -560,8 +561,8 @@
       "tz": -18,
       "center_x_studs": -11607.14,
       "center_z_studs": -31250.0,
-      "parts": 115,
-      "bytes_b64": 1944
+      "parts": 132,
+      "bytes_b64": 2156
     },
     {
       "key": "-7_-17",
@@ -569,8 +570,8 @@
       "tz": -17,
       "center_x_studs": -11607.14,
       "center_z_studs": -29464.29,
-      "parts": 141,
-      "bytes_b64": 1916
+      "parts": 144,
+      "bytes_b64": 1952
     },
     {
       "key": "-7_-16",
@@ -641,8 +642,8 @@
       "tz": -31,
       "center_x_studs": -9821.43,
       "center_z_studs": -54464.29,
-      "parts": 149,
-      "bytes_b64": 2240
+      "parts": 155,
+      "bytes_b64": 2340
     },
     {
       "key": "-6_-30",
@@ -668,8 +669,8 @@
       "tz": -28,
       "center_x_studs": -9821.43,
       "center_z_studs": -49107.14,
-      "parts": 47,
-      "bytes_b64": 676
+      "parts": 56,
+      "bytes_b64": 816
     },
     {
       "key": "-6_-27",
@@ -695,8 +696,8 @@
       "tz": -25,
       "center_x_studs": -9821.43,
       "center_z_studs": -43750.0,
-      "parts": 335,
-      "bytes_b64": 5468
+      "parts": 341,
+      "bytes_b64": 5524
     },
     {
       "key": "-6_-24",
@@ -704,8 +705,8 @@
       "tz": -24,
       "center_x_studs": -9821.43,
       "center_z_studs": -41964.29,
-      "parts": 401,
-      "bytes_b64": 5112
+      "parts": 405,
+      "bytes_b64": 5136
     },
     {
       "key": "-6_-23",
@@ -713,8 +714,8 @@
       "tz": -23,
       "center_x_studs": -9821.43,
       "center_z_studs": -40178.57,
-      "parts": 1181,
-      "bytes_b64": 17100
+      "parts": 1304,
+      "bytes_b64": 18668
     },
     {
       "key": "-6_-22",
@@ -722,8 +723,8 @@
       "tz": -22,
       "center_x_studs": -9821.43,
       "center_z_studs": -38392.86,
-      "parts": 902,
-      "bytes_b64": 13048
+      "parts": 954,
+      "bytes_b64": 13828
     },
     {
       "key": "-6_-21",
@@ -731,8 +732,8 @@
       "tz": -21,
       "center_x_studs": -9821.43,
       "center_z_studs": -36607.14,
-      "parts": 1770,
-      "bytes_b64": 24972
+      "parts": 2003,
+      "bytes_b64": 28108
     },
     {
       "key": "-6_-20",
@@ -740,8 +741,8 @@
       "tz": -20,
       "center_x_studs": -9821.43,
       "center_z_studs": -34821.43,
-      "parts": 1425,
-      "bytes_b64": 20852
+      "parts": 1554,
+      "bytes_b64": 22768
     },
     {
       "key": "-6_-19",
@@ -749,8 +750,8 @@
       "tz": -19,
       "center_x_studs": -9821.43,
       "center_z_studs": -33035.71,
-      "parts": 601,
-      "bytes_b64": 9156
+      "parts": 633,
+      "bytes_b64": 9640
     },
     {
       "key": "-6_-18",
@@ -848,8 +849,8 @@
       "tz": -32,
       "center_x_studs": -8035.71,
       "center_z_studs": -56250.0,
-      "parts": 144,
-      "bytes_b64": 2404
+      "parts": 156,
+      "bytes_b64": 2544
     },
     {
       "key": "-5_-31",
@@ -857,8 +858,8 @@
       "tz": -31,
       "center_x_studs": -8035.71,
       "center_z_studs": -54464.29,
-      "parts": 485,
-      "bytes_b64": 7168
+      "parts": 536,
+      "bytes_b64": 7884
     },
     {
       "key": "-5_-30",
@@ -929,8 +930,8 @@
       "tz": -23,
       "center_x_studs": -8035.71,
       "center_z_studs": -40178.57,
-      "parts": 389,
-      "bytes_b64": 5320
+      "parts": 415,
+      "bytes_b64": 5768
     },
     {
       "key": "-5_-22",
@@ -938,8 +939,8 @@
       "tz": -22,
       "center_x_studs": -8035.71,
       "center_z_studs": -38392.86,
-      "parts": 637,
-      "bytes_b64": 9208
+      "parts": 672,
+      "bytes_b64": 9808
     },
     {
       "key": "-5_-21",
@@ -947,8 +948,8 @@
       "tz": -21,
       "center_x_studs": -8035.71,
       "center_z_studs": -36607.14,
-      "parts": 367,
-      "bytes_b64": 5924
+      "parts": 427,
+      "bytes_b64": 6792
     },
     {
       "key": "-5_-20",
@@ -956,8 +957,8 @@
       "tz": -20,
       "center_x_studs": -8035.71,
       "center_z_studs": -34821.43,
-      "parts": 1394,
-      "bytes_b64": 19560
+      "parts": 1633,
+      "bytes_b64": 22952
     },
     {
       "key": "-5_-19",
@@ -965,8 +966,8 @@
       "tz": -19,
       "center_x_studs": -8035.71,
       "center_z_studs": -33035.71,
-      "parts": 1426,
-      "bytes_b64": 20592
+      "parts": 1570,
+      "bytes_b64": 22496
     },
     {
       "key": "-5_-18",
@@ -974,8 +975,8 @@
       "tz": -18,
       "center_x_studs": -8035.71,
       "center_z_studs": -31250.0,
-      "parts": 382,
-      "bytes_b64": 4556
+      "parts": 381,
+      "bytes_b64": 4548
     },
     {
       "key": "-5_-17",
@@ -983,8 +984,8 @@
       "tz": -17,
       "center_x_studs": -8035.71,
       "center_z_studs": -29464.29,
-      "parts": 379,
-      "bytes_b64": 5388
+      "parts": 389,
+      "bytes_b64": 5516
     },
     {
       "key": "-5_-16",
@@ -1064,8 +1065,8 @@
       "tz": -8,
       "center_x_studs": -8035.71,
       "center_z_studs": -13392.86,
-      "parts": 49,
-      "bytes_b64": 964
+      "parts": 55,
+      "bytes_b64": 1048
     },
     {
       "key": "-5_-7",
@@ -1082,8 +1083,8 @@
       "tz": -32,
       "center_x_studs": -6250.0,
       "center_z_studs": -56250.0,
-      "parts": 107,
-      "bytes_b64": 1760
+      "parts": 106,
+      "bytes_b64": 1744
     },
     {
       "key": "-4_-31",
@@ -1091,8 +1092,8 @@
       "tz": -31,
       "center_x_studs": -6250.0,
       "center_z_studs": -54464.29,
-      "parts": 78,
-      "bytes_b64": 1396
+      "parts": 81,
+      "bytes_b64": 1448
     },
     {
       "key": "-4_-30",
@@ -1100,8 +1101,8 @@
       "tz": -30,
       "center_x_studs": -6250.0,
       "center_z_studs": -52678.57,
-      "parts": 23,
-      "bytes_b64": 584
+      "parts": 26,
+      "bytes_b64": 624
     },
     {
       "key": "-4_-27",
@@ -1145,8 +1146,8 @@
       "tz": -23,
       "center_x_studs": -6250.0,
       "center_z_studs": -40178.57,
-      "parts": 51,
-      "bytes_b64": 1028
+      "parts": 55,
+      "bytes_b64": 1100
     },
     {
       "key": "-4_-22",
@@ -1154,8 +1155,8 @@
       "tz": -22,
       "center_x_studs": -6250.0,
       "center_z_studs": -38392.86,
-      "parts": 624,
-      "bytes_b64": 7812
+      "parts": 656,
+      "bytes_b64": 8256
     },
     {
       "key": "-4_-21",
@@ -1163,8 +1164,8 @@
       "tz": -21,
       "center_x_studs": -6250.0,
       "center_z_studs": -36607.14,
-      "parts": 472,
-      "bytes_b64": 7184
+      "parts": 526,
+      "bytes_b64": 7908
     },
     {
       "key": "-4_-20",
@@ -1172,8 +1173,8 @@
       "tz": -20,
       "center_x_studs": -6250.0,
       "center_z_studs": -34821.43,
-      "parts": 519,
-      "bytes_b64": 8232
+      "parts": 581,
+      "bytes_b64": 9092
     },
     {
       "key": "-4_-19",
@@ -1181,8 +1182,8 @@
       "tz": -19,
       "center_x_studs": -6250.0,
       "center_z_studs": -33035.71,
-      "parts": 1725,
-      "bytes_b64": 24420
+      "parts": 1877,
+      "bytes_b64": 26544
     },
     {
       "key": "-4_-18",
@@ -1190,8 +1191,8 @@
       "tz": -18,
       "center_x_studs": -6250.0,
       "center_z_studs": -31250.0,
-      "parts": 903,
-      "bytes_b64": 12620
+      "parts": 988,
+      "bytes_b64": 13732
     },
     {
       "key": "-4_-17",
@@ -1199,8 +1200,8 @@
       "tz": -17,
       "center_x_studs": -6250.0,
       "center_z_studs": -29464.29,
-      "parts": 967,
-      "bytes_b64": 14772
+      "parts": 1033,
+      "bytes_b64": 15676
     },
     {
       "key": "-4_-16",
@@ -1253,8 +1254,8 @@
       "tz": -11,
       "center_x_studs": -6250.0,
       "center_z_studs": -18750.0,
-      "parts": 160,
-      "bytes_b64": 2744
+      "parts": 186,
+      "bytes_b64": 3156
     },
     {
       "key": "-4_-10",
@@ -1262,8 +1263,8 @@
       "tz": -10,
       "center_x_studs": -6250.0,
       "center_z_studs": -16964.29,
-      "parts": 1238,
-      "bytes_b64": 18060
+      "parts": 1388,
+      "bytes_b64": 20144
     },
     {
       "key": "-4_-9",
@@ -1280,8 +1281,8 @@
       "tz": -8,
       "center_x_studs": -6250.0,
       "center_z_studs": -13392.86,
-      "parts": 70,
-      "bytes_b64": 1276
+      "parts": 73,
+      "bytes_b64": 1320
     },
     {
       "key": "-4_-7",
@@ -1289,8 +1290,8 @@
       "tz": -7,
       "center_x_studs": -6250.0,
       "center_z_studs": -11607.14,
-      "parts": 163,
-      "bytes_b64": 2592
+      "parts": 172,
+      "bytes_b64": 2668
     },
     {
       "key": "-3_-27",
@@ -1334,8 +1335,8 @@
       "tz": -23,
       "center_x_studs": -4464.29,
       "center_z_studs": -40178.57,
-      "parts": 119,
-      "bytes_b64": 2048
+      "parts": 129,
+      "bytes_b64": 2204
     },
     {
       "key": "-3_-22",
@@ -1343,8 +1344,8 @@
       "tz": -22,
       "center_x_studs": -4464.29,
       "center_z_studs": -38392.86,
-      "parts": 584,
-      "bytes_b64": 8684
+      "parts": 681,
+      "bytes_b64": 10012
     },
     {
       "key": "-3_-21",
@@ -1352,8 +1353,8 @@
       "tz": -21,
       "center_x_studs": -4464.29,
       "center_z_studs": -36607.14,
-      "parts": 532,
-      "bytes_b64": 6688
+      "parts": 540,
+      "bytes_b64": 6820
     },
     {
       "key": "-3_-20",
@@ -1361,8 +1362,8 @@
       "tz": -20,
       "center_x_studs": -4464.29,
       "center_z_studs": -34821.43,
-      "parts": 653,
-      "bytes_b64": 9584
+      "parts": 722,
+      "bytes_b64": 10552
     },
     {
       "key": "-3_-19",
@@ -1370,8 +1371,8 @@
       "tz": -19,
       "center_x_studs": -4464.29,
       "center_z_studs": -33035.71,
-      "parts": 683,
-      "bytes_b64": 10376
+      "parts": 737,
+      "bytes_b64": 11128
     },
     {
       "key": "-3_-18",
@@ -1379,8 +1380,8 @@
       "tz": -18,
       "center_x_studs": -4464.29,
       "center_z_studs": -31250.0,
-      "parts": 2161,
-      "bytes_b64": 30172
+      "parts": 2318,
+      "bytes_b64": 32300
     },
     {
       "key": "-3_-17",
@@ -1388,8 +1389,8 @@
       "tz": -17,
       "center_x_studs": -4464.29,
       "center_z_studs": -29464.29,
-      "parts": 1730,
-      "bytes_b64": 25328
+      "parts": 2008,
+      "bytes_b64": 28956
     },
     {
       "key": "-3_-16",
@@ -1397,8 +1398,8 @@
       "tz": -16,
       "center_x_studs": -4464.29,
       "center_z_studs": -27678.57,
-      "parts": 942,
-      "bytes_b64": 14208
+      "parts": 1025,
+      "bytes_b64": 15420
     },
     {
       "key": "-3_-15",
@@ -1406,8 +1407,8 @@
       "tz": -15,
       "center_x_studs": -4464.29,
       "center_z_studs": -25892.86,
-      "parts": 806,
-      "bytes_b64": 12424
+      "parts": 911,
+      "bytes_b64": 13704
     },
     {
       "key": "-3_-14",
@@ -1415,8 +1416,8 @@
       "tz": -14,
       "center_x_studs": -4464.29,
       "center_z_studs": -24107.14,
-      "parts": 147,
-      "bytes_b64": 2568
+      "parts": 162,
+      "bytes_b64": 2768
     },
     {
       "key": "-3_-13",
@@ -1424,8 +1425,8 @@
       "tz": -13,
       "center_x_studs": -4464.29,
       "center_z_studs": -22321.43,
-      "parts": 45,
-      "bytes_b64": 972
+      "parts": 51,
+      "bytes_b64": 1044
     },
     {
       "key": "-3_-12",
@@ -1433,8 +1434,8 @@
       "tz": -12,
       "center_x_studs": -4464.29,
       "center_z_studs": -20535.71,
-      "parts": 66,
-      "bytes_b64": 836
+      "parts": 77,
+      "bytes_b64": 1024
     },
     {
       "key": "-3_-11",
@@ -1442,8 +1443,8 @@
       "tz": -11,
       "center_x_studs": -4464.29,
       "center_z_studs": -18750.0,
-      "parts": 1911,
-      "bytes_b64": 27176
+      "parts": 2148,
+      "bytes_b64": 30532
     },
     {
       "key": "-3_-10",
@@ -1451,8 +1452,8 @@
       "tz": -10,
       "center_x_studs": -4464.29,
       "center_z_studs": -16964.29,
-      "parts": 2444,
-      "bytes_b64": 35216
+      "parts": 2645,
+      "bytes_b64": 37864
     },
     {
       "key": "-3_-9",
@@ -1460,8 +1461,8 @@
       "tz": -9,
       "center_x_studs": -4464.29,
       "center_z_studs": -15178.57,
-      "parts": 1215,
-      "bytes_b64": 17828
+      "parts": 1349,
+      "bytes_b64": 19712
     },
     {
       "key": "-3_-8",
@@ -1469,8 +1470,8 @@
       "tz": -8,
       "center_x_studs": -4464.29,
       "center_z_studs": -13392.86,
-      "parts": 37,
-      "bytes_b64": 792
+      "parts": 43,
+      "bytes_b64": 852
     },
     {
       "key": "-3_-7",
@@ -1478,8 +1479,8 @@
       "tz": -7,
       "center_x_studs": -4464.29,
       "center_z_studs": -11607.14,
-      "parts": 54,
-      "bytes_b64": 1036
+      "parts": 57,
+      "bytes_b64": 1084
     },
     {
       "key": "-3_-6",
@@ -1487,8 +1488,8 @@
       "tz": -6,
       "center_x_studs": -4464.29,
       "center_z_studs": -9821.43,
-      "parts": 392,
-      "bytes_b64": 6032
+      "parts": 425,
+      "bytes_b64": 6536
     },
     {
       "key": "-3_-5",
@@ -1496,8 +1497,8 @@
       "tz": -5,
       "center_x_studs": -4464.29,
       "center_z_studs": -8035.71,
-      "parts": 204,
-      "bytes_b64": 3364
+      "parts": 237,
+      "bytes_b64": 3804
     },
     {
       "key": "-2_-28",
@@ -1550,8 +1551,8 @@
       "tz": -23,
       "center_x_studs": -2678.57,
       "center_z_studs": -40178.57,
-      "parts": 962,
-      "bytes_b64": 13124
+      "parts": 1020,
+      "bytes_b64": 14020
     },
     {
       "key": "-2_-22",
@@ -1559,8 +1560,8 @@
       "tz": -22,
       "center_x_studs": -2678.57,
       "center_z_studs": -38392.86,
-      "parts": 1754,
-      "bytes_b64": 24080
+      "parts": 2022,
+      "bytes_b64": 27832
     },
     {
       "key": "-2_-21",
@@ -1568,8 +1569,8 @@
       "tz": -21,
       "center_x_studs": -2678.57,
       "center_z_studs": -36607.14,
-      "parts": 1043,
-      "bytes_b64": 14912
+      "parts": 1125,
+      "bytes_b64": 16064
     },
     {
       "key": "-2_-20",
@@ -1577,8 +1578,8 @@
       "tz": -20,
       "center_x_studs": -2678.57,
       "center_z_studs": -34821.43,
-      "parts": 1191,
-      "bytes_b64": 16752
+      "parts": 1341,
+      "bytes_b64": 18708
     },
     {
       "key": "-2_-19",
@@ -1586,8 +1587,8 @@
       "tz": -19,
       "center_x_studs": -2678.57,
       "center_z_studs": -33035.71,
-      "parts": 600,
-      "bytes_b64": 9348
+      "parts": 670,
+      "bytes_b64": 10380
     },
     {
       "key": "-2_-18",
@@ -1595,8 +1596,8 @@
       "tz": -18,
       "center_x_studs": -2678.57,
       "center_z_studs": -31250.0,
-      "parts": 2241,
-      "bytes_b64": 32076
+      "parts": 2469,
+      "bytes_b64": 35060
     },
     {
       "key": "-2_-17",
@@ -1604,8 +1605,8 @@
       "tz": -17,
       "center_x_studs": -2678.57,
       "center_z_studs": -29464.29,
-      "parts": 1814,
-      "bytes_b64": 25888
+      "parts": 2019,
+      "bytes_b64": 28692
     },
     {
       "key": "-2_-16",
@@ -1613,8 +1614,8 @@
       "tz": -16,
       "center_x_studs": -2678.57,
       "center_z_studs": -27678.57,
-      "parts": 2138,
-      "bytes_b64": 30620
+      "parts": 2436,
+      "bytes_b64": 34632
     },
     {
       "key": "-2_-15",
@@ -1622,8 +1623,8 @@
       "tz": -15,
       "center_x_studs": -2678.57,
       "center_z_studs": -25892.86,
-      "parts": 1742,
-      "bytes_b64": 25248
+      "parts": 2083,
+      "bytes_b64": 30108
     },
     {
       "key": "-2_-14",
@@ -1631,8 +1632,8 @@
       "tz": -14,
       "center_x_studs": -2678.57,
       "center_z_studs": -24107.14,
-      "parts": 545,
-      "bytes_b64": 8732
+      "parts": 626,
+      "bytes_b64": 9812
     },
     {
       "key": "-2_-13",
@@ -1640,8 +1641,8 @@
       "tz": -13,
       "center_x_studs": -2678.57,
       "center_z_studs": -22321.43,
-      "parts": 286,
-      "bytes_b64": 4504
+      "parts": 317,
+      "bytes_b64": 4992
     },
     {
       "key": "-2_-12",
@@ -1649,8 +1650,8 @@
       "tz": -12,
       "center_x_studs": -2678.57,
       "center_z_studs": -20535.71,
-      "parts": 113,
-      "bytes_b64": 1960
+      "parts": 128,
+      "bytes_b64": 2196
     },
     {
       "key": "-2_-11",
@@ -1658,8 +1659,8 @@
       "tz": -11,
       "center_x_studs": -2678.57,
       "center_z_studs": -18750.0,
-      "parts": 2615,
-      "bytes_b64": 35968
+      "parts": 2969,
+      "bytes_b64": 40792
     },
     {
       "key": "-2_-10",
@@ -1667,8 +1668,8 @@
       "tz": -10,
       "center_x_studs": -2678.57,
       "center_z_studs": -16964.29,
-      "parts": 2730,
-      "bytes_b64": 38612
+      "parts": 3146,
+      "bytes_b64": 42728
     },
     {
       "key": "-2_-9",
@@ -1676,8 +1677,8 @@
       "tz": -9,
       "center_x_studs": -2678.57,
       "center_z_studs": -15178.57,
-      "parts": 2052,
-      "bytes_b64": 29280
+      "parts": 2271,
+      "bytes_b64": 32048
     },
     {
       "key": "-2_-8",
@@ -1685,8 +1686,8 @@
       "tz": -8,
       "center_x_studs": -2678.57,
       "center_z_studs": -13392.86,
-      "parts": 544,
-      "bytes_b64": 8192
+      "parts": 594,
+      "bytes_b64": 8844
     },
     {
       "key": "-2_-7",
@@ -1694,8 +1695,8 @@
       "tz": -7,
       "center_x_studs": -2678.57,
       "center_z_studs": -11607.14,
-      "parts": 876,
-      "bytes_b64": 8736
+      "parts": 881,
+      "bytes_b64": 8812
     },
     {
       "key": "-2_-6",
@@ -1703,8 +1704,8 @@
       "tz": -6,
       "center_x_studs": -2678.57,
       "center_z_studs": -9821.43,
-      "parts": 1484,
-      "bytes_b64": 17884
+      "parts": 1537,
+      "bytes_b64": 18584
     },
     {
       "key": "-2_-5",
@@ -1712,8 +1713,8 @@
       "tz": -5,
       "center_x_studs": -2678.57,
       "center_z_studs": -8035.71,
-      "parts": 1078,
-      "bytes_b64": 15664
+      "parts": 1179,
+      "bytes_b64": 16988
     },
     {
       "key": "-2_-4",
@@ -1721,8 +1722,8 @@
       "tz": -4,
       "center_x_studs": -2678.57,
       "center_z_studs": -6250.0,
-      "parts": 382,
-      "bytes_b64": 5644
+      "parts": 420,
+      "bytes_b64": 6188
     },
     {
       "key": "-1_-28",
@@ -1775,8 +1776,8 @@
       "tz": -23,
       "center_x_studs": -892.86,
       "center_z_studs": -40178.57,
-      "parts": 457,
-      "bytes_b64": 6480
+      "parts": 481,
+      "bytes_b64": 6916
     },
     {
       "key": "-1_-22",
@@ -1784,8 +1785,8 @@
       "tz": -22,
       "center_x_studs": -892.86,
       "center_z_studs": -38392.86,
-      "parts": 1431,
-      "bytes_b64": 20160
+      "parts": 1608,
+      "bytes_b64": 22748
     },
     {
       "key": "-1_-21",
@@ -1793,8 +1794,8 @@
       "tz": -21,
       "center_x_studs": -892.86,
       "center_z_studs": -36607.14,
-      "parts": 1179,
-      "bytes_b64": 16504
+      "parts": 1313,
+      "bytes_b64": 18204
     },
     {
       "key": "-1_-20",
@@ -1802,8 +1803,8 @@
       "tz": -20,
       "center_x_studs": -892.86,
       "center_z_studs": -34821.43,
-      "parts": 1336,
-      "bytes_b64": 18040
+      "parts": 1508,
+      "bytes_b64": 20392
     },
     {
       "key": "-1_-19",
@@ -1811,8 +1812,8 @@
       "tz": -19,
       "center_x_studs": -892.86,
       "center_z_studs": -33035.71,
-      "parts": 1561,
-      "bytes_b64": 22056
+      "parts": 1776,
+      "bytes_b64": 24904
     },
     {
       "key": "-1_-18",
@@ -1820,8 +1821,8 @@
       "tz": -18,
       "center_x_studs": -892.86,
       "center_z_studs": -31250.0,
-      "parts": 1878,
-      "bytes_b64": 27076
+      "parts": 2140,
+      "bytes_b64": 30344
     },
     {
       "key": "-1_-17",
@@ -1829,8 +1830,8 @@
       "tz": -17,
       "center_x_studs": -892.86,
       "center_z_studs": -29464.29,
-      "parts": 2126,
-      "bytes_b64": 29552
+      "parts": 2457,
+      "bytes_b64": 34100
     },
     {
       "key": "-1_-16",
@@ -1838,8 +1839,8 @@
       "tz": -16,
       "center_x_studs": -892.86,
       "center_z_studs": -27678.57,
-      "parts": 2029,
-      "bytes_b64": 29288
+      "parts": 2368,
+      "bytes_b64": 33796
     },
     {
       "key": "-1_-15",
@@ -1847,8 +1848,8 @@
       "tz": -15,
       "center_x_studs": -892.86,
       "center_z_studs": -25892.86,
-      "parts": 2259,
-      "bytes_b64": 31480
+      "parts": 2630,
+      "bytes_b64": 36452
     },
     {
       "key": "-1_-14",
@@ -1856,8 +1857,8 @@
       "tz": -14,
       "center_x_studs": -892.86,
       "center_z_studs": -24107.14,
-      "parts": 903,
-      "bytes_b64": 13540
+      "parts": 992,
+      "bytes_b64": 14724
     },
     {
       "key": "-1_-13",
@@ -1865,8 +1866,8 @@
       "tz": -13,
       "center_x_studs": -892.86,
       "center_z_studs": -22321.43,
-      "parts": 645,
-      "bytes_b64": 10424
+      "parts": 697,
+      "bytes_b64": 10972
     },
     {
       "key": "-1_-12",
@@ -1874,8 +1875,8 @@
       "tz": -12,
       "center_x_studs": -892.86,
       "center_z_studs": -20535.71,
-      "parts": 644,
-      "bytes_b64": 9472
+      "parts": 745,
+      "bytes_b64": 10768
     },
     {
       "key": "-1_-11",
@@ -1883,8 +1884,8 @@
       "tz": -11,
       "center_x_studs": -892.86,
       "center_z_studs": -18750.0,
-      "parts": 1745,
-      "bytes_b64": 25504
+      "parts": 1926,
+      "bytes_b64": 28100
     },
     {
       "key": "-1_-10",
@@ -1892,8 +1893,8 @@
       "tz": -10,
       "center_x_studs": -892.86,
       "center_z_studs": -16964.29,
-      "parts": 2562,
-      "bytes_b64": 34960
+      "parts": 2828,
+      "bytes_b64": 38728
     },
     {
       "key": "-1_-9",
@@ -1901,8 +1902,8 @@
       "tz": -9,
       "center_x_studs": -892.86,
       "center_z_studs": -15178.57,
-      "parts": 1647,
-      "bytes_b64": 23592
+      "parts": 1819,
+      "bytes_b64": 26024
     },
     {
       "key": "-1_-8",
@@ -1910,8 +1911,8 @@
       "tz": -8,
       "center_x_studs": -892.86,
       "center_z_studs": -13392.86,
-      "parts": 916,
-      "bytes_b64": 11400
+      "parts": 969,
+      "bytes_b64": 12144
     },
     {
       "key": "-1_-7",
@@ -1928,8 +1929,8 @@
       "tz": -6,
       "center_x_studs": -892.86,
       "center_z_studs": -9821.43,
-      "parts": 71,
-      "bytes_b64": 1200
+      "parts": 70,
+      "bytes_b64": 1144
     },
     {
       "key": "-1_-5",
@@ -1937,8 +1938,8 @@
       "tz": -5,
       "center_x_studs": -892.86,
       "center_z_studs": -8035.71,
-      "parts": 1035,
-      "bytes_b64": 12636
+      "parts": 1078,
+      "bytes_b64": 13200
     },
     {
       "key": "-1_-4",
@@ -1946,8 +1947,8 @@
       "tz": -4,
       "center_x_studs": -892.86,
       "center_z_studs": -6250.0,
-      "parts": 190,
-      "bytes_b64": 2056
+      "parts": 188,
+      "bytes_b64": 2020
     },
     {
       "key": "0_-22",
@@ -1964,8 +1965,8 @@
       "tz": -21,
       "center_x_studs": 892.86,
       "center_z_studs": -36607.14,
-      "parts": 550,
-      "bytes_b64": 8608
+      "parts": 607,
+      "bytes_b64": 9396
     },
     {
       "key": "0_-20",
@@ -1973,8 +1974,8 @@
       "tz": -20,
       "center_x_studs": 892.86,
       "center_z_studs": -34821.43,
-      "parts": 1696,
-      "bytes_b64": 24056
+      "parts": 1929,
+      "bytes_b64": 27112
     },
     {
       "key": "0_-19",
@@ -1982,8 +1983,8 @@
       "tz": -19,
       "center_x_studs": 892.86,
       "center_z_studs": -33035.71,
-      "parts": 1615,
-      "bytes_b64": 22512
+      "parts": 1860,
+      "bytes_b64": 25856
     },
     {
       "key": "0_-18",
@@ -1991,8 +1992,8 @@
       "tz": -18,
       "center_x_studs": 892.86,
       "center_z_studs": -31250.0,
-      "parts": 2078,
-      "bytes_b64": 28904
+      "parts": 2378,
+      "bytes_b64": 32764
     },
     {
       "key": "0_-17",
@@ -2000,8 +2001,8 @@
       "tz": -17,
       "center_x_studs": 892.86,
       "center_z_studs": -29464.29,
-      "parts": 2141,
-      "bytes_b64": 29968
+      "parts": 2436,
+      "bytes_b64": 33892
     },
     {
       "key": "0_-16",
@@ -2009,8 +2010,8 @@
       "tz": -16,
       "center_x_studs": 892.86,
       "center_z_studs": -27678.57,
-      "parts": 2241,
-      "bytes_b64": 30252
+      "parts": 2456,
+      "bytes_b64": 33168
     },
     {
       "key": "0_-15",
@@ -2018,8 +2019,8 @@
       "tz": -15,
       "center_x_studs": 892.86,
       "center_z_studs": -25892.86,
-      "parts": 2143,
-      "bytes_b64": 29584
+      "parts": 2379,
+      "bytes_b64": 32960
     },
     {
       "key": "0_-14",
@@ -2027,8 +2028,8 @@
       "tz": -14,
       "center_x_studs": 892.86,
       "center_z_studs": -24107.14,
-      "parts": 1052,
-      "bytes_b64": 13996
+      "parts": 1166,
+      "bytes_b64": 15648
     },
     {
       "key": "0_-13",
@@ -2036,8 +2037,8 @@
       "tz": -13,
       "center_x_studs": 892.86,
       "center_z_studs": -22321.43,
-      "parts": 1017,
-      "bytes_b64": 12412
+      "parts": 1107,
+      "bytes_b64": 13692
     },
     {
       "key": "0_-12",
@@ -2045,8 +2046,8 @@
       "tz": -12,
       "center_x_studs": 892.86,
       "center_z_studs": -20535.71,
-      "parts": 1988,
-      "bytes_b64": 26660
+      "parts": 2277,
+      "bytes_b64": 30660
     },
     {
       "key": "0_-11",
@@ -2054,8 +2055,8 @@
       "tz": -11,
       "center_x_studs": 892.86,
       "center_z_studs": -18750.0,
-      "parts": 1840,
-      "bytes_b64": 25060
+      "parts": 2086,
+      "bytes_b64": 28476
     },
     {
       "key": "0_-10",
@@ -2063,8 +2064,8 @@
       "tz": -10,
       "center_x_studs": 892.86,
       "center_z_studs": -16964.29,
-      "parts": 2170,
-      "bytes_b64": 29268
+      "parts": 2420,
+      "bytes_b64": 32632
     },
     {
       "key": "0_-9",
@@ -2072,8 +2073,8 @@
       "tz": -9,
       "center_x_studs": 892.86,
       "center_z_studs": -15178.57,
-      "parts": 2194,
-      "bytes_b64": 30320
+      "parts": 2446,
+      "bytes_b64": 33632
     },
     {
       "key": "0_-8",
@@ -2081,8 +2082,8 @@
       "tz": -8,
       "center_x_studs": 892.86,
       "center_z_studs": -13392.86,
-      "parts": 1705,
-      "bytes_b64": 25164
+      "parts": 1954,
+      "bytes_b64": 28452
     },
     {
       "key": "0_-7",
@@ -2090,8 +2091,8 @@
       "tz": -7,
       "center_x_studs": 892.86,
       "center_z_studs": -11607.14,
-      "parts": 703,
-      "bytes_b64": 10424
+      "parts": 831,
+      "bytes_b64": 12036
     },
     {
       "key": "0_-6",
@@ -2099,8 +2100,8 @@
       "tz": -6,
       "center_x_studs": 892.86,
       "center_z_studs": -9821.43,
-      "parts": 842,
-      "bytes_b64": 11228
+      "parts": 938,
+      "bytes_b64": 12484
     },
     {
       "key": "0_-5",
@@ -2108,8 +2109,8 @@
       "tz": -5,
       "center_x_studs": 892.86,
       "center_z_studs": -8035.71,
-      "parts": 371,
-      "bytes_b64": 4788
+      "parts": 388,
+      "bytes_b64": 5036
     },
     {
       "key": "0_-4",
@@ -2117,8 +2118,8 @@
       "tz": -4,
       "center_x_studs": 892.86,
       "center_z_studs": -6250.0,
-      "parts": 179,
-      "bytes_b64": 1988
+      "parts": 183,
+      "bytes_b64": 2016
     },
     {
       "key": "1_-22",
@@ -2126,8 +2127,8 @@
       "tz": -22,
       "center_x_studs": 2678.57,
       "center_z_studs": -38392.86,
-      "parts": 506,
-      "bytes_b64": 6376
+      "parts": 528,
+      "bytes_b64": 6688
     },
     {
       "key": "1_-21",
@@ -2135,8 +2136,8 @@
       "tz": -21,
       "center_x_studs": 2678.57,
       "center_z_studs": -36607.14,
-      "parts": 995,
-      "bytes_b64": 13316
+      "parts": 1048,
+      "bytes_b64": 14152
     },
     {
       "key": "1_-20",
@@ -2144,8 +2145,8 @@
       "tz": -20,
       "center_x_studs": 2678.57,
       "center_z_studs": -34821.43,
-      "parts": 1004,
-      "bytes_b64": 12504
+      "parts": 1151,
+      "bytes_b64": 14380
     },
     {
       "key": "1_-19",
@@ -2153,8 +2154,8 @@
       "tz": -19,
       "center_x_studs": 2678.57,
       "center_z_studs": -33035.71,
-      "parts": 1911,
-      "bytes_b64": 23456
+      "parts": 2112,
+      "bytes_b64": 26348
     },
     {
       "key": "1_-18",
@@ -2162,8 +2163,8 @@
       "tz": -18,
       "center_x_studs": 2678.57,
       "center_z_studs": -31250.0,
-      "parts": 1914,
-      "bytes_b64": 26032
+      "parts": 2147,
+      "bytes_b64": 29192
     },
     {
       "key": "1_-17",
@@ -2171,8 +2172,8 @@
       "tz": -17,
       "center_x_studs": 2678.57,
       "center_z_studs": -29464.29,
-      "parts": 2061,
-      "bytes_b64": 28740
+      "parts": 2364,
+      "bytes_b64": 32852
     },
     {
       "key": "1_-16",
@@ -2180,8 +2181,8 @@
       "tz": -16,
       "center_x_studs": 2678.57,
       "center_z_studs": -27678.57,
-      "parts": 2406,
-      "bytes_b64": 33200
+      "parts": 2687,
+      "bytes_b64": 36908
     },
     {
       "key": "1_-15",
@@ -2189,8 +2190,8 @@
       "tz": -15,
       "center_x_studs": 2678.57,
       "center_z_studs": -25892.86,
-      "parts": 1959,
-      "bytes_b64": 28496
+      "parts": 2231,
+      "bytes_b64": 31976
     },
     {
       "key": "1_-14",
@@ -2198,8 +2199,8 @@
       "tz": -14,
       "center_x_studs": 2678.57,
       "center_z_studs": -24107.14,
-      "parts": 1192,
-      "bytes_b64": 16960
+      "parts": 1326,
+      "bytes_b64": 18824
     },
     {
       "key": "1_-13",
@@ -2207,8 +2208,8 @@
       "tz": -13,
       "center_x_studs": 2678.57,
       "center_z_studs": -22321.43,
-      "parts": 1115,
-      "bytes_b64": 14496
+      "parts": 1241,
+      "bytes_b64": 16264
     },
     {
       "key": "1_-12",
@@ -2216,8 +2217,8 @@
       "tz": -12,
       "center_x_studs": 2678.57,
       "center_z_studs": -20535.71,
-      "parts": 1724,
-      "bytes_b64": 22800
+      "parts": 2153,
+      "bytes_b64": 29196
     },
     {
       "key": "1_-11",
@@ -2225,8 +2226,8 @@
       "tz": -11,
       "center_x_studs": 2678.57,
       "center_z_studs": -18750.0,
-      "parts": 1711,
-      "bytes_b64": 24664
+      "parts": 2137,
+      "bytes_b64": 30880
     },
     {
       "key": "1_-10",
@@ -2234,8 +2235,8 @@
       "tz": -10,
       "center_x_studs": 2678.57,
       "center_z_studs": -16964.29,
-      "parts": 1704,
-      "bytes_b64": 23888
+      "parts": 1955,
+      "bytes_b64": 27288
     },
     {
       "key": "1_-9",
@@ -2243,8 +2244,8 @@
       "tz": -9,
       "center_x_studs": 2678.57,
       "center_z_studs": -15178.57,
-      "parts": 1283,
-      "bytes_b64": 16828
+      "parts": 1399,
+      "bytes_b64": 18408
     },
     {
       "key": "1_-8",
@@ -2252,8 +2253,8 @@
       "tz": -8,
       "center_x_studs": 2678.57,
       "center_z_studs": -13392.86,
-      "parts": 1618,
-      "bytes_b64": 23580
+      "parts": 1862,
+      "bytes_b64": 26784
     },
     {
       "key": "1_-7",
@@ -2261,8 +2262,8 @@
       "tz": -7,
       "center_x_studs": 2678.57,
       "center_z_studs": -11607.14,
-      "parts": 1320,
-      "bytes_b64": 18664
+      "parts": 1485,
+      "bytes_b64": 20840
     },
     {
       "key": "1_-6",
@@ -2270,8 +2271,8 @@
       "tz": -6,
       "center_x_studs": 2678.57,
       "center_z_studs": -9821.43,
-      "parts": 1057,
-      "bytes_b64": 15012
+      "parts": 1198,
+      "bytes_b64": 16884
     },
     {
       "key": "1_-5",
@@ -2279,8 +2280,8 @@
       "tz": -5,
       "center_x_studs": 2678.57,
       "center_z_studs": -8035.71,
-      "parts": 560,
-      "bytes_b64": 6524
+      "parts": 581,
+      "bytes_b64": 6840
     },
     {
       "key": "1_-4",
@@ -2288,8 +2289,8 @@
       "tz": -4,
       "center_x_studs": 2678.57,
       "center_z_studs": -6250.0,
-      "parts": 311,
-      "bytes_b64": 3348
+      "parts": 320,
+      "bytes_b64": 3444
     },
     {
       "key": "2_-20",
@@ -2297,8 +2298,8 @@
       "tz": -20,
       "center_x_studs": 4464.29,
       "center_z_studs": -34821.43,
-      "parts": 28,
-      "bytes_b64": 684
+      "parts": 33,
+      "bytes_b64": 784
     },
     {
       "key": "2_-19",
@@ -2306,8 +2307,8 @@
       "tz": -19,
       "center_x_studs": 4464.29,
       "center_z_studs": -33035.71,
-      "parts": 1904,
-      "bytes_b64": 26696
+      "parts": 2198,
+      "bytes_b64": 30940
     },
     {
       "key": "2_-18",
@@ -2315,8 +2316,8 @@
       "tz": -18,
       "center_x_studs": 4464.29,
       "center_z_studs": -31250.0,
-      "parts": 2734,
-      "bytes_b64": 37212
+      "parts": 3009,
+      "bytes_b64": 40988
     },
     {
       "key": "2_-17",
@@ -2324,8 +2325,8 @@
       "tz": -17,
       "center_x_studs": 4464.29,
       "center_z_studs": -29464.29,
-      "parts": 2095,
-      "bytes_b64": 29584
+      "parts": 2342,
+      "bytes_b64": 33060
     },
     {
       "key": "2_-16",
@@ -2333,8 +2334,8 @@
       "tz": -16,
       "center_x_studs": 4464.29,
       "center_z_studs": -27678.57,
-      "parts": 2090,
-      "bytes_b64": 29428
+      "parts": 2349,
+      "bytes_b64": 32828
     },
     {
       "key": "2_-15",
@@ -2342,8 +2343,8 @@
       "tz": -15,
       "center_x_studs": 4464.29,
       "center_z_studs": -25892.86,
-      "parts": 2241,
-      "bytes_b64": 30912
+      "parts": 2669,
+      "bytes_b64": 36692
     },
     {
       "key": "2_-14",
@@ -2351,8 +2352,8 @@
       "tz": -14,
       "center_x_studs": 4464.29,
       "center_z_studs": -24107.14,
-      "parts": 1611,
-      "bytes_b64": 21748
+      "parts": 1835,
+      "bytes_b64": 24752
     },
     {
       "key": "2_-13",
@@ -2360,8 +2361,8 @@
       "tz": -13,
       "center_x_studs": 4464.29,
       "center_z_studs": -22321.43,
-      "parts": 774,
-      "bytes_b64": 9956
+      "parts": 830,
+      "bytes_b64": 10740
     },
     {
       "key": "2_-12",
@@ -2369,8 +2370,8 @@
       "tz": -12,
       "center_x_studs": 4464.29,
       "center_z_studs": -20535.71,
-      "parts": 1835,
-      "bytes_b64": 25692
+      "parts": 2205,
+      "bytes_b64": 30936
     },
     {
       "key": "2_-11",
@@ -2378,8 +2379,8 @@
       "tz": -11,
       "center_x_studs": 4464.29,
       "center_z_studs": -18750.0,
-      "parts": 1384,
-      "bytes_b64": 19232
+      "parts": 1785,
+      "bytes_b64": 25168
     },
     {
       "key": "2_-10",
@@ -2387,8 +2388,8 @@
       "tz": -10,
       "center_x_studs": 4464.29,
       "center_z_studs": -16964.29,
-      "parts": 1766,
-      "bytes_b64": 23716
+      "parts": 2015,
+      "bytes_b64": 27420
     },
     {
       "key": "2_-9",
@@ -2396,8 +2397,8 @@
       "tz": -9,
       "center_x_studs": 4464.29,
       "center_z_studs": -15178.57,
-      "parts": 809,
-      "bytes_b64": 11720
+      "parts": 927,
+      "bytes_b64": 13316
     },
     {
       "key": "2_-8",
@@ -2405,8 +2406,8 @@
       "tz": -8,
       "center_x_studs": 4464.29,
       "center_z_studs": -13392.86,
-      "parts": 1264,
-      "bytes_b64": 17944
+      "parts": 1365,
+      "bytes_b64": 19284
     },
     {
       "key": "2_-7",
@@ -2414,8 +2415,8 @@
       "tz": -7,
       "center_x_studs": 4464.29,
       "center_z_studs": -11607.14,
-      "parts": 1809,
-      "bytes_b64": 24444
+      "parts": 1936,
+      "bytes_b64": 26248
     },
     {
       "key": "2_-6",
@@ -2423,8 +2424,8 @@
       "tz": -6,
       "center_x_studs": 4464.29,
       "center_z_studs": -9821.43,
-      "parts": 944,
-      "bytes_b64": 12540
+      "parts": 1036,
+      "bytes_b64": 13888
     },
     {
       "key": "2_-5",
@@ -2450,8 +2451,8 @@
       "tz": -19,
       "center_x_studs": 6250.0,
       "center_z_studs": -33035.71,
-      "parts": 212,
-      "bytes_b64": 3528
+      "parts": 281,
+      "bytes_b64": 4520
     },
     {
       "key": "3_-18",
@@ -2459,8 +2460,8 @@
       "tz": -18,
       "center_x_studs": 6250.0,
       "center_z_studs": -31250.0,
-      "parts": 2110,
-      "bytes_b64": 29980
+      "parts": 2368,
+      "bytes_b64": 33488
     },
     {
       "key": "3_-17",
@@ -2468,8 +2469,8 @@
       "tz": -17,
       "center_x_studs": 6250.0,
       "center_z_studs": -29464.29,
-      "parts": 2446,
-      "bytes_b64": 34696
+      "parts": 2879,
+      "bytes_b64": 40864
     },
     {
       "key": "3_-16",
@@ -2477,8 +2478,8 @@
       "tz": -16,
       "center_x_studs": 6250.0,
       "center_z_studs": -27678.57,
-      "parts": 2728,
-      "bytes_b64": 38088
+      "parts": 3038,
+      "bytes_b64": 42416
     },
     {
       "key": "3_-15",
@@ -2486,8 +2487,8 @@
       "tz": -15,
       "center_x_studs": 6250.0,
       "center_z_studs": -25892.86,
-      "parts": 1719,
-      "bytes_b64": 25204
+      "parts": 1857,
+      "bytes_b64": 27124
     },
     {
       "key": "3_-14",
@@ -2495,8 +2496,8 @@
       "tz": -14,
       "center_x_studs": 6250.0,
       "center_z_studs": -24107.14,
-      "parts": 352,
-      "bytes_b64": 5620
+      "parts": 379,
+      "bytes_b64": 6024
     },
     {
       "key": "3_-13",
@@ -2504,8 +2505,8 @@
       "tz": -13,
       "center_x_studs": 6250.0,
       "center_z_studs": -22321.43,
-      "parts": 28,
-      "bytes_b64": 656
+      "parts": 30,
+      "bytes_b64": 708
     },
     {
       "key": "3_-12",
@@ -2513,8 +2514,8 @@
       "tz": -12,
       "center_x_studs": 6250.0,
       "center_z_studs": -20535.71,
-      "parts": 1005,
-      "bytes_b64": 13064
+      "parts": 1098,
+      "bytes_b64": 14388
     },
     {
       "key": "3_-11",
@@ -2522,8 +2523,8 @@
       "tz": -11,
       "center_x_studs": 6250.0,
       "center_z_studs": -18750.0,
-      "parts": 1132,
-      "bytes_b64": 15068
+      "parts": 1254,
+      "bytes_b64": 16756
     },
     {
       "key": "3_-10",
@@ -2531,8 +2532,8 @@
       "tz": -10,
       "center_x_studs": 6250.0,
       "center_z_studs": -16964.29,
-      "parts": 1218,
-      "bytes_b64": 17636
+      "parts": 1361,
+      "bytes_b64": 19632
     },
     {
       "key": "3_-9",
@@ -2540,8 +2541,8 @@
       "tz": -9,
       "center_x_studs": 6250.0,
       "center_z_studs": -15178.57,
-      "parts": 965,
-      "bytes_b64": 13748
+      "parts": 1078,
+      "bytes_b64": 15292
     },
     {
       "key": "3_-8",
@@ -2549,8 +2550,8 @@
       "tz": -8,
       "center_x_studs": 6250.0,
       "center_z_studs": -13392.86,
-      "parts": 1371,
-      "bytes_b64": 19544
+      "parts": 1584,
+      "bytes_b64": 22308
     },
     {
       "key": "3_-7",
@@ -2558,8 +2559,8 @@
       "tz": -7,
       "center_x_studs": 6250.0,
       "center_z_studs": -11607.14,
-      "parts": 2078,
-      "bytes_b64": 28752
+      "parts": 2313,
+      "bytes_b64": 31900
     },
     {
       "key": "3_-6",
@@ -2567,8 +2568,8 @@
       "tz": -6,
       "center_x_studs": 6250.0,
       "center_z_studs": -9821.43,
-      "parts": 1842,
-      "bytes_b64": 25724
+      "parts": 1994,
+      "bytes_b64": 27780
     },
     {
       "key": "3_-5",
@@ -2576,8 +2577,8 @@
       "tz": -5,
       "center_x_studs": 6250.0,
       "center_z_studs": -8035.71,
-      "parts": 1493,
-      "bytes_b64": 21316
+      "parts": 1886,
+      "bytes_b64": 25372
     },
     {
       "key": "3_-4",
@@ -2585,8 +2586,8 @@
       "tz": -4,
       "center_x_studs": 6250.0,
       "center_z_studs": -6250.0,
-      "parts": 125,
-      "bytes_b64": 1928
+      "parts": 145,
+      "bytes_b64": 2220
     },
     {
       "key": "4_-18",
@@ -2603,8 +2604,8 @@
       "tz": -17,
       "center_x_studs": 8035.71,
       "center_z_studs": -29464.29,
-      "parts": 1087,
-      "bytes_b64": 16080
+      "parts": 1307,
+      "bytes_b64": 19168
     },
     {
       "key": "4_-16",
@@ -2612,8 +2613,8 @@
       "tz": -16,
       "center_x_studs": 8035.71,
       "center_z_studs": -27678.57,
-      "parts": 1743,
-      "bytes_b64": 24280
+      "parts": 2169,
+      "bytes_b64": 30316
     },
     {
       "key": "4_-15",
@@ -2621,8 +2622,8 @@
       "tz": -15,
       "center_x_studs": 8035.71,
       "center_z_studs": -25892.86,
-      "parts": 527,
-      "bytes_b64": 8308
+      "parts": 590,
+      "bytes_b64": 9216
     },
     {
       "key": "4_-14",
@@ -2648,8 +2649,8 @@
       "tz": -12,
       "center_x_studs": 8035.71,
       "center_z_studs": -20535.71,
-      "parts": 1010,
-      "bytes_b64": 14040
+      "parts": 1170,
+      "bytes_b64": 15940
     },
     {
       "key": "4_-11",
@@ -2657,8 +2658,8 @@
       "tz": -11,
       "center_x_studs": 8035.71,
       "center_z_studs": -18750.0,
-      "parts": 1515,
-      "bytes_b64": 20944
+      "parts": 1777,
+      "bytes_b64": 24108
     },
     {
       "key": "4_-10",
@@ -2666,8 +2667,8 @@
       "tz": -10,
       "center_x_studs": 8035.71,
       "center_z_studs": -16964.29,
-      "parts": 2135,
-      "bytes_b64": 29892
+      "parts": 2362,
+      "bytes_b64": 32872
     },
     {
       "key": "4_-9",
@@ -2675,8 +2676,8 @@
       "tz": -9,
       "center_x_studs": 8035.71,
       "center_z_studs": -15178.57,
-      "parts": 1558,
-      "bytes_b64": 22928
+      "parts": 1722,
+      "bytes_b64": 25076
     },
     {
       "key": "4_-8",
@@ -2684,8 +2685,8 @@
       "tz": -8,
       "center_x_studs": 8035.71,
       "center_z_studs": -13392.86,
-      "parts": 1661,
-      "bytes_b64": 24340
+      "parts": 2011,
+      "bytes_b64": 28852
     },
     {
       "key": "4_-7",
@@ -2693,8 +2694,8 @@
       "tz": -7,
       "center_x_studs": 8035.71,
       "center_z_studs": -11607.14,
-      "parts": 2361,
-      "bytes_b64": 33228
+      "parts": 2659,
+      "bytes_b64": 37060
     },
     {
       "key": "4_-6",
@@ -2702,8 +2703,8 @@
       "tz": -6,
       "center_x_studs": 8035.71,
       "center_z_studs": -9821.43,
-      "parts": 2289,
-      "bytes_b64": 32432
+      "parts": 2446,
+      "bytes_b64": 34624
     },
     {
       "key": "4_-5",
@@ -2711,8 +2712,8 @@
       "tz": -5,
       "center_x_studs": 8035.71,
       "center_z_studs": -8035.71,
-      "parts": 2259,
-      "bytes_b64": 31536
+      "parts": 2614,
+      "bytes_b64": 36412
     },
     {
       "key": "4_-4",
@@ -2720,8 +2721,8 @@
       "tz": -4,
       "center_x_studs": 8035.71,
       "center_z_studs": -6250.0,
-      "parts": 1862,
-      "bytes_b64": 26024
+      "parts": 2153,
+      "bytes_b64": 29952
     },
     {
       "key": "5_-18",
@@ -2774,8 +2775,8 @@
       "tz": -13,
       "center_x_studs": 9821.43,
       "center_z_studs": -22321.43,
-      "parts": 262,
-      "bytes_b64": 4248
+      "parts": 280,
+      "bytes_b64": 4508
     },
     {
       "key": "5_-12",
@@ -2783,8 +2784,8 @@
       "tz": -12,
       "center_x_studs": 9821.43,
       "center_z_studs": -20535.71,
-      "parts": 984,
-      "bytes_b64": 14116
+      "parts": 1116,
+      "bytes_b64": 15904
     },
     {
       "key": "5_-11",
@@ -2792,8 +2793,8 @@
       "tz": -11,
       "center_x_studs": 9821.43,
       "center_z_studs": -18750.0,
-      "parts": 1827,
-      "bytes_b64": 25364
+      "parts": 2045,
+      "bytes_b64": 28268
     },
     {
       "key": "5_-10",
@@ -2801,8 +2802,8 @@
       "tz": -10,
       "center_x_studs": 9821.43,
       "center_z_studs": -16964.29,
-      "parts": 1782,
-      "bytes_b64": 26000
+      "parts": 1943,
+      "bytes_b64": 28208
     },
     {
       "key": "5_-9",
@@ -2810,8 +2811,8 @@
       "tz": -9,
       "center_x_studs": 9821.43,
       "center_z_studs": -15178.57,
-      "parts": 1913,
-      "bytes_b64": 26524
+      "parts": 2062,
+      "bytes_b64": 28532
     },
     {
       "key": "5_-8",
@@ -2819,8 +2820,8 @@
       "tz": -8,
       "center_x_studs": 9821.43,
       "center_z_studs": -13392.86,
-      "parts": 2241,
-      "bytes_b64": 31776
+      "parts": 2469,
+      "bytes_b64": 34688
     },
     {
       "key": "5_-7",
@@ -2828,8 +2829,8 @@
       "tz": -7,
       "center_x_studs": 9821.43,
       "center_z_studs": -11607.14,
-      "parts": 1668,
-      "bytes_b64": 23960
+      "parts": 1895,
+      "bytes_b64": 26832
     },
     {
       "key": "5_-6",
@@ -2837,8 +2838,8 @@
       "tz": -6,
       "center_x_studs": 9821.43,
       "center_z_studs": -9821.43,
-      "parts": 1592,
-      "bytes_b64": 22368
+      "parts": 1708,
+      "bytes_b64": 23948
     },
     {
       "key": "5_-5",
@@ -2846,8 +2847,8 @@
       "tz": -5,
       "center_x_studs": 9821.43,
       "center_z_studs": -8035.71,
-      "parts": 2260,
-      "bytes_b64": 31200
+      "parts": 2543,
+      "bytes_b64": 35144
     },
     {
       "key": "5_-4",
@@ -2855,8 +2856,8 @@
       "tz": -4,
       "center_x_studs": 9821.43,
       "center_z_studs": -6250.0,
-      "parts": 1212,
-      "bytes_b64": 17236
+      "parts": 1434,
+      "bytes_b64": 20184
     },
     {
       "key": "5_-3",
@@ -2918,8 +2919,8 @@
       "tz": -13,
       "center_x_studs": 11607.14,
       "center_z_studs": -22321.43,
-      "parts": 138,
-      "bytes_b64": 2360
+      "parts": 149,
+      "bytes_b64": 2532
     },
     {
       "key": "6_-12",
@@ -2927,8 +2928,8 @@
       "tz": -12,
       "center_x_studs": 11607.14,
       "center_z_studs": -20535.71,
-      "parts": 1889,
-      "bytes_b64": 26784
+      "parts": 2090,
+      "bytes_b64": 29480
     },
     {
       "key": "6_-11",
@@ -2936,8 +2937,8 @@
       "tz": -11,
       "center_x_studs": 11607.14,
       "center_z_studs": -18750.0,
-      "parts": 815,
-      "bytes_b64": 11852
+      "parts": 934,
+      "bytes_b64": 13412
     },
     {
       "key": "6_-10",
@@ -2945,8 +2946,8 @@
       "tz": -10,
       "center_x_studs": 11607.14,
       "center_z_studs": -16964.29,
-      "parts": 1979,
-      "bytes_b64": 27696
+      "parts": 2199,
+      "bytes_b64": 30736
     },
     {
       "key": "6_-9",
@@ -2954,8 +2955,8 @@
       "tz": -9,
       "center_x_studs": 11607.14,
       "center_z_studs": -15178.57,
-      "parts": 949,
-      "bytes_b64": 13812
+      "parts": 1012,
+      "bytes_b64": 14712
     },
     {
       "key": "6_-8",
@@ -2963,8 +2964,8 @@
       "tz": -8,
       "center_x_studs": 11607.14,
       "center_z_studs": -13392.86,
-      "parts": 861,
-      "bytes_b64": 11728
+      "parts": 939,
+      "bytes_b64": 12832
     },
     {
       "key": "6_-7",
@@ -2972,8 +2973,8 @@
       "tz": -7,
       "center_x_studs": 11607.14,
       "center_z_studs": -11607.14,
-      "parts": 565,
-      "bytes_b64": 8928
+      "parts": 650,
+      "bytes_b64": 9964
     },
     {
       "key": "6_-6",
@@ -2981,8 +2982,8 @@
       "tz": -6,
       "center_x_studs": 11607.14,
       "center_z_studs": -9821.43,
-      "parts": 1430,
-      "bytes_b64": 20204
+      "parts": 1584,
+      "bytes_b64": 22120
     },
     {
       "key": "6_-5",
@@ -2990,8 +2991,8 @@
       "tz": -5,
       "center_x_studs": 11607.14,
       "center_z_studs": -8035.71,
-      "parts": 1181,
-      "bytes_b64": 16592
+      "parts": 1349,
+      "bytes_b64": 19080
     },
     {
       "key": "6_-4",
@@ -2999,8 +3000,8 @@
       "tz": -4,
       "center_x_studs": 11607.14,
       "center_z_studs": -6250.0,
-      "parts": 667,
-      "bytes_b64": 9796
+      "parts": 801,
+      "bytes_b64": 11704
     },
     {
       "key": "7_-18",
@@ -3053,8 +3054,8 @@
       "tz": -13,
       "center_x_studs": 13392.86,
       "center_z_studs": -22321.43,
-      "parts": 367,
-      "bytes_b64": 4656
+      "parts": 411,
+      "bytes_b64": 5288
     },
     {
       "key": "7_-12",
@@ -3062,8 +3063,8 @@
       "tz": -12,
       "center_x_studs": 13392.86,
       "center_z_studs": -20535.71,
-      "parts": 1463,
-      "bytes_b64": 21056
+      "parts": 1702,
+      "bytes_b64": 24208
     },
     {
       "key": "7_-11",
@@ -3071,8 +3072,8 @@
       "tz": -11,
       "center_x_studs": 13392.86,
       "center_z_studs": -18750.0,
-      "parts": 1685,
-      "bytes_b64": 23636
+      "parts": 1847,
+      "bytes_b64": 25688
     },
     {
       "key": "7_-10",
@@ -3080,8 +3081,8 @@
       "tz": -10,
       "center_x_studs": 13392.86,
       "center_z_studs": -16964.29,
-      "parts": 1649,
-      "bytes_b64": 23628
+      "parts": 1801,
+      "bytes_b64": 25580
     },
     {
       "key": "7_-9",
@@ -3089,8 +3090,8 @@
       "tz": -9,
       "center_x_studs": 13392.86,
       "center_z_studs": -15178.57,
-      "parts": 1677,
-      "bytes_b64": 23524
+      "parts": 2059,
+      "bytes_b64": 27468
     },
     {
       "key": "7_-8",
@@ -3098,8 +3099,8 @@
       "tz": -8,
       "center_x_studs": 13392.86,
       "center_z_studs": -13392.86,
-      "parts": 238,
-      "bytes_b64": 3932
+      "parts": 244,
+      "bytes_b64": 4012
     },
     {
       "key": "7_-7",
@@ -3107,8 +3108,8 @@
       "tz": -7,
       "center_x_studs": 13392.86,
       "center_z_studs": -11607.14,
-      "parts": 874,
-      "bytes_b64": 10164
+      "parts": 888,
+      "bytes_b64": 10356
     },
     {
       "key": "7_-6",
@@ -3116,8 +3117,8 @@
       "tz": -6,
       "center_x_studs": 13392.86,
       "center_z_studs": -9821.43,
-      "parts": 682,
-      "bytes_b64": 10536
+      "parts": 723,
+      "bytes_b64": 11176
     },
     {
       "key": "7_-5",
@@ -3125,8 +3126,8 @@
       "tz": -5,
       "center_x_studs": 13392.86,
       "center_z_studs": -8035.71,
-      "parts": 193,
-      "bytes_b64": 2924
+      "parts": 195,
+      "bytes_b64": 2944
     },
     {
       "key": "7_-4",
@@ -3134,8 +3135,8 @@
       "tz": -4,
       "center_x_studs": 13392.86,
       "center_z_studs": -6250.0,
-      "parts": 218,
-      "bytes_b64": 3328
+      "parts": 224,
+      "bytes_b64": 3404
     },
     {
       "key": "7_-3",
@@ -3197,8 +3198,8 @@
       "tz": -15,
       "center_x_studs": 15178.57,
       "center_z_studs": -25892.86,
-      "parts": 85,
-      "bytes_b64": 1556
+      "parts": 97,
+      "bytes_b64": 1708
     },
     {
       "key": "8_-14",
@@ -3206,8 +3207,8 @@
       "tz": -14,
       "center_x_studs": 15178.57,
       "center_z_studs": -24107.14,
-      "parts": 1054,
-      "bytes_b64": 15568
+      "parts": 1226,
+      "bytes_b64": 17788
     },
     {
       "key": "8_-13",
@@ -3215,8 +3216,8 @@
       "tz": -13,
       "center_x_studs": 15178.57,
       "center_z_studs": -22321.43,
-      "parts": 1461,
-      "bytes_b64": 20740
+      "parts": 1585,
+      "bytes_b64": 22348
     },
     {
       "key": "8_-12",
@@ -3224,8 +3225,8 @@
       "tz": -12,
       "center_x_studs": 15178.57,
       "center_z_studs": -20535.71,
-      "parts": 2040,
-      "bytes_b64": 27708
+      "parts": 2207,
+      "bytes_b64": 29860
     },
     {
       "key": "8_-11",
@@ -3233,8 +3234,8 @@
       "tz": -11,
       "center_x_studs": 15178.57,
       "center_z_studs": -18750.0,
-      "parts": 1817,
-      "bytes_b64": 25756
+      "parts": 2001,
+      "bytes_b64": 28200
     },
     {
       "key": "8_-10",
@@ -3242,8 +3243,8 @@
       "tz": -10,
       "center_x_studs": 15178.57,
       "center_z_studs": -16964.29,
-      "parts": 1841,
-      "bytes_b64": 25508
+      "parts": 1996,
+      "bytes_b64": 27564
     },
     {
       "key": "8_-9",
@@ -3251,8 +3252,8 @@
       "tz": -9,
       "center_x_studs": 15178.57,
       "center_z_studs": -15178.57,
-      "parts": 1494,
-      "bytes_b64": 21408
+      "parts": 1623,
+      "bytes_b64": 23164
     },
     {
       "key": "8_-8",
@@ -3260,8 +3261,8 @@
       "tz": -8,
       "center_x_studs": 15178.57,
       "center_z_studs": -13392.86,
-      "parts": 1560,
-      "bytes_b64": 21328
+      "parts": 1718,
+      "bytes_b64": 23604
     },
     {
       "key": "8_-7",
@@ -3269,8 +3270,8 @@
       "tz": -7,
       "center_x_studs": 15178.57,
       "center_z_studs": -11607.14,
-      "parts": 421,
-      "bytes_b64": 6552
+      "parts": 436,
+      "bytes_b64": 6748
     },
     {
       "key": "8_-6",
@@ -3278,8 +3279,8 @@
       "tz": -6,
       "center_x_studs": 15178.57,
       "center_z_studs": -9821.43,
-      "parts": 461,
-      "bytes_b64": 6116
+      "parts": 477,
+      "bytes_b64": 6352
     },
     {
       "key": "8_-5",
@@ -3296,8 +3297,8 @@
       "tz": -4,
       "center_x_studs": 15178.57,
       "center_z_studs": -6250.0,
-      "parts": 207,
-      "bytes_b64": 3020
+      "parts": 221,
+      "bytes_b64": 3220
     },
     {
       "key": "8_-3",
@@ -3359,8 +3360,8 @@
       "tz": -15,
       "center_x_studs": 16964.29,
       "center_z_studs": -25892.86,
-      "parts": 694,
-      "bytes_b64": 10348
+      "parts": 817,
+      "bytes_b64": 11992
     },
     {
       "key": "9_-14",
@@ -3368,8 +3369,8 @@
       "tz": -14,
       "center_x_studs": 16964.29,
       "center_z_studs": -24107.14,
-      "parts": 1243,
-      "bytes_b64": 17988
+      "parts": 1357,
+      "bytes_b64": 19480
     },
     {
       "key": "9_-13",
@@ -3377,8 +3378,8 @@
       "tz": -13,
       "center_x_studs": 16964.29,
       "center_z_studs": -22321.43,
-      "parts": 1346,
-      "bytes_b64": 19052
+      "parts": 1488,
+      "bytes_b64": 20984
     },
     {
       "key": "9_-12",
@@ -3386,8 +3387,8 @@
       "tz": -12,
       "center_x_studs": 16964.29,
       "center_z_studs": -20535.71,
-      "parts": 1102,
-      "bytes_b64": 16592
+      "parts": 1263,
+      "bytes_b64": 18748
     },
     {
       "key": "9_-11",
@@ -3395,8 +3396,8 @@
       "tz": -11,
       "center_x_studs": 16964.29,
       "center_z_studs": -18750.0,
-      "parts": 1708,
-      "bytes_b64": 22240
+      "parts": 1882,
+      "bytes_b64": 24736
     },
     {
       "key": "9_-10",
@@ -3404,8 +3405,8 @@
       "tz": -10,
       "center_x_studs": 16964.29,
       "center_z_studs": -16964.29,
-      "parts": 963,
-      "bytes_b64": 14212
+      "parts": 1049,
+      "bytes_b64": 15380
     },
     {
       "key": "9_-9",
@@ -3413,8 +3414,8 @@
       "tz": -9,
       "center_x_studs": 16964.29,
       "center_z_studs": -15178.57,
-      "parts": 1250,
-      "bytes_b64": 18104
+      "parts": 1368,
+      "bytes_b64": 19700
     },
     {
       "key": "9_-8",
@@ -3422,8 +3423,8 @@
       "tz": -8,
       "center_x_studs": 16964.29,
       "center_z_studs": -13392.86,
-      "parts": 2016,
-      "bytes_b64": 27676
+      "parts": 2210,
+      "bytes_b64": 30148
     },
     {
       "key": "9_-7",
@@ -3431,8 +3432,8 @@
       "tz": -7,
       "center_x_studs": 16964.29,
       "center_z_studs": -11607.14,
-      "parts": 621,
-      "bytes_b64": 9012
+      "parts": 659,
+      "bytes_b64": 9532
     },
     {
       "key": "9_-6",
@@ -3440,8 +3441,8 @@
       "tz": -6,
       "center_x_studs": 16964.29,
       "center_z_studs": -9821.43,
-      "parts": 339,
-      "bytes_b64": 5020
+      "parts": 380,
+      "bytes_b64": 5588
     },
     {
       "key": "9_-5",
@@ -3449,8 +3450,8 @@
       "tz": -5,
       "center_x_studs": 16964.29,
       "center_z_studs": -8035.71,
-      "parts": 264,
-      "bytes_b64": 4156
+      "parts": 276,
+      "bytes_b64": 4372
     },
     {
       "key": "9_-4",
@@ -3458,8 +3459,8 @@
       "tz": -4,
       "center_x_studs": 16964.29,
       "center_z_studs": -6250.0,
-      "parts": 279,
-      "bytes_b64": 4428
+      "parts": 287,
+      "bytes_b64": 4532
     },
     {
       "key": "9_-3",
@@ -3467,8 +3468,8 @@
       "tz": -3,
       "center_x_studs": 16964.29,
       "center_z_studs": -4464.29,
-      "parts": 554,
-      "bytes_b64": 8044
+      "parts": 617,
+      "bytes_b64": 9028
     },
     {
       "key": "10_-18",
@@ -3476,8 +3477,8 @@
       "tz": -18,
       "center_x_studs": 18750.0,
       "center_z_studs": -31250.0,
-      "parts": 184,
-      "bytes_b64": 3016
+      "parts": 204,
+      "bytes_b64": 3324
     },
     {
       "key": "10_-17",
@@ -3485,8 +3486,8 @@
       "tz": -17,
       "center_x_studs": 18750.0,
       "center_z_studs": -29464.29,
-      "parts": 812,
-      "bytes_b64": 11964
+      "parts": 932,
+      "bytes_b64": 13636
     },
     {
       "key": "10_-16",
@@ -3494,8 +3495,8 @@
       "tz": -16,
       "center_x_studs": 18750.0,
       "center_z_studs": -27678.57,
-      "parts": 1056,
-      "bytes_b64": 15708
+      "parts": 1193,
+      "bytes_b64": 17512
     },
     {
       "key": "10_-15",
@@ -3503,8 +3504,8 @@
       "tz": -15,
       "center_x_studs": 18750.0,
       "center_z_studs": -25892.86,
-      "parts": 2047,
-      "bytes_b64": 28732
+      "parts": 2386,
+      "bytes_b64": 33224
     },
     {
       "key": "10_-14",
@@ -3512,8 +3513,8 @@
       "tz": -14,
       "center_x_studs": 18750.0,
       "center_z_studs": -24107.14,
-      "parts": 1812,
-      "bytes_b64": 25996
+      "parts": 2062,
+      "bytes_b64": 29348
     },
     {
       "key": "10_-13",
@@ -3521,8 +3522,8 @@
       "tz": -13,
       "center_x_studs": 18750.0,
       "center_z_studs": -22321.43,
-      "parts": 2066,
-      "bytes_b64": 29372
+      "parts": 2330,
+      "bytes_b64": 32864
     },
     {
       "key": "10_-12",
@@ -3530,8 +3531,8 @@
       "tz": -12,
       "center_x_studs": 18750.0,
       "center_z_studs": -20535.71,
-      "parts": 1108,
-      "bytes_b64": 15832
+      "parts": 1292,
+      "bytes_b64": 18148
     },
     {
       "key": "10_-11",
@@ -3539,8 +3540,8 @@
       "tz": -11,
       "center_x_studs": 18750.0,
       "center_z_studs": -18750.0,
-      "parts": 363,
-      "bytes_b64": 4800
+      "parts": 380,
+      "bytes_b64": 5028
     },
     {
       "key": "10_-10",
@@ -3548,8 +3549,8 @@
       "tz": -10,
       "center_x_studs": 18750.0,
       "center_z_studs": -16964.29,
-      "parts": 284,
-      "bytes_b64": 4364
+      "parts": 297,
+      "bytes_b64": 4588
     },
     {
       "key": "10_-9",
@@ -3557,8 +3558,8 @@
       "tz": -9,
       "center_x_studs": 18750.0,
       "center_z_studs": -15178.57,
-      "parts": 1016,
-      "bytes_b64": 15160
+      "parts": 1092,
+      "bytes_b64": 16176
     },
     {
       "key": "10_-8",
@@ -3566,8 +3567,8 @@
       "tz": -8,
       "center_x_studs": 18750.0,
       "center_z_studs": -13392.86,
-      "parts": 802,
-      "bytes_b64": 12108
+      "parts": 916,
+      "bytes_b64": 13564
     },
     {
       "key": "10_-7",
@@ -3575,8 +3576,8 @@
       "tz": -7,
       "center_x_studs": 18750.0,
       "center_z_studs": -11607.14,
-      "parts": 975,
-      "bytes_b64": 12576
+      "parts": 1055,
+      "bytes_b64": 13676
     },
     {
       "key": "10_-6",
@@ -3584,8 +3585,8 @@
       "tz": -6,
       "center_x_studs": 18750.0,
       "center_z_studs": -9821.43,
-      "parts": 266,
-      "bytes_b64": 4016
+      "parts": 277,
+      "bytes_b64": 4196
     },
     {
       "key": "10_-5",
@@ -3593,8 +3594,8 @@
       "tz": -5,
       "center_x_studs": 18750.0,
       "center_z_studs": -8035.71,
-      "parts": 163,
-      "bytes_b64": 2332
+      "parts": 184,
+      "bytes_b64": 2620
     },
     {
       "key": "10_-4",
@@ -3602,8 +3603,8 @@
       "tz": -4,
       "center_x_studs": 18750.0,
       "center_z_studs": -6250.0,
-      "parts": 87,
-      "bytes_b64": 1484
+      "parts": 90,
+      "bytes_b64": 1536
     },
     {
       "key": "10_-3",
@@ -3611,8 +3612,8 @@
       "tz": -3,
       "center_x_studs": 18750.0,
       "center_z_studs": -4464.29,
-      "parts": 452,
-      "bytes_b64": 6792
+      "parts": 474,
+      "bytes_b64": 7072
     },
     {
       "key": "11_-18",
@@ -3620,8 +3621,8 @@
       "tz": -18,
       "center_x_studs": 20535.71,
       "center_z_studs": -31250.0,
-      "parts": 317,
-      "bytes_b64": 5128
+      "parts": 357,
+      "bytes_b64": 5764
     },
     {
       "key": "11_-17",
@@ -3629,8 +3630,8 @@
       "tz": -17,
       "center_x_studs": 20535.71,
       "center_z_studs": -29464.29,
-      "parts": 2082,
-      "bytes_b64": 28768
+      "parts": 2489,
+      "bytes_b64": 34248
     },
     {
       "key": "11_-16",
@@ -3638,8 +3639,8 @@
       "tz": -16,
       "center_x_studs": 20535.71,
       "center_z_studs": -27678.57,
-      "parts": 2354,
-      "bytes_b64": 32412
+      "parts": 2693,
+      "bytes_b64": 36800
     },
     {
       "key": "11_-15",
@@ -3647,8 +3648,8 @@
       "tz": -15,
       "center_x_studs": 20535.71,
       "center_z_studs": -25892.86,
-      "parts": 2057,
-      "bytes_b64": 28904
+      "parts": 2329,
+      "bytes_b64": 32368
     },
     {
       "key": "11_-14",
@@ -3656,8 +3657,8 @@
       "tz": -14,
       "center_x_studs": 20535.71,
       "center_z_studs": -24107.14,
-      "parts": 1558,
-      "bytes_b64": 21720
+      "parts": 1733,
+      "bytes_b64": 24204
     },
     {
       "key": "11_-13",
@@ -3665,8 +3666,8 @@
       "tz": -13,
       "center_x_studs": 20535.71,
       "center_z_studs": -22321.43,
-      "parts": 2073,
-      "bytes_b64": 28268
+      "parts": 2350,
+      "bytes_b64": 32096
     },
     {
       "key": "11_-12",
@@ -3674,8 +3675,8 @@
       "tz": -12,
       "center_x_studs": 20535.71,
       "center_z_studs": -20535.71,
-      "parts": 1737,
-      "bytes_b64": 24412
+      "parts": 2070,
+      "bytes_b64": 29012
     },
     {
       "key": "11_-11",
@@ -3683,8 +3684,8 @@
       "tz": -11,
       "center_x_studs": 20535.71,
       "center_z_studs": -18750.0,
-      "parts": 1255,
-      "bytes_b64": 17940
+      "parts": 1367,
+      "bytes_b64": 19524
     },
     {
       "key": "11_-10",
@@ -3692,8 +3693,8 @@
       "tz": -10,
       "center_x_studs": 20535.71,
       "center_z_studs": -16964.29,
-      "parts": 1413,
-      "bytes_b64": 20148
+      "parts": 1519,
+      "bytes_b64": 21556
     },
     {
       "key": "11_-9",
@@ -3701,8 +3702,8 @@
       "tz": -9,
       "center_x_studs": 20535.71,
       "center_z_studs": -15178.57,
-      "parts": 1300,
-      "bytes_b64": 18456
+      "parts": 1444,
+      "bytes_b64": 20424
     },
     {
       "key": "11_-8",
@@ -3719,8 +3720,8 @@
       "tz": -7,
       "center_x_studs": 20535.71,
       "center_z_studs": -11607.14,
-      "parts": 589,
-      "bytes_b64": 8752
+      "parts": 655,
+      "bytes_b64": 9688
     },
     {
       "key": "11_-6",
@@ -3728,8 +3729,8 @@
       "tz": -6,
       "center_x_studs": 20535.71,
       "center_z_studs": -9821.43,
-      "parts": 710,
-      "bytes_b64": 10392
+      "parts": 722,
+      "bytes_b64": 10540
     },
     {
       "key": "11_-5",
@@ -3737,8 +3738,8 @@
       "tz": -5,
       "center_x_studs": 20535.71,
       "center_z_studs": -8035.71,
-      "parts": 319,
-      "bytes_b64": 4992
+      "parts": 331,
+      "bytes_b64": 5172
     },
     {
       "key": "11_-4",
@@ -3764,8 +3765,8 @@
       "tz": -17,
       "center_x_studs": 22321.43,
       "center_z_studs": -29464.29,
-      "parts": 1630,
-      "bytes_b64": 22796
+      "parts": 1878,
+      "bytes_b64": 26272
     },
     {
       "key": "12_-16",
@@ -3773,8 +3774,8 @@
       "tz": -16,
       "center_x_studs": 22321.43,
       "center_z_studs": -27678.57,
-      "parts": 1258,
-      "bytes_b64": 18396
+      "parts": 1506,
+      "bytes_b64": 21792
     },
     {
       "key": "12_-15",
@@ -3782,8 +3783,8 @@
       "tz": -15,
       "center_x_studs": 22321.43,
       "center_z_studs": -25892.86,
-      "parts": 1395,
-      "bytes_b64": 20008
+      "parts": 1683,
+      "bytes_b64": 23484
     },
     {
       "key": "12_-14",
@@ -3791,8 +3792,8 @@
       "tz": -14,
       "center_x_studs": 22321.43,
       "center_z_studs": -24107.14,
-      "parts": 1671,
-      "bytes_b64": 23252
+      "parts": 1966,
+      "bytes_b64": 27256
     },
     {
       "key": "12_-13",
@@ -3800,8 +3801,8 @@
       "tz": -13,
       "center_x_studs": 22321.43,
       "center_z_studs": -22321.43,
-      "parts": 2002,
-      "bytes_b64": 27448
+      "parts": 2578,
+      "bytes_b64": 35296
     },
     {
       "key": "12_-12",
@@ -3809,8 +3810,8 @@
       "tz": -12,
       "center_x_studs": 22321.43,
       "center_z_studs": -20535.71,
-      "parts": 1942,
-      "bytes_b64": 27120
+      "parts": 2516,
+      "bytes_b64": 34784
     },
     {
       "key": "12_-11",
@@ -3818,8 +3819,8 @@
       "tz": -11,
       "center_x_studs": 22321.43,
       "center_z_studs": -18750.0,
-      "parts": 1072,
-      "bytes_b64": 15240
+      "parts": 1273,
+      "bytes_b64": 18172
     },
     {
       "key": "12_-10",
@@ -3827,8 +3828,8 @@
       "tz": -10,
       "center_x_studs": 22321.43,
       "center_z_studs": -16964.29,
-      "parts": 325,
-      "bytes_b64": 5328
+      "parts": 350,
+      "bytes_b64": 5652
     },
     {
       "key": "12_-9",
@@ -3836,8 +3837,8 @@
       "tz": -9,
       "center_x_studs": 22321.43,
       "center_z_studs": -15178.57,
-      "parts": 143,
-      "bytes_b64": 2268
+      "parts": 161,
+      "bytes_b64": 2512
     },
     {
       "key": "12_-8",
@@ -3845,8 +3846,8 @@
       "tz": -8,
       "center_x_studs": 22321.43,
       "center_z_studs": -13392.86,
-      "parts": 236,
-      "bytes_b64": 3536
+      "parts": 271,
+      "bytes_b64": 3960
     },
     {
       "key": "12_-7",
@@ -3863,8 +3864,8 @@
       "tz": -6,
       "center_x_studs": 22321.43,
       "center_z_studs": -9821.43,
-      "parts": 55,
-      "bytes_b64": 996
+      "parts": 52,
+      "bytes_b64": 940
     },
     {
       "key": "12_-5",
@@ -3872,8 +3873,8 @@
       "tz": -5,
       "center_x_studs": 22321.43,
       "center_z_studs": -8035.71,
-      "parts": 56,
-      "bytes_b64": 1184
+      "parts": 62,
+      "bytes_b64": 1268
     },
     {
       "key": "12_-4",
@@ -3890,8 +3891,8 @@
       "tz": -3,
       "center_x_studs": 22321.43,
       "center_z_studs": -4464.29,
-      "parts": 75,
-      "bytes_b64": 1260
+      "parts": 79,
+      "bytes_b64": 1324
     },
     {
       "key": "12_-2",
@@ -3899,8 +3900,8 @@
       "tz": -2,
       "center_x_studs": 22321.43,
       "center_z_studs": -2678.57,
-      "parts": 81,
-      "bytes_b64": 1220
+      "parts": 84,
+      "bytes_b64": 1260
     },
     {
       "key": "13_-18",
@@ -3908,8 +3909,8 @@
       "tz": -18,
       "center_x_studs": 24107.14,
       "center_z_studs": -31250.0,
-      "parts": 102,
-      "bytes_b64": 1752
+      "parts": 120,
+      "bytes_b64": 2040
     },
     {
       "key": "13_-17",
@@ -3926,8 +3927,8 @@
       "tz": -16,
       "center_x_studs": 24107.14,
       "center_z_studs": -27678.57,
-      "parts": 151,
-      "bytes_b64": 2680
+      "parts": 158,
+      "bytes_b64": 2804
     },
     {
       "key": "13_-15",
@@ -3935,8 +3936,8 @@
       "tz": -15,
       "center_x_studs": 24107.14,
       "center_z_studs": -25892.86,
-      "parts": 328,
-      "bytes_b64": 5152
+      "parts": 352,
+      "bytes_b64": 5392
     },
     {
       "key": "13_-14",
@@ -3944,8 +3945,8 @@
       "tz": -14,
       "center_x_studs": 24107.14,
       "center_z_studs": -24107.14,
-      "parts": 533,
-      "bytes_b64": 8212
+      "parts": 615,
+      "bytes_b64": 9308
     },
     {
       "key": "13_-13",
@@ -3953,8 +3954,8 @@
       "tz": -13,
       "center_x_studs": 24107.14,
       "center_z_studs": -22321.43,
-      "parts": 721,
-      "bytes_b64": 10488
+      "parts": 883,
+      "bytes_b64": 12752
     },
     {
       "key": "13_-12",
@@ -3962,8 +3963,8 @@
       "tz": -12,
       "center_x_studs": 24107.14,
       "center_z_studs": -20535.71,
-      "parts": 417,
-      "bytes_b64": 6240
+      "parts": 487,
+      "bytes_b64": 7292
     },
     {
       "key": "13_-11",
@@ -3971,8 +3972,8 @@
       "tz": -11,
       "center_x_studs": 24107.14,
       "center_z_studs": -18750.0,
-      "parts": 211,
-      "bytes_b64": 3160
+      "parts": 220,
+      "bytes_b64": 3328
     },
     {
       "key": "13_-10",
@@ -3980,8 +3981,8 @@
       "tz": -10,
       "center_x_studs": 24107.14,
       "center_z_studs": -16964.29,
-      "parts": 132,
-      "bytes_b64": 2168
+      "parts": 144,
+      "bytes_b64": 2316
     },
     {
       "key": "13_-9",
@@ -3989,8 +3990,8 @@
       "tz": -9,
       "center_x_studs": 24107.14,
       "center_z_studs": -15178.57,
-      "parts": 53,
-      "bytes_b64": 1084
+      "parts": 66,
+      "bytes_b64": 1272
     },
     {
       "key": "13_-8",
@@ -3998,8 +3999,8 @@
       "tz": -8,
       "center_x_studs": 24107.14,
       "center_z_studs": -13392.86,
-      "parts": 308,
-      "bytes_b64": 4264
+      "parts": 336,
+      "bytes_b64": 4648
     },
     {
       "key": "13_-7",
@@ -4016,8 +4017,8 @@
       "tz": -6,
       "center_x_studs": 24107.14,
       "center_z_studs": -9821.43,
-      "parts": 116,
-      "bytes_b64": 2032
+      "parts": 115,
+      "bytes_b64": 2016
     },
     {
       "key": "13_-5",
@@ -4034,8 +4035,8 @@
       "tz": -4,
       "center_x_studs": 24107.14,
       "center_z_studs": -6250.0,
-      "parts": 191,
-      "bytes_b64": 2572
+      "parts": 200,
+      "bytes_b64": 2704
     },
     {
       "key": "13_-3",
@@ -4043,8 +4044,8 @@
       "tz": -3,
       "center_x_studs": 24107.14,
       "center_z_studs": -4464.29,
-      "parts": 189,
-      "bytes_b64": 3192
+      "parts": 233,
+      "bytes_b64": 3752
     },
     {
       "key": "13_-2",
@@ -4052,8 +4053,8 @@
       "tz": -2,
       "center_x_studs": 24107.14,
       "center_z_studs": -2678.57,
-      "parts": 167,
-      "bytes_b64": 2284
+      "parts": 179,
+      "bytes_b64": 2452
     },
     {
       "key": "14_-10",
@@ -4079,8 +4080,8 @@
       "tz": -8,
       "center_x_studs": 25892.86,
       "center_z_studs": -13392.86,
-      "parts": 155,
-      "bytes_b64": 2308
+      "parts": 161,
+      "bytes_b64": 2384
     },
     {
       "key": "14_-7",
@@ -4088,8 +4089,8 @@
       "tz": -7,
       "center_x_studs": 25892.86,
       "center_z_studs": -11607.14,
-      "parts": 36,
-      "bytes_b64": 780
+      "parts": 42,
+      "bytes_b64": 856
     },
     {
       "key": "14_-6",
@@ -4124,8 +4125,8 @@
       "tz": -3,
       "center_x_studs": 25892.86,
       "center_z_studs": -4464.29,
-      "parts": 155,
-      "bytes_b64": 2648
+      "parts": 164,
+      "bytes_b64": 2780
     },
     {
       "key": "14_-2",
@@ -4142,8 +4143,8 @@
       "tz": -8,
       "center_x_studs": 27678.57,
       "center_z_studs": -13392.86,
-      "parts": 52,
-      "bytes_b64": 820
+      "parts": 49,
+      "bytes_b64": 760
     },
     {
       "key": "15_-7",
@@ -4151,8 +4152,8 @@
       "tz": -7,
       "center_x_studs": 27678.57,
       "center_z_studs": -11607.14,
-      "parts": 58,
-      "bytes_b64": 1160
+      "parts": 61,
+      "bytes_b64": 1192
     },
     {
       "key": "15_-6",
@@ -4196,8 +4197,8 @@
       "tz": -2,
       "center_x_studs": 27678.57,
       "center_z_studs": -2678.57,
-      "parts": 232,
-      "bytes_b64": 3588
+      "parts": 239,
+      "bytes_b64": 3656
     },
     {
       "key": "16_-7",
@@ -4241,8 +4242,8 @@
       "tz": -2,
       "center_x_studs": 29464.29,
       "center_z_studs": -2678.57,
-      "parts": 889,
-      "bytes_b64": 13036
+      "parts": 922,
+      "bytes_b64": 13464
     },
     {
       "key": "16_-1",
@@ -4250,8 +4251,8 @@
       "tz": -1,
       "center_x_studs": 29464.29,
       "center_z_studs": -892.86,
-      "parts": 263,
-      "bytes_b64": 4164
+      "parts": 268,
+      "bytes_b64": 4228
     }
   ]
 }

@@ -287,6 +287,8 @@ def run_build(
         campus_poly=campus_poly,
         road_clearance_poly=road_out.road_clearance_geoms,
         overrides=cfg.get("overrides") or {},
+        extra_road_parts=road_out.parts,
+        anchor_streets=campus_data.get("streets"),
     )
 
     all_parts = [*road_out.parts, *bld_parts]
@@ -401,7 +403,7 @@ def main() -> None:
     print(f"city={idx['city']} time={res['elapsed_s']}s area={cnt['area_km2']}km2")
     print(f"calib: dx={cal['dx_m']}m dz={cal['dz_m']}m rot={cal['dtheta_deg']}deg rms={cal['rms_residual_m']}m samples={cal['matched_samples']} streets={len(cal['matched_streets'])}")
     print(f"roads: segs={cnt['segments']} junc={cnt['junction_nodes']} sidewalks={cnt['sidewalk_parts']} stripes={cnt['lane_stripes']} snaps={cnt['snapped_to_anchor']} dup_drop={cnt['dropped_duplicate_anchor']}")
-    print(f"buildings: kept={cnt['kept_buildings']} parts={cnt['building_parts']} drop_small={cnt['dropped_small']} drop_road_campus={cnt['dropped_campus_or_road']}")
+    print(f"buildings: kept={cnt['kept_buildings']} parts={cnt['building_parts']} drop_small={cnt['dropped_small']} drop_road_campus={cnt['dropped_campus_or_road']} post_drop={cnt.get('post_filter_dropped', 0)}")
     print(f"output: tiles={idx['total_tiles']} total_parts={idx['total_parts']} b64_kb={idx['total_b64_bytes']//1024} parts/km2={cnt['parts_per_km2']} est_sapucaia_urban(25km2)={cnt['parts_per_km2']*25}")
 
 

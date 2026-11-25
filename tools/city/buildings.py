@@ -8,12 +8,16 @@ import math
 from typing import Any
 
 import shapely
-from shapely.geometry import LineString, Polygon
+from shapely import affinity
+from shapely.geometry import LineString, Point, Polygon, box as shp_box
 from shapely.geometry.base import BaseGeometry
+from shapely.ops import unary_union
 from shapely.strtree import STRtree
 
 from .codec import (
     CAT_BUILDINGS,
+    CAT_ROADS,
+    CAT_SIDEWALKS,
     FLAG_CAN_QUERY,
     FLAG_COLLIDE,
     FLAG_SHADOW,
@@ -22,6 +26,7 @@ from .codec import (
     MAT_SLATE,
     MAT_SMOOTH_PLASTIC,
     PART_BLOCK,
+    PART_CYLINDER,
     PART_WEDGE,
     STUDS_PER_METER,
     TilePart,
@@ -98,37 +103,68 @@ def _obb_params(poly: Polygon) -> OrientedBox:
     return OrientedBox(cx=cx, cz=cz, width_u=u_len, depth_v=v_len, yaw_u=yaw)
 
 
+def obb_world_polygon(box: OrientedBox, margin_m: float = 0.0) -> Polygon:
+    """Retorna o poligono 2D exato (em metros) da OBB no sistema do Roblox (+Z=Sul)."""
+    hx = max(0.5, box.width_u * 0.5 + margin_m)
+    hz = max(0.5, box.depth_v * 0.5 + margin_m)
+    p = shp_box(-hx, -hz, hx, hz)
+    p = affinity.rotate(p, -math.degrees(box.yaw_u), origin=(0.0, 0.0))
+    return affinity.translate(p, xoff=box.cx, yoff=box.cz)
+
+
+def _tile_part_footprint_m(part: TilePart, extra_margin_m: float = 0.0) -> Polygon:
+    px = part.px_studs / STUDS_PER_METER
+    pz = part.pz_studs / STUDS_PER_METER
+    if part.part_type == PART_CYLINDER:
+        r = max(part.sx_studs, part.sz_studs) * 0.5 / STUDS_PER_METER + extra_margin_m
+        return Point(px, pz).buffer(max(0.2, r), resolution=8)
+    hx = max(0.2, part.sx_studs * 0.5 / STUDS_PER_METER + extra_margin_m)
+    hz = max(0.2, part.sz_studs * 0.5 / STUDS_PER_METER + extra_margin_m)
+    p = shp_box(-hx, -hz, hx, hz)
+    p = affinity.rotate(p, -math.degrees(part.yaw_rad), origin=(0.0, 0.0))
+    return affinity.translate(p, xoff=px, yoff=pz)
+
+
 def _decompose_footprint(poly: Polygon, min_area_m2: float = 14.0, depth: int = 0) -> list[OrientedBox]:
     obb_geom = poly.minimum_rotated_rectangle
     if obb_geom.area <= 0.1:
         return []
     fill_ratio = poly.area / obb_geom.area
-    if fill_ratio >= 0.75 or poly.area < 220.0 or depth >= 2:
+    if fill_ratio >= 0.84 or depth >= 3:
         box = _obb_params(poly)
         if box.width_u >= 2.2 and box.depth_v >= 2.2:
             return [box]
         return []
 
-    # Divide ao longo do eixo maior do OBB
+    # Divide pelo centro ao longo do eixo menor (cortando o eixo maior ao meio); se nao dividir, tenta o outro eixo
     box = _obb_params(poly)
     ux = math.cos(box.yaw_u)
     uz = -math.sin(box.yaw_u)
     vx = -uz
     vz = ux
     span = max(box.width_u, box.depth_v) + 2.0
-    cut_line = LineString([
-        (box.cx - vx * span, box.cz - vz * span),
-        (box.cx + vx * span, box.cz + vz * span),
-    ])
-    half_strip = cut_line.buffer(0.05)
-    rem = poly.difference(half_strip)
-    pieces = [rem] if rem.geom_type == "Polygon" else list(getattr(rem, "geoms", []))
+
+    pieces: list[Polygon] = []
+    for axis_x, axis_z in ((vx, vz), (ux, uz)):
+        cut_line = LineString([
+            (box.cx - axis_x * span, box.cz - axis_z * span),
+            (box.cx + axis_x * span, box.cz + axis_z * span),
+        ])
+        rem = poly.difference(cut_line.buffer(0.05))
+        cand = [rem] if rem.geom_type == "Polygon" else [g for g in getattr(rem, "geoms", []) if g.geom_type == "Polygon"]
+        cand = [g for g in cand if g.area >= min_area_m2]
+        if len(cand) >= 2:
+            pieces = cand
+            break
+
+    if not pieces:
+        if fill_ratio >= 0.65 and box.width_u >= 2.2 and box.depth_v >= 2.2:
+            return [box]
+        return []
+
     out: list[OrientedBox] = []
     for p in pieces:
-        if p.geom_type == "Polygon" and p.area >= min_area_m2:
-            out.extend(_decompose_footprint(p, min_area_m2=min_area_m2, depth=depth + 1))
-    if not out:
-        return [box]
+        out.extend(_decompose_footprint(p, min_area_m2=min_area_m2, depth=depth + 1))
     return out[:4]
 
 
@@ -176,8 +212,10 @@ def build_buildings(
     campus_poly: BaseGeometry,
     road_clearance_poly: BaseGeometry | list[BaseGeometry],
     overrides: dict[str, Any],
+    extra_road_parts: list[TilePart] | None = None,
+    anchor_streets: list[dict[str, Any]] | None = None,
 ) -> tuple[list[TilePart], list[Polygon], dict[str, int]]:
-    """Converte footprints em fachadas simplificadas e retorna parts + poligonos aceitos para preview."""
+    """Converte footprints em fachadas simplificadas garantindo zero sobreposicao com ruas/calcadas."""
     exclude_ids = set(overrides.get("exclude_ids") or [])
     height_overrides = overrides.get("heights_m") or {}
 
@@ -187,6 +225,7 @@ def build_buildings(
         "raw_buildings": len(building_records),
         "dropped_small": 0,
         "dropped_campus_or_road": 0,
+        "post_filter_dropped": 0,
         "kept_buildings": 0,
         "building_parts": 0,
     }
@@ -202,6 +241,30 @@ def build_buildings(
     else:
         clearance_list = []
     road_tree = STRtree(clearance_list) if clearance_list else None
+
+    exact_road_polys: list[BaseGeometry] = []
+    if extra_road_parts:
+        for rp in extra_road_parts:
+            if rp.category in (CAT_ROADS, CAT_SIDEWALKS) and rp.flags != 0:
+                exact_road_polys.append(_tile_part_footprint_m(rp, extra_margin_m=0.08))
+    if anchor_streets:
+        for st in anchor_streets:
+            pts = st.get("points") or []
+            if len(pts) >= 2:
+                exact_road_polys.append(
+                    LineString(pts).buffer(float(st.get("width", 7.5)) * 0.5 + 2.2, cap_style="flat")
+                )
+    exact_road_tree = STRtree(exact_road_polys) if exact_road_polys else None
+
+    def _box_conflicts(b: OrientedBox) -> bool:
+        b_poly = obb_world_polygon(b, margin_m=0.35)
+        if campus_guard.intersects(b_poly):
+            return True
+        if road_tree is not None and any(clearance_list[idx].intersects(b_poly) for idx in road_tree.query(b_poly)):
+            return True
+        if exact_road_tree is not None and any(exact_road_polys[idx].intersects(b_poly) for idx in exact_road_tree.query(b_poly)):
+            return True
+        return False
 
     for rec in building_records:
         bid = rec["id"]
@@ -223,20 +286,54 @@ def build_buildings(
         if campus_guard.intersects(geom):
             stats["dropped_campus_or_road"] += 1
             continue
-        if road_tree is not None and any(clearance_list[idx].intersects(geom) for idx in road_tree.query(geom)):
-            stats["dropped_campus_or_road"] += 1
+
+        # Se o footprint bruto encosta em rua/calcada, recorta apenas a porcao livre
+        work_geoms: list[Polygon]
+        if road_tree is not None:
+            hit_idxs = road_tree.query(geom)
+            hits = [clearance_list[idx] for idx in hit_idxs if clearance_list[idx].intersects(geom)]
+            if hits:
+                diff = geom.difference(unary_union(hits))
+                cands = [diff] if diff.geom_type == "Polygon" else [g for g in getattr(diff, "geoms", []) if g.geom_type == "Polygon"]
+                work_geoms = [g for g in cands if g.area >= 15.0 and not campus_guard.intersects(g)]
+                if not work_geoms:
+                    stats["dropped_campus_or_road"] += 1
+                    continue
+            else:
+                work_geoms = [geom]
+        else:
+            work_geoms = [geom]
+
+        raw_boxes: list[OrientedBox] = []
+        for wg in work_geoms:
+            raw_boxes.extend(_decompose_footprint(wg))
+
+        valid_boxes: list[OrientedBox] = []
+        for b in raw_boxes:
+            if not _box_conflicts(b):
+                valid_boxes.append(b)
+            else:
+                # Tenta recuar ate 15% mantendo dimensao minima >= 3.0 m
+                shrunk = OrientedBox(
+                    cx=b.cx,
+                    cz=b.cz,
+                    width_u=b.width_u * 0.85,
+                    depth_v=b.depth_v * 0.85,
+                    yaw_u=b.yaw_u,
+                )
+                if shrunk.width_u >= 3.0 and shrunk.depth_v >= 3.0 and not _box_conflicts(shrunk):
+                    valid_boxes.append(shrunk)
+                else:
+                    stats["post_filter_dropped"] += 1
+
+        if not valid_boxes:
+            if not raw_boxes:
+                stats["dropped_small"] += 1
             continue
 
         seed = _stable_hash(bid)
         h_ov = height_overrides.get(bid)
         height_m, kind = _estimate_height_and_kind(rec, geom.area, seed, h_ov)
-        boxes = _decompose_footprint(geom)
-        if not boxes:
-            stats["dropped_small"] += 1
-            continue
-
-        stats["kept_buildings"] += 1
-        preview_polys.append(geom)
 
         if kind == "warehouse":
             w_rgb = WALL_PALETTE_INDUSTRIAL[seed % len(WALL_PALETTE_INDUSTRIAL)]
@@ -250,15 +347,15 @@ def build_buildings(
 
         roof_rgb = ROOF_PALETTE_TILE[(seed >> 8) % len(ROOF_PALETTE_TILE)]
 
-        for box in boxes:
+        kept_any_box = False
+        for box in valid_boxes:
             sx = box.width_u * STUDS_PER_METER
             sz = box.depth_v * STUDS_PER_METER
             sy = height_m * STUDS_PER_METER
             cx_s = box.cx * STUDS_PER_METER
             cz_s = box.cz * STUDS_PER_METER
 
-            # Corpo da edificacao apoiado em Y = 0.0
-            parts.append(
+            group_parts: list[TilePart] = [
                 TilePart(
                     part_type=PART_BLOCK,
                     material=w_mat,
@@ -275,24 +372,20 @@ def build_buildings(
                     sz_studs=sz,
                     yaw_rad=box.yaw_u,
                 )
-            )
-            stats["building_parts"] += 1
+            ]
 
             # Cobertura por tipologia
             if kind == "house":
-                # Telhado 2 aguas (2 WedgeParts cujo +Z sobe para a cumeeira central)
                 roof_h_m = min(1.5, max(0.7, box.depth_v * 0.22))
                 roof_sy = roof_h_m * STUDS_PER_METER
                 half_v_m = box.depth_v * 0.25 + 0.12
                 vx = math.sin(box.yaw_u)
                 vz = math.cos(box.yaw_u)
                 for side in (-1.0, 1.0):
-                    # WedgePart sobe de -Z para +Z; se side = -1 (lado -v), +Z precisa apontar +v (yaw_u)
-                    # se side = +1 (lado +v), +Z precisa apontar -v (yaw_u + pi)
                     w_yaw = box.yaw_u if side < 0 else (box.yaw_u + math.pi)
                     wx_s = (box.cx + vx * half_v_m * side) * STUDS_PER_METER
                     wz_s = (box.cz + vz * half_v_m * side) * STUDS_PER_METER
-                    parts.append(
+                    group_parts.append(
                         TilePart(
                             part_type=PART_WEDGE,
                             material=MAT_SLATE,
@@ -310,10 +403,9 @@ def build_buildings(
                             yaw_rad=w_yaw,
                         )
                     )
-                    stats["building_parts"] += 1
             elif kind == "warehouse":
                 cap_sy = 0.35 * STUDS_PER_METER
-                parts.append(
+                group_parts.append(
                     TilePart(
                         part_type=PART_BLOCK,
                         material=MAT_METAL,
@@ -331,10 +423,9 @@ def build_buildings(
                         yaw_rad=box.yaw_u,
                     )
                 )
-                stats["building_parts"] += 1
             else:
                 cap_sy = 0.28 * STUDS_PER_METER
-                parts.append(
+                group_parts.append(
                     TilePart(
                         part_type=PART_BLOCK,
                         material=MAT_CONCRETE,
@@ -352,6 +443,25 @@ def build_buildings(
                         yaw_rad=box.yaw_u,
                     )
                 )
-                stats["building_parts"] += 1
+
+            # Gate final: nenhuma part deste grupo (inclusive beirais) pode invadir pista/calcada
+            if exact_road_tree is not None:
+                conflict = False
+                for gp in group_parts:
+                    gpoly = _tile_part_footprint_m(gp, extra_margin_m=0.02)
+                    if any(exact_road_polys[idx].intersects(gpoly) for idx in exact_road_tree.query(gpoly)):
+                        conflict = True
+                        break
+                if conflict:
+                    stats["post_filter_dropped"] += 1
+                    continue
+
+            parts.extend(group_parts)
+            stats["building_parts"] += len(group_parts)
+            preview_polys.append(obb_world_polygon(box))
+            kept_any_box = True
+
+        if kept_any_box:
+            stats["kept_buildings"] += 1
 
     return parts, preview_polys, stats

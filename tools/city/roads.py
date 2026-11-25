@@ -180,13 +180,23 @@ def build_roads(
     anchor_carriage_union = unary_union(anchor_carriages) if anchor_carriages else Polygon()
     anchor_corridor_union = unary_union(anchor_corridors) if anchor_corridors else Polygon()
 
-    # Tambem protege a faixa de entrada/driveway do campus
+    # Tambem protege a faixa de entrada/driveway e estacionamentos do campus
     driveway_geoms = [
         LineString(d["points"]).buffer(float(d.get("width", 6.0)) * 0.5 + 0.5, cap_style="flat")
         for d in campus_data.get("driveways", [])
         if len(d.get("points", [])) >= 2
     ]
-    protected_campus = unary_union([campus_poly, *driveway_geoms]) if driveway_geoms else campus_poly
+    parking_geoms = [
+        Polygon(pk["polygon"]).buffer(0.5)
+        for pk in campus_data.get("parking_lots", [])
+        if len(pk.get("polygon", [])) >= 3
+    ]
+    extra_campus = [*driveway_geoms, *parking_geoms]
+    protected_campus = unary_union([campus_poly, *extra_campus]) if extra_campus else campus_poly
+
+    border_buf = boundary_xz.buffer(30.0)
+    shapely.prepare(border_buf)
+    unclipped_road_clearances: list[BaseGeometry] = []
 
     kept_edges: list[RoadSegment] = []
     kept_lines: list[LineString] = []
@@ -214,13 +224,6 @@ def build_roads(
             continue
 
         geom = rec["geom"]
-        clipped = geom.intersection(boundary_xz)
-        if clipped.is_empty:
-            continue
-        clipped = clipped.difference(protected_campus)
-        if clipped.is_empty:
-            continue
-
         w = rec.get("width")
         if w is None or w < 3.5 or w > 22.0:
             w = DEFAULT_WIDTHS_M.get(rclass, 7.0)
@@ -231,6 +234,18 @@ def build_roads(
         is_unpaved = rclass == "track" or surface in UNPAVED_SURFACES
         has_sidewalk = (not is_unpaved) and (rclass not in NO_SIDEWALK_CLASSES)
         has_centerline = (not is_unpaved) and (rclass in CENTERLINE_CLASSES)
+
+        if border_buf.intersects(geom):
+            unclipped_road_clearances.append(
+                geom.buffer(w * 0.5 + (2.4 if has_sidewalk else 0.7), cap_style="round", join_style="round")
+            )
+
+        clipped = geom.intersection(boundary_xz)
+        if clipped.is_empty:
+            continue
+        clipped = clipped.difference(protected_campus)
+        if clipped.is_empty:
+            continue
 
         for ln in _extract_linestrings(clipped):
             if _is_parallel_duplicate(ln, anchors):
@@ -332,7 +347,7 @@ def build_roads(
     carriage_tree = STRtree(all_carriage_items) if all_carriage_items else None
     all_clearance_geoms = [
         g.buffer(0.25)
-        for g in [*all_carriage_items, *sidewalk_polys, *anchor_corridors]
+        for g in [*all_carriage_items, *sidewalk_polys, *anchor_corridors, *unclipped_road_clearances]
         if not g.is_empty
     ]
 
