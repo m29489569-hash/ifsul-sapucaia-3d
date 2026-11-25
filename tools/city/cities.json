@@ -4,10 +4,18 @@
     "lon": -51.156
   },
   "tile_size_m": 500,
-  "campus_grass_box_m": [-280.0, -370.0, 280.0, 370.0],
+  "campus_grass_box_m": [
+    -280.0,
+    -370.0,
+    280.0,
+    370.0
+  ],
   "cities": {
     "pilot": {
-      "center": [-29.8151, -51.156],
+      "center": [
+        -29.8151,
+        -51.156
+      ],
       "radius_m": 1000
     },
     "sapucaia": {
@@ -23,5 +31,11 @@
   "overrides": {
     "heights_m": {},
     "exclude_ids": []
+  },
+  "calibrated_transform": {
+    "dx_m": -0.4671,
+    "dz_m": 0.0716,
+    "dtheta_deg": -0.10355,
+    "rms_residual_m": 0.5989
   }
 }

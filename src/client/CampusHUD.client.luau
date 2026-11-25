@@ -382,6 +382,41 @@ ContextActionService:SetTitle("IFSulSprint", "Correr")
 
 -- Lógica de Dia / Noite LOCAL (cada jogador escolhe seu horário sem afetar outros jogadores)
 local isNight = false
+local lightsConn: RBXScriptConnection? = nil
+
+local function applyLightState(desc: Instance, night: boolean)
+	if desc:IsA("PointLight") then
+		local alwaysOn = desc:GetAttribute("AlwaysOn") == true
+		desc.Enabled = alwaysOn or night
+		if alwaysOn then
+			local targetB = if night then desc:GetAttribute("NightBrightness") else desc:GetAttribute("DayBrightness")
+			if typeof(targetB) == "number" then
+				desc.Brightness = targetB
+			end
+		end
+	end
+end
+
+local function bindCampusLights(lightsFolder: Instance)
+	if lightsConn then
+		lightsConn:Disconnect()
+		lightsConn = nil
+	end
+	for _, desc in ipairs(lightsFolder:GetDescendants()) do
+		applyLightState(desc, isNight)
+	end
+	lightsConn = lightsFolder.DescendantAdded:Connect(function(desc: Instance)
+		applyLightState(desc, isNight)
+	end)
+end
+
+local function ensureLightsBinding()
+	local campus = Workspace:FindFirstChild("IFSul_Campus")
+	local lightsFolder = if campus then campus:FindFirstChild("Lights") else nil
+	if lightsFolder then
+		bindCampusLights(lightsFolder)
+	end
+end
 
 local function applyLocalLighting(night: boolean)
 	isNight = night
@@ -399,25 +434,10 @@ local function applyLocalLighting(night: boolean)
 		atmosphere.Haze = preset.AtmosphereHaze
 	end
 
-	local campus = Workspace:FindFirstChild("IFSul_Campus")
-	if campus then
-		local lightsFolder = campus:FindFirstChild("Lights")
-		if lightsFolder then
-			for _, desc in ipairs(lightsFolder:GetDescendants()) do
-				if desc:IsA("PointLight") then
-					local alwaysOn = desc:GetAttribute("AlwaysOn") == true
-					desc.Enabled = alwaysOn or night
-					if alwaysOn then
-						local targetB = if night then desc:GetAttribute("NightBrightness") else desc:GetAttribute("DayBrightness")
-						if typeof(targetB) == "number" then
-							desc.Brightness = targetB
-						end
-					end
-				end
-			end
-		end
-	end
+	ensureLightsBinding()
 end
+
+ensureLightsBinding()
 
 -- Backdrop clicável para fechar o modal no celular ou PC
 local modalBackdrop = Instance.new("TextButton")

@@ -125,6 +125,7 @@ def calibrate_to_campus(
     campus_streets: list[dict[str, Any]],
     max_initial_dist_m: float = 35.0,
     max_rms_m: float = 3.0,
+    fallback_calibration: dict[str, Any] | None = None,
 ) -> CalibrationResult:
     """Estima transformacao rigida (dx, dz, rotacao) alinhando Overture as 9 ruas-ancora."""
     anchors_by_name: dict[str, list[LineString]] = {}
@@ -134,7 +135,7 @@ def calibrate_to_campus(
         if key and len(pts) >= 2:
             anchors_by_name.setdefault(key, []).append(LineString(pts))
 
-    # Coleta pares (ponto_overture, linha_ancora)
+    # Coleta pares (ponto_overture, linha_ancora) apenas no interior do segmento-ancora
     pairs: list[tuple[float, float, LineString, str]] = []
     matched_names: set[str] = set()
     for rec in road_records:
@@ -149,10 +150,21 @@ def calibrate_to_campus(
             pt = Point(px, pz)
             best_line = min(candidates, key=lambda ln: ln.distance(pt))
             if best_line.distance(pt) <= max_initial_dist_m:
-                pairs.append((px, pz, best_line, key))
-                matched_names.add(key)
+                d_proj = best_line.project(pt)
+                if 1.0 < d_proj < (best_line.length - 1.0):
+                    pairs.append((px, pz, best_line, key))
+                    matched_names.add(key)
 
     if len(pairs) < 6:
+        if fallback_calibration:
+            return CalibrationResult(
+                dx_m=float(fallback_calibration.get("dx_m", 0.0)),
+                dz_m=float(fallback_calibration.get("dz_m", 0.0)),
+                dtheta_deg=float(fallback_calibration.get("dtheta_deg", 0.0)),
+                rms_residual_m=float(fallback_calibration.get("rms_residual_m", 0.0)),
+                matched_samples=0,
+                matched_streets=[],
+            )
         raise RuntimeError(
             f"Poucas amostras casadas com as ruas do campus ({len(pairs)}); "
             "verifique nomes ou bbox."

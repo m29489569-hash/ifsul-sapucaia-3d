@@ -104,7 +104,7 @@ python tools/sync_campus_data.py
 ### Gerando Malha Viária e Edifícios da Cidade
 Para gerar tiles binários (`IFC2`) de ruas e fachadas em escala 1:1 a partir do Overture Maps:
 ```bash
-python -m tools.city.build_city --city pilot --summary
+python -m tools.city.build_city --city sapucaia --summary
 ```
 
 ---

@@ -14,11 +14,15 @@ from shapely.geometry import Polygon, box
 
 from .buildings import build_buildings
 from .codec import (
+    CAT_BUILDINGS,
     CAT_GROUND,
+    CAT_ROADS,
     FLAG_CAN_QUERY,
     FLAG_COLLIDE,
+    MAT_CONCRETE,
     MAT_GRASS,
     PART_BLOCK,
+    PART_WEDGE,
     STUDS_PER_METER,
     TilePart,
     encode_tile_b64,
@@ -141,6 +145,51 @@ def _render_preview(
     img.save(out_png)
 
 
+def _enforce_tile_budget(t_parts: list[TilePart], max_parts: int = 6000) -> list[TilePart]:
+    """Garante teto de parts por tile removendo faixas e simplificando telhados 2 aguas."""
+    if len(t_parts) <= max_parts:
+        return t_parts
+
+    # 1) Remove faixas tracejadas (flags == 0 em CAT_ROADS)
+    trimmed = [p for p in t_parts if not (p.category == CAT_ROADS and p.flags == 0)]
+    if len(trimmed) <= max_parts:
+        return trimmed
+
+    # 2) Converte pares de telhados Wedge em laje unica se ainda exceder max_parts
+    out: list[TilePart] = []
+    skip_next_wedge = False
+    for p in trimmed:
+        if len(out) + (len(trimmed) - len(out)) <= max_parts:
+            out.append(p)
+            continue
+        if p.category == CAT_BUILDINGS and p.part_type == PART_WEDGE:
+            if skip_next_wedge:
+                skip_next_wedge = False
+                continue
+            skip_next_wedge = True
+            out.append(
+                TilePart(
+                    part_type=PART_BLOCK,
+                    material=MAT_CONCRETE,
+                    category=CAT_BUILDINGS,
+                    flags=0,
+                    r=p.r,
+                    g=p.g,
+                    b=p.b,
+                    px_studs=p.px_studs,
+                    py_studs=p.py_studs,
+                    pz_studs=p.pz_studs,
+                    sx_studs=p.sx_studs,
+                    sy_studs=min(p.sy_studs, 1.0),
+                    sz_studs=p.sz_studs,
+                    yaw_rad=p.yaw_rad,
+                )
+            )
+        else:
+            out.append(p)
+    return out
+
+
 def run_build(city_id: str) -> dict[str, Any]:
     t0 = time.perf_counter()
     cfg = json.loads(CITIES_CFG_PATH.read_text(encoding="utf-8"))
@@ -162,7 +211,20 @@ def run_build(city_id: str) -> dict[str, Any]:
         cache_root=REPO_ROOT / "data" / "cache",
     )
 
-    calib = calibrate_to_campus(road_records, campus_data["streets"])
+    calib = calibrate_to_campus(
+        road_records,
+        campus_data["streets"],
+        fallback_calibration=cfg.get("calibrated_transform"),
+    )
+    if calib.matched_samples > 0:
+        cfg["calibrated_transform"] = {
+            "dx_m": round(calib.dx_m, 4),
+            "dz_m": round(calib.dz_m, 4),
+            "dtheta_deg": round(calib.dtheta_deg, 5),
+            "rms_residual_m": round(calib.rms_residual_m, 4),
+        }
+        CITIES_CFG_PATH.write_text(json.dumps(cfg, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
     for rec in road_records:
         rec["geom"] = calib.apply(rec["geom"])
     for rec in building_records:
@@ -174,7 +236,7 @@ def run_build(city_id: str) -> dict[str, Any]:
         building_records=building_records,
         boundary_xz=boundary_xz,
         campus_poly=campus_poly,
-        road_clearance_poly=road_out.road_clearance_poly,
+        road_clearance_poly=road_out.road_clearance_geoms,
         overrides=cfg.get("overrides") or {},
     )
 
@@ -206,7 +268,7 @@ def run_build(city_id: str) -> dict[str, Any]:
     total_parts = 0
     total_b64_bytes = 0
     for (tx, tz) in sorted(buckets.keys()):
-        t_parts = buckets[(tx, tz)]
+        t_parts = _enforce_tile_budget(buckets[(tx, tz)], max_parts=6000)
         if not t_parts:
             continue
         ox_m = (tx + 0.5) * tile_size_m

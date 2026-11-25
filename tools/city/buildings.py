@@ -10,6 +10,7 @@ from typing import Any
 import shapely
 from shapely.geometry import LineString, Polygon
 from shapely.geometry.base import BaseGeometry
+from shapely.strtree import STRtree
 
 from .codec import (
     CAT_BUILDINGS,
@@ -173,7 +174,7 @@ def build_buildings(
     building_records: list[dict[str, Any]],
     boundary_xz: BaseGeometry,
     campus_poly: BaseGeometry,
-    road_clearance_poly: BaseGeometry,
+    road_clearance_poly: BaseGeometry | list[BaseGeometry],
     overrides: dict[str, Any],
 ) -> tuple[list[TilePart], list[Polygon], dict[str, int]]:
     """Converte footprints em fachadas simplificadas e retorna parts + poligonos aceitos para preview."""
@@ -191,10 +192,16 @@ def build_buildings(
     }
 
     campus_guard = campus_poly.buffer(2.5)
-    road_guard = road_clearance_poly.buffer(0.25)
     shapely.prepare(boundary_xz)
     shapely.prepare(campus_guard)
-    shapely.prepare(road_guard)
+
+    if isinstance(road_clearance_poly, list):
+        clearance_list = [g for g in road_clearance_poly if not g.is_empty]
+    elif road_clearance_poly is not None and not road_clearance_poly.is_empty:
+        clearance_list = [road_clearance_poly.buffer(0.25)]
+    else:
+        clearance_list = []
+    road_tree = STRtree(clearance_list) if clearance_list else None
 
     for rec in building_records:
         bid = rec["id"]
@@ -213,7 +220,10 @@ def build_buildings(
             continue
         if not boundary_xz.intersects(geom.centroid):
             continue
-        if campus_guard.intersects(geom) or road_guard.intersects(geom):
+        if campus_guard.intersects(geom):
+            stats["dropped_campus_or_road"] += 1
+            continue
+        if road_tree is not None and any(clearance_list[idx].intersects(geom) for idx in road_tree.query(geom)):
             stats["dropped_campus_or_road"] += 1
             continue
 

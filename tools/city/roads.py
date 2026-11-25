@@ -71,7 +71,7 @@ class RoadSegment:
 @dataclass(slots=True)
 class RoadNetworkOutput:
     parts: list[TilePart]
-    road_clearance_poly: BaseGeometry
+    road_clearance_geoms: list[BaseGeometry]
     road_lines: list[LineString]
     stats: dict[str, int]
 
@@ -329,7 +329,11 @@ def build_roads(
 
     all_carriage_items = [*carriage_polys, *anchor_carriages, protected_campus]
     carriage_tree = STRtree(all_carriage_items) if all_carriage_items else None
-    all_clearance_union = unary_union([*all_carriage_items, *sidewalk_polys, *anchor_corridors])
+    all_clearance_geoms = [
+        g.buffer(0.25)
+        for g in [*all_carriage_items, *sidewalk_polys, *anchor_corridors]
+        if not g.is_empty
+    ]
 
     parts: list[TilePart] = []
 
@@ -359,14 +363,14 @@ def build_roads(
             )
         )
 
-        # Faixa tracejada central
-        if seg.has_centerline and length >= 8.0:
+        # Faixa tracejada central (padrao CONTRAN: 3m traco a cada 9m)
+        if seg.has_centerline and length >= 10.0:
             dx = (seg.p1[0] - seg.p0[0]) / length
             dz = (seg.p1[1] - seg.p0[1]) / length
-            dash_len = 2.0
-            step = 6.0
-            s = 2.5
-            while s + dash_len <= length - 2.5:
+            dash_len = 3.0
+            step = 9.0
+            s = 3.0
+            while s + dash_len <= length - 3.0:
                 dcx = seg.p0[0] + dx * (s + dash_len * 0.5)
                 dcz = seg.p0[1] + dz * (s + dash_len * 0.5)
                 parts.append(
@@ -467,7 +471,7 @@ def build_roads(
 
     return RoadNetworkOutput(
         parts=parts,
-        road_clearance_poly=all_clearance_union,
+        road_clearance_geoms=all_clearance_geoms,
         road_lines=kept_lines,
         stats=stats,
     )
