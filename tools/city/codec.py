@@ -40,6 +40,7 @@ CAT_BUILDINGS = 4
 FLAG_COLLIDE = 1 << 0
 FLAG_SHADOW = 1 << 1
 FLAG_CAN_QUERY = 1 << 2
+FLAG_DETAIL = 1 << 3  # detalhe decorativo (rodape/janelas); descartavel pelo orcamento de Parts
 
 
 @dataclass(slots=True)

@@ -19,6 +19,7 @@ from .codec import (
     CAT_ROADS,
     FLAG_CAN_QUERY,
     FLAG_COLLIDE,
+    FLAG_DETAIL,
     MAT_CONCRETE,
     MAT_GRASS,
     PART_BLOCK,
@@ -173,8 +174,12 @@ def _enforce_tile_budget(t_parts: list[TilePart], max_parts: int = 6000) -> list
     if len(t_parts) <= max_parts:
         return t_parts
 
-    # 1) Remove faixas tracejadas (flags == 0 em CAT_ROADS)
-    trimmed = [p for p in t_parts if not (p.category == CAT_ROADS and p.flags == 0)]
+    # 1) Remove faixas tracejadas (flags == 0 em CAT_ROADS) e detalhes decorativos de fachada
+    trimmed = [
+        p for p in t_parts
+        if not (p.category == CAT_ROADS and p.flags == 0)
+        and not (p.category == CAT_BUILDINGS and (p.flags & FLAG_DETAIL))
+    ]
     if len(trimmed) <= max_parts:
         return trimmed
 

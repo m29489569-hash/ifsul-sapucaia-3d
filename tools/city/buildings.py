@@ -20,6 +20,7 @@ from .codec import (
     CAT_SIDEWALKS,
     FLAG_CAN_QUERY,
     FLAG_COLLIDE,
+    FLAG_DETAIL,
     FLAG_SHADOW,
     MAT_CONCRETE,
     MAT_METAL,
@@ -41,6 +42,11 @@ WALL_PALETTE_RESIDENTIAL = [
     (208, 214, 218),  # cinza azulado claro
     (226, 214, 180),  # ocre claro
     (198, 174, 154),  # reboco terroso
+    (240, 222, 150),  # amarelo suave
+    (196, 218, 190),  # verde menta
+    (232, 196, 180),  # salmao
+    (176, 200, 222),  # azul claro
+    (222, 170, 150),  # tijolo claro
 ]
 
 WALL_PALETTE_COMMERCIAL = [
@@ -347,6 +353,12 @@ def build_buildings(
 
         roof_rgb = ROOF_PALETTE_TILE[(seed >> 8) % len(ROOF_PALETTE_TILE)]
 
+        # Variacao sutil de tom por edificio (determinstica) para quebrar a repeticao da paleta
+        jitter = ((seed >> 16) % 15) - 7
+        w_rgb = tuple(max(0, min(255, c + jitter)) for c in w_rgb)
+        trim_rgb = tuple(max(0, c - 55) for c in w_rgb)
+        win_rgb = (52, 78, 104)
+
         kept_any_box = False
         for box in valid_boxes:
             sx = box.width_u * STUDS_PER_METER
@@ -373,6 +385,33 @@ def build_buildings(
                     yaw_rad=box.yaw_u,
                 )
             ]
+
+            # Detalhes baratos: rodape escuro + fita de janelas por andar (1 Part cada, envolvendo a fachada)
+            def _detail(center_y_m: float, h_m: float, grow_m: float, rgb: tuple[int, int, int]) -> TilePart:
+                return TilePart(
+                    part_type=PART_BLOCK,
+                    material=MAT_SMOOTH_PLASTIC,
+                    category=CAT_BUILDINGS,
+                    flags=FLAG_DETAIL,
+                    r=rgb[0],
+                    g=rgb[1],
+                    b=rgb[2],
+                    px_studs=cx_s,
+                    py_studs=center_y_m * STUDS_PER_METER,
+                    pz_studs=cz_s,
+                    sx_studs=sx + grow_m * 2.0 * STUDS_PER_METER,
+                    sy_studs=h_m * STUDS_PER_METER,
+                    sz_studs=sz + grow_m * 2.0 * STUDS_PER_METER,
+                    yaw_rad=box.yaw_u,
+                )
+
+            group_parts.append(_detail(0.3, 0.6, 0.07, trim_rgb))
+            if kind != "warehouse" and min(box.width_u, box.depth_v) >= 3.5:
+                n_floors = max(1, min(8, int(round(height_m / 3.1))))
+                floor_h = height_m / n_floors
+                win_h = min(1.2, floor_h * 0.36)
+                for f in range(n_floors):
+                    group_parts.append(_detail(f * floor_h + floor_h * 0.58, win_h, 0.04, win_rgb))
 
             # Cobertura por tipologia
             if kind == "house":
