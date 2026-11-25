@@ -224,9 +224,11 @@ local function buildLobbyPortal()
 	pad.CanCollide = false
 	pad.Material = Enum.Material.Neon
 	pad.Color = Config.Colors.IFSulGreen
-	pad.Transparency = 0.35
+	-- Opaco: peças transparentes sobrepostas trocam a ordem de desenho e piscam ao mover a câmera
+	pad.Transparency = 0
 	pad.Size = Vector3.new(0.35, RING_RADIUS * 2, RING_RADIUS * 2)
 	pad.CFrame = CFrame.new(center) * CFrame.Angles(0, 0, math.rad(90))
+	pad.CastShadow = false
 	pad.Parent = folder
 
 	local innerPad = Instance.new("Part")
@@ -236,9 +238,11 @@ local function buildLobbyPortal()
 	innerPad.CanCollide = false
 	innerPad.Material = Enum.Material.SmoothPlastic
 	innerPad.Color = Color3.fromRGB(20, 30, 26)
-	innerPad.Transparency = 0.2
-	innerPad.Size = Vector3.new(0.38, (RING_RADIUS - 1.1) * 2, (RING_RADIUS - 1.1) * 2)
-	innerPad.CFrame = CFrame.new(center) * CFrame.Angles(0, 0, math.rad(90))
+	innerPad.Transparency = 0
+	innerPad.CastShadow = false
+	-- Topo do disco interno 0,1 stud acima do anel externo (evita z-fighting entre as faces)
+	innerPad.Size = Vector3.new(0.35, (RING_RADIUS - 1.1) * 2, (RING_RADIUS - 1.1) * 2)
+	innerPad.CFrame = CFrame.new(center + Vector3.new(0, 0.1, 0)) * CFrame.Angles(0, 0, math.rad(90))
 	innerPad.Parent = folder
 
 	-- Props prontos da Creator Store nas laterais do portal (Caixas Táticas + Torreta)
